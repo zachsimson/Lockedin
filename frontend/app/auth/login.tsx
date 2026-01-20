@@ -21,7 +21,7 @@ export default function Login() {
     setLoading(true);
     try {
       await login(email, password);
-      router.replace('/(tabs)/dashboard');
+      router.replace('/(tabs)/home');
     } catch (error: any) {
       Alert.alert('Login Failed', error.message);
     } finally {
@@ -39,12 +39,12 @@ export default function Login() {
           style={styles.backButton}
           onPress={() => router.back()}
         >
-          <Ionicons name="arrow-back" size={24} color="#2C3E50" />
+          <Ionicons name="arrow-back" size={24} color={colors.textPrimary} />
         </TouchableOpacity>
 
         <View style={styles.content}>
           <View style={styles.header}>
-            <Ionicons name="shield-checkmark" size={60} color="#4CAF50" />
+            <Ionicons name="shield-checkmark" size={60} color={colors.primary} />
             <Text style={styles.title}>Welcome Back</Text>
             <Text style={styles.subtitle}>Sign in to continue your journey</Text>
           </View>
@@ -55,6 +55,7 @@ export default function Login() {
               <TextInput
                 style={styles.input}
                 placeholder="Enter your email"
+                placeholderTextColor={colors.textMuted}
                 value={email}
                 onChangeText={setEmail}
                 keyboardType="email-address"
@@ -68,6 +69,7 @@ export default function Login() {
               <TextInput
                 style={styles.input}
                 placeholder="Enter your password"
+                placeholderTextColor={colors.textMuted}
                 value={password}
                 onChangeText={setPassword}
                 secureTextEntry
@@ -122,12 +124,12 @@ const styles = StyleSheet.create({
   title: {
     fontSize: 32,
     fontWeight: 'bold',
-    color: '#2C3E50',
+    color: colors.textPrimary,
     marginTop: 16,
   },
   subtitle: {
     fontSize: 16,
-    color: '#7F8C8D',
+    color: colors.textSecondary,
     marginTop: 8,
   },
   form: {
@@ -139,19 +141,20 @@ const styles = StyleSheet.create({
   label: {
     fontSize: 16,
     fontWeight: '600',
-    color: '#2C3E50',
+    color: colors.textPrimary,
     marginBottom: 8,
   },
   input: {
     borderWidth: 1,
-    borderColor: '#ddd',
+    borderColor: colors.border,
     borderRadius: 12,
     padding: 16,
     fontSize: 16,
-    backgroundColor: '#F8F9FA',
+    backgroundColor: colors.cardBackground,
+    color: colors.textPrimary,
   },
   button: {
-    backgroundColor: '#4CAF50',
+    backgroundColor: colors.primary,
     padding: 16,
     borderRadius: 12,
     alignItems: 'center',
@@ -172,11 +175,11 @@ const styles = StyleSheet.create({
   },
   footerText: {
     fontSize: 16,
-    color: '#7F8C8D',
+    color: colors.textSecondary,
   },
   linkText: {
     fontSize: 16,
-    color: '#4CAF50',
+    color: colors.primary,
     fontWeight: '600',
   },
 });
