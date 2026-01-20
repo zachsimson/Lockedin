@@ -1,5 +1,5 @@
 // FanDuel-inspired color scheme
-export const colors = {
+const colors = {
   // Primary colors
   primary: '#1FB958', // FanDuel bright green
   primaryDark: '#159A47',
@@ -30,7 +30,7 @@ export const colors = {
   borderLight: '#475569',
 };
 
-export const shadows = {
+const shadows = {
   small: {
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
@@ -54,7 +54,7 @@ export const shadows = {
   },
 };
 
-export const typography = {
+const typography = {
   h1: {
     fontSize: 32,
     fontWeight: 'bold' as const,
@@ -79,3 +79,5 @@ export const typography = {
     color: colors.textMuted,
   },
 };
+
+export { colors, shadows, typography };
