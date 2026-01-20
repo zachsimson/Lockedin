@@ -108,8 +108,8 @@ export default function Tracker() {
   return (
     <View style={styles.container}>
       <View style={styles.header}>
-        <Text style={styles.headerTitle}>Abstinence Tracker</Text>
-        <Text style={styles.headerSubtitle}>Every second counts</Text>
+        <Text style={styles.headerTitle}>Time Saved</Text>
+        <Text style={styles.headerSubtitle}>Lock In.</Text>
       </View>
 
       <ScrollView
