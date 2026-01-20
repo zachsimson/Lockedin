@@ -16,7 +16,7 @@ export default function Index() {
         router.replace('/(tabs)/home');
       }
     }
-  }, [user, loading]);
+  }, [user, loading, router]);
 
   if (loading) {
     return (
