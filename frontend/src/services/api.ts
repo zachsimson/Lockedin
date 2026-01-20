@@ -1,7 +1,7 @@
 import axios from 'axios';
 import storage from './storage';
 
-const API_URL = process.env.EXPO_PUBLIC_BACKEND_URL || '/api';
+const API_URL = '';
 
 const api = axios.create({
   baseURL: API_URL,
