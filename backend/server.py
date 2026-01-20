@@ -462,11 +462,22 @@ async def get_blocking_status(current_user: dict = Depends(get_current_user)):
 # ============= ADMIN ENDPOINTS =============
 
 @app.get("/api/admin/users")
-async def get_all_users(current_user: dict = Depends(get_current_admin)):
-    users = await users_collection.find().to_list(1000)
-    for user in users:
-        user.pop("password", None)
-    return {"users": serialize_doc(users)}
+async def get_all_users(
+    skip: int = 0,
+    limit: int = 100,
+    current_user: dict = Depends(get_current_admin)
+):
+    users = await users_collection.find(
+        {},
+        {"password": 0, "gambling_history": 0}
+    ).skip(skip).limit(limit).to_list(limit)
+    total_count = await users_collection.count_documents({})
+    return {
+        "users": serialize_doc(users),
+        "total": total_count,
+        "skip": skip,
+        "limit": limit
+    }
 
 @app.post("/api/admin/block-user/{user_id}")
 async def block_user(
