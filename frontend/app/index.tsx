@@ -129,12 +129,12 @@ const styles = StyleSheet.create({
     width: 120,
     height: 120,
     borderRadius: 60,
-    backgroundColor: 'rgba(233, 30, 99, 0.1)',
+    backgroundColor: 'rgba(107, 70, 193, 0.1)',
     justifyContent: 'center',
     alignItems: 'center',
     marginBottom: 20,
     borderWidth: 2,
-    borderColor: '#E91E63',
+    borderColor: '#6B46C1',
   },
   appName: {
     fontSize: 48,
@@ -164,7 +164,7 @@ const styles = StyleSheet.create({
   statNumber: {
     fontSize: 32,
     fontWeight: 'bold',
-    color: '#E91E63',
+    color: '#6B46C1',
     marginBottom: 4,
   },
   statLabel: {
@@ -194,7 +194,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     marginRight: 16,
     borderWidth: 1,
-    borderColor: '#E91E63',
+    borderColor: '#6B46C1',
   },
   featureContent: {
     flex: 1,
@@ -214,7 +214,7 @@ const styles = StyleSheet.create({
     gap: 12,
   },
   primaryButton: {
-    backgroundColor: '#E91E63',
+    backgroundColor: '#6B46C1',
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
@@ -230,13 +230,13 @@ const styles = StyleSheet.create({
   secondaryButton: {
     backgroundColor: 'transparent',
     borderWidth: 2,
-    borderColor: 'rgba(233, 30, 99, 0.5)',
+    borderColor: 'rgba(107, 70, 193, 0.5)',
     padding: 18,
     borderRadius: 16,
     alignItems: 'center',
   },
   secondaryButtonText: {
-    color: '#E91E63',
+    color: '#6B46C1',
     fontSize: 16,
     fontWeight: '600',
   },
