@@ -15,6 +15,7 @@ export default function Register() {
   const router = useRouter();
 
   const handleRegister = async () => {
+    console.log('Register button clicked');
     if (!username || !email || !password) {
       Alert.alert('Error', 'Please fill in all required fields');
       return;
@@ -26,11 +27,14 @@ export default function Register() {
     }
 
     setLoading(true);
+    console.log('Attempting registration...', { username, email });
     try {
       const amount = parseFloat(weeklyAmount) || 0;
       await register(username, email, password, amount);
+      console.log('Registration successful, navigating to home...');
       router.replace('/(tabs)/home');
     } catch (error: any) {
+      console.error('Registration failed:', error);
       Alert.alert('Registration Failed', error.message);
     } finally {
       setLoading(false);
