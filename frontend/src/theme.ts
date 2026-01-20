@@ -1,16 +1,16 @@
-// Dark Purple & Black Premium Theme
+// Dark Purple & Black - PrizePicks Style
 const colors = {
-  // Primary colors - Deep purple/pink
-  primary: '#E91E63', // Vibrant pink
-  primaryDark: '#C2185B',
-  primaryLight: '#F06292',
-  secondary: '#7B1FA2', // Deep purple
+  // Primary colors - Deep purple like PrizePicks
+  primary: '#6B46C1', // Deep purple
+  primaryDark: '#553C9A',
+  primaryLight: '#805AD5',
+  secondary: '#9F7AEA', // Light purple
   
   // Gradient colors - Dark purple gradient
   gradientStart: '#1a0033', // Very dark purple
-  gradientEnd: '#0a0015', // Almost black
+  gradientEnd: '#000000', // Pure black
   
-  // Dark theme backgrounds - Much darker
+  // Dark theme backgrounds
   background: '#000000', // Pure black
   cardBackground: '#0D0D1A', // Very dark purple-black
   surface: '#1A1A2E', // Dark surface
@@ -27,7 +27,7 @@ const colors = {
   info: '#00B0FF',
   
   // Accent colors
-  accent: '#E91E63',
+  accent: '#6B46C1',
   gold: '#FFD700',
   
   // Borders - Darker
