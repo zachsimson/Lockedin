@@ -2,18 +2,25 @@ import axios from 'axios';
 import storage from './storage';
 import { Platform } from 'react-native';
 
-// For mobile (Expo Go), we need the full backend URL
-// For web, we can use relative URLs since both are served from same domain
+// Get the backend URL
+// For both web and mobile, we use the full backend URL 
+// because Expo dev server doesn't proxy API requests
 const getApiUrl = () => {
-  // On web, use relative URLs (empty string)
-  if (Platform.OS === 'web') {
-    return '';
+  const backendUrl = process.env.EXPO_PUBLIC_BACKEND_URL;
+  console.log('[API] EXPO_PUBLIC_BACKEND_URL:', backendUrl);
+  
+  // Use the environment variable if available, otherwise use the default
+  if (backendUrl) {
+    return backendUrl;
   }
   
-  // On mobile, use the environment variable
-  const backendUrl = process.env.EXPO_PUBLIC_BACKEND_URL;
-  console.log('[API] Backend URL:', backendUrl);
-  return backendUrl || 'https://gamblefree.preview.emergentagent.com';
+  // Fallback for web development
+  if (Platform.OS === 'web' && typeof window !== 'undefined') {
+    // Use current host if we're on web
+    return window.location.origin;
+  }
+  
+  return 'https://gamblefree.preview.emergentagent.com';
 };
 
 const API_URL = getApiUrl();
@@ -33,7 +40,7 @@ api.interceptors.request.use(async (config) => {
   if (token) {
     config.headers.Authorization = `Bearer ${token}`;
   }
-  console.log('[API] Request:', config.method?.toUpperCase(), config.url);
+  console.log('[API] Request:', config.method?.toUpperCase(), config.baseURL + config.url);
   return config;
 });
 
