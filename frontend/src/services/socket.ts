@@ -1,7 +1,7 @@
 import { io, Socket } from 'socket.io-client';
 import storage from './storage';
 
-const SOCKET_URL = process.env.EXPO_PUBLIC_BACKEND_URL || 'http://localhost:8001';
+const SOCKET_URL = process.env.EXPO_PUBLIC_BACKEND_URL || '/api';
 
 class SocketService {
   private socket: Socket | null = null;
