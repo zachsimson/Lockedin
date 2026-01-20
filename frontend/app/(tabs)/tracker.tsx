@@ -160,7 +160,7 @@ export default function Tracker() {
           <View style={styles.statCard}>
             <Ionicons name="cash" size={32} color={colors.primary} />
             <Text style={styles.statNumber}>${moneySaved.toFixed(0)}</Text>
-            <Text style={styles.statLabel}>Money Not Gambled</Text>
+            <Text style={styles.statLabel}>Money Saved</Text>
             <Text style={styles.statSubtext}>estimated</Text>
           </View>
         </View>
@@ -177,7 +177,7 @@ export default function Tracker() {
             <Ionicons name="calendar" size={32} color={colors.info} />
             <Text style={styles.statNumber}>{Math.floor(time.days / 7)}</Text>
             <Text style={styles.statLabel}>Weeks Clean</Text>
-            <Text style={styles.statSubtext}>counting up</Text>
+            <Text style={styles.statSubtext}>keep going</Text>
           </View>
         </View>
 
