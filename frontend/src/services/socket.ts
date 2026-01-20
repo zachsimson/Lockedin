@@ -10,7 +10,7 @@ class SocketService {
   async connect() {
     if (this.socket?.connected) return;
 
-    const token = await SecureStore.getItemAsync('authToken');
+    const token = await storage.getItem('authToken');
     if (!token) {
       console.log('No auth token found');
       return;
