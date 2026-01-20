@@ -40,13 +40,13 @@ export default function Login() {
       behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
       style={styles.container}
     >
-      <ScrollView contentContainerStyle={styles.scrollContent}>
-        <TouchableOpacity 
+      <ScrollView contentContainerStyle={styles.scrollContent} keyboardShouldPersistTaps="handled">
+        <Pressable 
           style={styles.backButton}
           onPress={() => router.back()}
         >
           <Ionicons name="arrow-back" size={24} color={colors.textPrimary} />
-        </TouchableOpacity>
+        </Pressable>
 
         <View style={styles.content}>
           <View style={styles.header}>
@@ -83,21 +83,27 @@ export default function Login() {
               />
             </View>
 
-            <TouchableOpacity
-              style={[styles.button, loading && styles.buttonDisabled]}
+            <Pressable
+              style={({ pressed }) => [
+                styles.button,
+                loading && styles.buttonDisabled,
+                pressed && styles.buttonPressed
+              ]}
               onPress={handleLogin}
               disabled={loading}
             >
-              <Text style={styles.buttonText}>
-                {loading ? 'Signing in...' : 'Sign In'}
-              </Text>
-            </TouchableOpacity>
+              {loading ? (
+                <ActivityIndicator color="#fff" />
+              ) : (
+                <Text style={styles.buttonText}>Sign In</Text>
+              )}
+            </Pressable>
 
             <View style={styles.footer}>
               <Text style={styles.footerText}>Don't have an account? </Text>
-              <TouchableOpacity onPress={() => router.push('/auth/register')}>
+              <Pressable onPress={() => router.push('/auth/register')}>
                 <Text style={styles.linkText}>Sign Up</Text>
-              </TouchableOpacity>
+              </Pressable>
             </View>
           </View>
         </View>
