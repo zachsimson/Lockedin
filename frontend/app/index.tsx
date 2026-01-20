@@ -4,6 +4,7 @@ import { useRouter } from 'expo-router';
 import { useEffect } from 'react';
 import { Ionicons } from '@expo/vector-icons';
 import { colors } from '../src/theme';
+import { LinearGradient } from 'expo-linear-gradient';
 
 export default function Index() {
   const { user, loading } = useAuth();
@@ -12,90 +13,107 @@ export default function Index() {
   useEffect(() => {
     if (!loading) {
       if (user) {
-        router.replace('/(tabs)/dashboard');
+        router.replace('/(tabs)/home');
       }
     }
   }, [user, loading]);
 
   if (loading) {
     return (
-      <View style={styles.container}>
+      <LinearGradient
+        colors={[colors.gradientStart, colors.gradientEnd]}
+        style={styles.container}
+      >
         <Text style={styles.loadingText}>Loading...</Text>
-      </View>
+      </LinearGradient>
     );
   }
 
   return (
-    <View style={styles.container}>
+    <LinearGradient
+      colors={[colors.gradientStart, colors.gradientEnd]}
+      style={styles.container}
+    >
       <View style={styles.content}>
-        {/* Logo/Icon */}
+        {/* Logo */}
         <View style={styles.logoContainer}>
           <View style={styles.iconCircle}>
-            <Ionicons name="shield-checkmark" size={80} color={colors.primary} />
+            <Ionicons name="shield-checkmark" size={80} color="#FFF" />
           </View>
+          <Text style={styles.appName}>GambleFree</Text>
+          <Text style={styles.tagline}>Your Recovery, Your Rules</Text>
         </View>
-        
-        <Text style={styles.title}>NoChance</Text>
-        <Text style={styles.subtitle}>Beat The Odds. Win Your Life Back.</Text>
-        
-        {/* Fun betting-style stats */}
+
+        {/* Stats Cards */}
         <View style={styles.statsContainer}>
-          <View style={styles.statBox}>
-            <Text style={styles.statNumber}>10K+</Text>
-            <Text style={styles.statLabel}>Lives Changed</Text>
+          <View style={styles.statCard}>
+            <Text style={styles.statNumber}>15K+</Text>
+            <Text style={styles.statLabel}>Active Members</Text>
           </View>
-          <View style={styles.statDivider} />
-          <View style={styles.statBox}>
-            <Text style={styles.statNumber}>$2M+</Text>
+          <View style={styles.statCard}>
+            <Text style={styles.statNumber}>$5M+</Text>
             <Text style={styles.statLabel}>Money Saved</Text>
           </View>
         </View>
 
-        {/* Features with emoji */}
-        <View style={styles.features}>
-          <View style={styles.feature}>
-            <Text style={styles.featureEmoji}>🛡️</Text>
-            <Text style={styles.featureText}>Block All Betting Apps</Text>
+        {/* Features */}
+        <View style={styles.featuresContainer}>
+          <View style={styles.featureItem}>
+            <View style={styles.featureIcon}>
+              <Ionicons name="lock-closed" size={24} color={colors.primary} />
+            </View>
+            <View style={styles.featureContent}>
+              <Text style={styles.featureTitle}>Block All Betting Apps</Text>
+              <Text style={styles.featureSubtext}>One swipe protection</Text>
+            </View>
           </View>
-          <View style={styles.feature}>
-            <Text style={styles.featureEmoji}>💰</Text>
-            <Text style={styles.featureText}>Track Your Winnings (Savings!)</Text>
+
+          <View style={styles.featureItem}>
+            <View style={styles.featureIcon}>
+              <Ionicons name="people" size={24} color={colors.primary} />
+            </View>
+            <View style={styles.featureContent}>
+              <Text style={styles.featureTitle}>24/7 Community Support</Text>
+              <Text style={styles.featureSubtext}>Never face it alone</Text>
+            </View>
           </View>
-          <View style={styles.feature}>
-            <Text style={styles.featureEmoji}>🤝</Text>
-            <Text style={styles.featureText}>24/7 Recovery Squad</Text>
-          </View>
-          <View style={styles.feature}>
-            <Text style={styles.featureEmoji}>🏆</Text>
-            <Text style={styles.featureText}>Build Your Streak</Text>
+
+          <View style={styles.featureItem}>
+            <View style={styles.featureIcon}>
+              <Ionicons name="trending-up" size={24} color={colors.primary} />
+            </View>
+            <View style={styles.featureContent}>
+              <Text style={styles.featureTitle}>Track Your Progress</Text>
+              <Text style={styles.featureSubtext}>Live timer & savings</Text>
+            </View>
           </View>
         </View>
 
+        {/* Buttons */}
         <View style={styles.buttonContainer}>
           <TouchableOpacity
             style={styles.primaryButton}
             onPress={() => router.push('/auth/register')}
           >
-            <Text style={styles.primaryButtonText}>Start Winning Today</Text>
-            <Ionicons name="arrow-forward" size={20} color="#FFF" />
+            <Text style={styles.primaryButtonText}>Get Started Free</Text>
+            <Ionicons name="arrow-forward" size={20} color="#000" />
           </TouchableOpacity>
 
           <TouchableOpacity
             style={styles.secondaryButton}
             onPress={() => router.push('/auth/login')}
           >
-            <Text style={styles.secondaryButtonText}>I Already Have an Account</Text>
+            <Text style={styles.secondaryButtonText}>I Have an Account</Text>
           </TouchableOpacity>
         </View>
       </View>
-    </View>
+    </LinearGradient>
   );
 }
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: colors.background,
   },
   content: {
     flex: 1,
@@ -104,124 +122,118 @@ const styles = StyleSheet.create({
     padding: 24,
   },
   logoContainer: {
-    marginBottom: 24,
+    alignItems: 'center',
+    marginBottom: 40,
   },
   iconCircle: {
-    width: 140,
-    height: 140,
-    borderRadius: 70,
-    backgroundColor: colors.cardBackground,
+    width: 120,
+    height: 120,
+    borderRadius: 60,
+    backgroundColor: 'rgba(255,255,255,0.2)',
     justifyContent: 'center',
     alignItems: 'center',
-    borderWidth: 3,
-    borderColor: colors.primary,
+    marginBottom: 20,
   },
-  title: {
+  appName: {
     fontSize: 48,
     fontWeight: 'bold',
-    color: colors.primary,
+    color: '#FFF',
     marginBottom: 8,
-    textShadowColor: colors.primary,
-    textShadowOffset: { width: 0, height: 0 },
-    textShadowRadius: 20,
   },
-  subtitle: {
+  tagline: {
     fontSize: 18,
-    color: colors.textSecondary,
-    marginBottom: 32,
-    textAlign: 'center',
+    color: 'rgba(255,255,255,0.9)',
   },
   statsContainer: {
     flexDirection: 'row',
-    backgroundColor: colors.cardBackground,
-    borderRadius: 16,
-    padding: 24,
-    marginBottom: 32,
-    borderWidth: 1,
-    borderColor: colors.border,
+    gap: 16,
+    marginBottom: 40,
+    width: '100%',
   },
-  statBox: {
+  statCard: {
     flex: 1,
+    backgroundColor: 'rgba(255,255,255,0.15)',
+    borderRadius: 16,
+    padding: 20,
     alignItems: 'center',
   },
-  statDivider: {
-    width: 1,
-    backgroundColor: colors.border,
-    marginHorizontal: 24,
-  },
   statNumber: {
-    fontSize: 28,
+    fontSize: 32,
     fontWeight: 'bold',
-    color: colors.primary,
+    color: '#FFF',
     marginBottom: 4,
   },
   statLabel: {
     fontSize: 14,
-    color: colors.textMuted,
+    color: 'rgba(255,255,255,0.8)',
   },
-  features: {
+  featuresContainer: {
     width: '100%',
-    marginBottom: 32,
+    marginBottom: 40,
   },
-  feature: {
+  featureItem: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginBottom: 16,
-    backgroundColor: colors.cardBackground,
+    backgroundColor: 'rgba(255,255,255,0.1)',
+    borderRadius: 16,
     padding: 16,
-    borderRadius: 12,
-    borderWidth: 1,
-    borderColor: colors.border,
+    marginBottom: 12,
   },
-  featureEmoji: {
-    fontSize: 28,
+  featureIcon: {
+    width: 48,
+    height: 48,
+    borderRadius: 24,
+    backgroundColor: '#FFF',
+    justifyContent: 'center',
+    alignItems: 'center',
     marginRight: 16,
   },
-  featureText: {
+  featureContent: {
+    flex: 1,
+  },
+  featureTitle: {
     fontSize: 16,
-    color: colors.textPrimary,
     fontWeight: '600',
+    color: '#FFF',
+    marginBottom: 2,
+  },
+  featureSubtext: {
+    fontSize: 14,
+    color: 'rgba(255,255,255,0.7)',
   },
   buttonContainer: {
     width: '100%',
-    gap: 16,
+    gap: 12,
   },
   primaryButton: {
-    width: '100%',
-    padding: 18,
-    borderRadius: 12,
-    alignItems: 'center',
-    backgroundColor: colors.primary,
+    backgroundColor: '#FFF',
     flexDirection: 'row',
+    alignItems: 'center',
     justifyContent: 'center',
+    padding: 18,
+    borderRadius: 16,
     gap: 8,
-    shadowColor: colors.primary,
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.4,
-    shadowRadius: 8,
-    elevation: 8,
   },
   primaryButtonText: {
-    color: '#FFF',
+    color: colors.primary,
     fontSize: 18,
     fontWeight: 'bold',
   },
   secondaryButton: {
-    width: '100%',
-    padding: 18,
-    borderRadius: 12,
-    alignItems: 'center',
-    backgroundColor: colors.cardBackground,
+    backgroundColor: 'transparent',
     borderWidth: 2,
-    borderColor: colors.primary,
+    borderColor: '#FFF',
+    padding: 18,
+    borderRadius: 16,
+    alignItems: 'center',
   },
   secondaryButtonText: {
-    color: colors.primary,
+    color: '#FFF',
     fontSize: 16,
     fontWeight: '600',
   },
   loadingText: {
     fontSize: 18,
-    color: colors.textSecondary,
+    color: '#FFF',
   },
 });
