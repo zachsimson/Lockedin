@@ -450,7 +450,10 @@ async def enable_blocking(
 
 @app.get("/api/blocking/status")
 async def get_blocking_status(current_user: dict = Depends(get_current_user)):
-    user = await users_collection.find_one({"_id": ObjectId(current_user["_id"])})
+    user = await users_collection.find_one(
+        {"_id": ObjectId(current_user["_id"])},
+        {"blocking_enabled": 1, "is_blocked": 1}
+    )
     return {
         "blocking_enabled": user.get("blocking_enabled", False),
         "is_blocked": user.get("is_blocked", False)
