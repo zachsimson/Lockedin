@@ -25,7 +25,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
   const loadUser = async () => {
     try {
-      const token = await SecureStore.getItemAsync('authToken');
+      const token = await storage.getItem('authToken');
       if (token) {
         const response = await api.get('/api/auth/me');
         setUser(response.data);
@@ -35,7 +35,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       }
     } catch (error) {
       console.error('Failed to load user:', error);
-      await SecureStore.deleteItemAsync('authToken');
+      await storage.removeItem('authToken');
     } finally {
       setLoading(false);
     }
