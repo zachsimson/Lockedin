@@ -316,8 +316,10 @@ class GamblingRecoveryAPITester:
     def test_enable_blocking(self):
         """Test enabling/disabling blocking status"""
         try:
-            # Test enabling
-            response = self.make_request('POST', '/blocking/enable', {"enabled": True}, auth_required=True)
+            # Test enabling - use query parameter instead of JSON body
+            url = f"{API_URL}/blocking/enable?enabled=true"
+            headers = {'Authorization': f'Bearer {self.auth_token}'}
+            response = self.session.post(url, headers=headers, timeout=30)
             
             if response.status_code == 200:
                 data = response.json()
