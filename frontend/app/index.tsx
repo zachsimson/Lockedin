@@ -31,14 +31,14 @@ export default function Index() {
 
   return (
     <LinearGradient
-      colors={[colors.gradientStart, colors.gradientEnd]}
+      colors={['#1a0033', '#0a0015']}
       style={styles.container}
     >
       <View style={styles.content}>
         {/* Logo */}
         <View style={styles.logoContainer}>
           <View style={styles.iconCircle}>
-            <Ionicons name="shield-checkmark" size={80} color="#FFF" />
+            <Ionicons name="shield-checkmark" size={80} color="#E91E63" />
           </View>
           <Text style={styles.appName}>GambleFree</Text>
           <Text style={styles.tagline}>Your Recovery, Your Rules</Text>
@@ -60,7 +60,7 @@ export default function Index() {
         <View style={styles.featuresContainer}>
           <View style={styles.featureItem}>
             <View style={styles.featureIcon}>
-              <Ionicons name="lock-closed" size={24} color={colors.primary} />
+              <Ionicons name="lock-closed" size={24} color="#E91E63" />
             </View>
             <View style={styles.featureContent}>
               <Text style={styles.featureTitle}>Block All Betting Apps</Text>
@@ -70,7 +70,7 @@ export default function Index() {
 
           <View style={styles.featureItem}>
             <View style={styles.featureIcon}>
-              <Ionicons name="people" size={24} color={colors.primary} />
+              <Ionicons name="people" size={24} color="#E91E63" />
             </View>
             <View style={styles.featureContent}>
               <Text style={styles.featureTitle}>24/7 Community Support</Text>
@@ -80,7 +80,7 @@ export default function Index() {
 
           <View style={styles.featureItem}>
             <View style={styles.featureIcon}>
-              <Ionicons name="trending-up" size={24} color={colors.primary} />
+              <Ionicons name="trending-up" size={24} color="#E91E63" />
             </View>
             <View style={styles.featureContent}>
               <Text style={styles.featureTitle}>Track Your Progress</Text>
@@ -96,7 +96,7 @@ export default function Index() {
             onPress={() => router.push('/auth/register')}
           >
             <Text style={styles.primaryButtonText}>Get Started Free</Text>
-            <Ionicons name="arrow-forward" size={20} color="#000" />
+            <Ionicons name="arrow-forward" size={20} color="#FFF" />
           </TouchableOpacity>
 
           <TouchableOpacity
