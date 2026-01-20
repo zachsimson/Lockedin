@@ -423,7 +423,10 @@ async def get_chat_history(
     limit: int = 50,
     current_user: dict = Depends(get_current_user)
 ):
-    messages = await messages_collection.find().sort("timestamp", -1).limit(limit).to_list(limit)
+    messages = await messages_collection.find(
+        {},
+        {"user_id": 1, "username": 1, "message": 1, "timestamp": 1}
+    ).sort("timestamp", -1).limit(limit).to_list(limit)
     messages.reverse()  # Chronological order
     return {"messages": serialize_doc(messages)}
 
