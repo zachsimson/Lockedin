@@ -4,7 +4,6 @@ import { useRouter } from 'expo-router';
 import { useEffect } from 'react';
 import { Ionicons } from '@expo/vector-icons';
 import { colors } from '../src/theme';
-import { LinearGradient } from 'expo-linear-gradient';
 
 export default function Index() {
   const { user, loading } = useAuth();
