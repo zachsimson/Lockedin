@@ -1,4 +1,4 @@
-import { View, Text, TextInput, TouchableOpacity, StyleSheet, Alert, KeyboardAvoidingView, Platform, ScrollView } from 'react-native';
+import { View, Text, TextInput, Pressable, StyleSheet, Alert, KeyboardAvoidingView, Platform, ScrollView, ActivityIndicator } from 'react-native';
 import { useState } from 'react';
 import { useAuth } from '../../src/context/AuthContext';
 import { useRouter } from 'expo-router';
@@ -14,7 +14,6 @@ export default function Login() {
 
   const handleLogin = async () => {
     console.log('[Login] Button pressed');
-    Alert.alert('Debug', 'Login button pressed - processing...'); // Debug alert
     
     if (!email || !password) {
       Alert.alert('Error', 'Please fill in all fields');
