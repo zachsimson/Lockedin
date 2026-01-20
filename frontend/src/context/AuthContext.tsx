@@ -48,7 +48,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         password,
       });
 
-      await SecureStore.setItemAsync('authToken', response.data.access_token);
+      await storage.setItem('authToken', response.data.access_token);
       setUser(response.data.user);
       
       // Connect socket
@@ -67,7 +67,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         gambling_weekly_amount: weeklyAmount,
       });
 
-      await SecureStore.setItemAsync('authToken', response.data.access_token);
+      await storage.setItem('authToken', response.data.access_token);
       setUser(response.data.user);
       
       // Connect socket
@@ -78,7 +78,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   };
 
   const logout = async () => {
-    await SecureStore.deleteItemAsync('authToken');
+    await storage.removeItem('authToken');
     setUser(null);
     socketService.disconnect();
   };
