@@ -1,37 +1,38 @@
-// LockedIn - PrizePicks-Style Premium Dark Theme
+// Dark Purple & Black - EXACTLY as requested
 const colors = {
-  // Exact PrizePicks colors
-  background: '#0E1117',
-  cardBackground: '#161A23',
-  surface: '#1A1F2C',
-  divider: '#222634',
+  // Primary colors - Deep dark purple
+  primary: '#8B5CF6', // Deep purple
+  primaryDark: '#7C3AED',
+  primaryLight: '#A78BFA',
+  secondary: '#C084FC',
   
-  // Primary accents
-  primary: '#00F5A0', // PrizePicks green-teal
-  secondary: '#00C2FF', // Cyan accent
-  danger: '#FF4D4F',
+  // Gradient colors
+  gradientStart: '#1E0A3C', // Very dark purple
+  gradientEnd: '#000000', // Pure black
+  
+  // Dark theme backgrounds
+  background: '#000000', // Pure black
+  cardBackground: '#0F0A1F', // Very dark purple-black
+  surface: '#1A0F2E',
   
   // Text colors
   textPrimary: '#FFFFFF',
-  textSecondary: '#A1A7B3',
-  textMuted: '#6B7280',
+  textSecondary: '#C4B5FD',
+  textMuted: '#8B7FC7',
   
   // Status colors
-  success: '#00F5A0',
-  warning: '#FFB800',
-  info: '#00C2FF',
+  success: '#10B981',
+  warning: '#F59E0B',
+  danger: '#EF4444',
+  info: '#3B82F6',
   
   // Accent colors
-  accent: '#00F5A0',
-  gold: '#FFD700',
+  accent: '#8B5CF6',
+  gold: '#FCD34D',
   
   // Borders
-  border: '#222634',
-  borderLight: '#2A2F3D',
-  
-  // Gradient
-  gradientStart: '#0E1117',
-  gradientEnd: '#000000',
+  border: '#2D1B4E',
+  borderLight: '#3D2B5E',
 };
 
 const shadows = {
