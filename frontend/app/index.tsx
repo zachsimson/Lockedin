@@ -16,12 +16,12 @@ export default function Index() {
         router.replace('/(tabs)/home');
       }
     }
-  }, [user, loading, router]);
+  }, [user, loading]);
 
   if (loading) {
     return (
       <LinearGradient
-        colors={[colors.gradientStart, colors.gradientEnd]}
+        colors={['#1E0A3C', '#000000']}
         style={styles.container}
       >
         <Text style={styles.loadingText}>Loading...</Text>
@@ -31,14 +31,14 @@ export default function Index() {
 
   return (
     <LinearGradient
-      colors={['#0a1f0a', '#000000']}
+      colors={['#1E0A3C', '#000000']}
       style={styles.container}
     >
       <View style={styles.content}>
         {/* Logo */}
         <View style={styles.logoContainer}>
           <View style={styles.iconCircle}>
-            <Ionicons name="shield-checkmark" size={80} color="#53D337" />
+            <Ionicons name="shield-checkmark" size={80} color="#8B5CF6" />
           </View>
           <Text style={styles.appName}>GambleFree</Text>
           <Text style={styles.tagline}>Your Recovery, Your Rules</Text>
@@ -60,7 +60,7 @@ export default function Index() {
         <View style={styles.featuresContainer}>
           <View style={styles.featureItem}>
             <View style={styles.featureIcon}>
-              <Ionicons name="lock-closed" size={24} color="#53D337" />
+              <Ionicons name="lock-closed" size={24} color="#8B5CF6" />
             </View>
             <View style={styles.featureContent}>
               <Text style={styles.featureTitle}>Block All Betting Apps</Text>
@@ -70,7 +70,7 @@ export default function Index() {
 
           <View style={styles.featureItem}>
             <View style={styles.featureIcon}>
-              <Ionicons name="people" size={24} color="#53D337" />
+              <Ionicons name="people" size={24} color="#8B5CF6" />
             </View>
             <View style={styles.featureContent}>
               <Text style={styles.featureTitle}>24/7 Community Support</Text>
@@ -80,7 +80,7 @@ export default function Index() {
 
           <View style={styles.featureItem}>
             <View style={styles.featureIcon}>
-              <Ionicons name="trending-up" size={24} color="#53D337" />
+              <Ionicons name="trending-up" size={24} color="#8B5CF6" />
             </View>
             <View style={styles.featureContent}>
               <Text style={styles.featureTitle}>Track Your Progress</Text>
@@ -96,7 +96,7 @@ export default function Index() {
             onPress={() => router.push('/auth/register')}
           >
             <Text style={styles.primaryButtonText}>Get Started Free</Text>
-            <Ionicons name="arrow-forward" size={20} color="#000" />
+            <Ionicons name="arrow-forward" size={20} color="#FFF" />
           </TouchableOpacity>
 
           <TouchableOpacity
@@ -129,12 +129,12 @@ const styles = StyleSheet.create({
     width: 120,
     height: 120,
     borderRadius: 60,
-    backgroundColor: 'rgba(83, 211, 55, 0.1)',
+    backgroundColor: 'rgba(139, 92, 246, 0.15)',
     justifyContent: 'center',
     alignItems: 'center',
     marginBottom: 20,
     borderWidth: 2,
-    borderColor: '#53D337',
+    borderColor: '#8B5CF6',
   },
   appName: {
     fontSize: 48,
@@ -154,17 +154,17 @@ const styles = StyleSheet.create({
   },
   statCard: {
     flex: 1,
-    backgroundColor: 'rgba(13, 31, 13, 0.8)',
+    backgroundColor: 'rgba(15, 10, 31, 0.8)',
     borderRadius: 16,
     padding: 20,
     alignItems: 'center',
     borderWidth: 1,
-    borderColor: '#1F351F',
+    borderColor: '#2D1B4E',
   },
   statNumber: {
     fontSize: 32,
     fontWeight: 'bold',
-    color: '#53D337',
+    color: '#8B5CF6',
     marginBottom: 4,
   },
   statLabel: {
@@ -178,23 +178,23 @@ const styles = StyleSheet.create({
   featureItem: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: 'rgba(13, 31, 13, 0.6)',
+    backgroundColor: 'rgba(15, 10, 31, 0.6)',
     borderRadius: 16,
     padding: 16,
     marginBottom: 12,
     borderWidth: 1,
-    borderColor: '#1F351F',
+    borderColor: '#2D1B4E',
   },
   featureIcon: {
     width: 48,
     height: 48,
     borderRadius: 24,
-    backgroundColor: '#0D1F0D',
+    backgroundColor: '#0F0A1F',
     justifyContent: 'center',
     alignItems: 'center',
     marginRight: 16,
     borderWidth: 1,
-    borderColor: '#53D337',
+    borderColor: '#8B5CF6',
   },
   featureContent: {
     flex: 1,
@@ -214,7 +214,7 @@ const styles = StyleSheet.create({
     gap: 12,
   },
   primaryButton: {
-    backgroundColor: '#53D337',
+    backgroundColor: '#8B5CF6',
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
@@ -223,20 +223,20 @@ const styles = StyleSheet.create({
     gap: 8,
   },
   primaryButtonText: {
-    color: '#000',
+    color: '#FFF',
     fontSize: 18,
     fontWeight: 'bold',
   },
   secondaryButton: {
     backgroundColor: 'transparent',
     borderWidth: 2,
-    borderColor: 'rgba(83, 211, 55, 0.5)',
+    borderColor: 'rgba(139, 92, 246, 0.5)',
     padding: 18,
     borderRadius: 16,
     alignItems: 'center',
   },
   secondaryButtonText: {
-    color: '#53D337',
+    color: '#8B5CF6',
     fontSize: 16,
     fontWeight: '600',
   },
