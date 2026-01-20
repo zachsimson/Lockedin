@@ -170,11 +170,99 @@ async def startup_db():
             "_id": "app_settings",
             "discord_link": "https://discord.gg/gambling-recovery",
             "blocked_domains": [
-                "bet365.com", "draftkings.com", "fanduel.com", "pokerstars.com",
-                "888casino.com", "williamhill.com", "betway.com", "unibet.com",
-                "bwin.com", "betfair.com", "paddypower.com", "bovada.lv",
-                "betonline.ag", "ignition.casino", "slots.lv", "cafe-casino.com",
-                "mybookie.ag", "sportsbetting.ag", "intertops.eu", "xbet.ag"
+                # Major US Sportsbooks
+                "draftkings.com", "fanduel.com", "bet365.com", "caesars.com", "betmgm.com",
+                "pointsbet.com", "barstoolsportsbook.com", "foxbet.com", "unibet.com", "williamhill.com",
+                "betrivers.com", "sugarhousebet.com", "twinspires.com", "wynnbet.com", "hardrock.bet",
+                "betfred.com", "betway.com", "borgataonline.com", "betonline.ag", "bovada.lv",
+                "mybookie.ag", "sportsbetting.ag", "intertops.eu", "xbet.ag", "betdsi.com",
+                "betonline.com", "betonusa.com", "bovada.ag", "nitrogen.eu", "cloudbet.com",
+                
+                # Online Casinos
+                "888casino.com", "pokerstars.com", "partypoker.com", "pulsz.com", "stake.us",
+                "betmgmcasino.com", "goldencasino.com", "betrivers.net", "playsugarhouse.com",
+                "tropicana.net", "mohegansuncasino.com", "resortscasino.com", "betamerica.com",
+                "chumba.com", "luckyland.com", "funzpoints.com", "global poker.com", "fortunecoins.com",
+                "wow.vegas.com", "sweepslots.com", "mcluck.com", "real.prize.com", "rollbit.com",
+                "ignition.casino", "cafe-casino.com", "slots.lv", "slotslights.com", "bodog.com",
+                
+                # Social Casinos
+                "doubledowncasino.com", "slotsmania.com", "houseof fun.com", "jackpotparty.com",
+                "quickhitsslots.com", "hititrich.com", "pop slots.com", "slotomania.com",
+                "cashman.com", "lightning link.com", "heartoflasvegas.com", "big fish casino.com",
+                "caesarscasino.com", "mykonami.com", "doubleucasino.com", "lucktastic.com",
+                "wsop.com", "zynga.com/games/zynga-poker", "replay poker.com", "playtika.com",
+                
+                # International Betting Sites
+                "bet888.com", "bwin.com", "paddypower.com", "betfair.com", "coral.co.uk",
+                "ladbrokes.com", "skybet.com", "betvictor.com", "10bet.com", "888sport.com",
+                "betsson.com", "bethard.com", "mr green.com", "leovegas.com", "casumo.com",
+                "22bet.com", "1xbet.com", "melbet.com", "parimatch.com", "dafabet.com",
+                "sbobet.com", "pinnacle.com", "marathon bet.com", "asiabet.com", "cmd368.com",
+                
+                # Crypto Gambling
+                "stake.com", "roobet.com", "bc.game", "duelbits.com", "wolf.bet",
+                "betfury.io", "coinflip.com", "fortunejack.com", "bitstarz.com", "cryptowild.com",
+                "fair spin.com", "bitcasino.io", "sportsbet.io", "cloudbet.com", "nitrogen.eu",
+                "thunderpick.io", "trust dice.io", "metaspins.com", "punt.com", "flush.com",
+                
+                # DFS & Fantasy Sports
+                "draftkings.com/daily-fantasy", "fanduel.com/fantasy", "yahoo.com/fantasy",
+                "espn.com/fantasy", "underdog.com", "prizepicks.com", "drafters.com",
+                "monday.qq.com", "superdraft.com", "betr.com", "parlayplay.com", "jock mkt.com",
+                
+                # Horse Racing
+                "tvg.com", "twinspires.com", "xpressbet.com", "nyra.com/bets", "betamerica.com",
+                "4njbets.com", "fanduel racing.com", "paddypower.com/racing", "betfair racing.com",
+                
+                # Lottery & Bingo
+                "jackpocket.com", "thel.com", "luckyday.com", "bingo.com", "bingoblitz.com",
+                "gsn.com/bingo", "bingozone.com", "cyberbingo.com", "south beach bingo.com",
+                
+                # Poker Sites
+                "pokerstars.net", "888poker.com", "party poker.com", "acr poker.eu",
+                "globalpoker.com", "wsop.com/poker", "ggpoker.com", "bet online.poker",
+                "ignitionpoker.eu", "carbon poker.ag", "bodog.poker", "betonline.poker",
+                
+                # Prediction Markets
+                "predicit.com", "poly market.com", "kalshi.com", "augur.net", "futuur.com",
+                
+                # Skill-Based & Other
+                "skillz.com", "pocket7games.com", "real money.com", "swagbucks.com/games",
+                "long game.com", "winr.games", "gameville.com", "winview.com",
+                
+                # Additional International
+                "betano.com", "inter wetten.com", "tipico.com", "bettilt.com", "netbet.com",
+                "marathonbet.com", "boyle sports.com", "sports bet.com.au", "tab.com.au",
+                "bet365.es", "codere.es", "marca.apuestas.es", "luckia.es", "versus.es",
+                "bet way.co.za", "hollywoodbets.net", "supabets.co.za", "bet.co.za",
+                "betika.com", "sporty bet.com", "1xbet.ng", "bet9ja.com", "nairabet.com",
+                
+                # Sweepstakes & Contest Sites
+                "sweepstakes.com", "contest.com", "omaze.com", "prizegrab.com", "raffall.com",
+                "lottoland.com", "thelotter.com", "mega millions.com", "power ball.com",
+                
+                # Affiliate/Review Sites
+                "odds checker.com", "sbo.net", "askgamblers.com", "casino.org", "gambling.com",
+                "odds portal.com", "bet tips.com", "picks and parlays.com", "covers.com",
+                "the action network.com", "vegasinsider.com", "sports betting dime.com",
+                
+                # Mobile Apps Websites
+                "big time.com", "mistplay.com", "appkarma.io", "featurepoints.com",
+                "cash'em all.com", "make money.com", "money sms.com", "current app.com",
+                
+                # Emerging/New Platforms (2024-2025)
+                "fliff.com", "betr.app", "tipico.de", "betano.de", "neo.bet",
+                "admiral bet.com", "maxbet.rs", "meridian bet.com", "mozzart.com",
+                "pinnbet.com", "stoiximan.gr", "novibet.gr", "pamestoixima.gr",
+                
+                # Fantasy & Props
+                "champ.games", "dabble.com", "sleeper.app", "run your pool.com",
+                "fantasy pros.com", "draft sharks.com", "player profiler.com",
+                
+                # Newer Social Casinos
+                "zula.casino", "gambino.slots.com", "scratchmania.com", "primal.casino",
+                "wow.vegas", "hey.spin.com", "vibe.gaming.com", "wild.casino",
             ]
         })
     
