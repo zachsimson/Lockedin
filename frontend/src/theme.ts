@@ -1,38 +1,38 @@
-// Dark Purple & Black - PrizePicks Style
+// DraftKings-Style Color Scheme - Green & Black
 const colors = {
-  // Primary colors - Deep purple like PrizePicks
-  primary: '#6B46C1', // Deep purple
-  primaryDark: '#553C9A',
-  primaryLight: '#805AD5',
-  secondary: '#9F7AEA', // Light purple
+  // Primary colors - DraftKings bright green
+  primary: '#53D337', // Bright neon green
+  primaryDark: '#42A82A',
+  primaryLight: '#6FE04C',
+  secondary: '#1DB954', // Spotify-style green
   
-  // Gradient colors - Dark purple gradient
-  gradientStart: '#1a0033', // Very dark purple
+  // Gradient colors - Dark to black
+  gradientStart: '#0a1f0a', // Very dark green
   gradientEnd: '#000000', // Pure black
   
   // Dark theme backgrounds
   background: '#000000', // Pure black
-  cardBackground: '#0D0D1A', // Very dark purple-black
-  surface: '#1A1A2E', // Dark surface
+  cardBackground: '#0D1F0D', // Very dark green-black
+  surface: '#1A2E1A', // Dark surface with green tint
   
   // Text colors
   textPrimary: '#FFFFFF',
-  textSecondary: '#B8B8D1',
-  textMuted: '#6E6E8F',
+  textSecondary: '#B8D1B8',
+  textMuted: '#6E8F6E',
   
   // Status colors
-  success: '#00E676',
+  success: '#53D337',
   warning: '#FFC107',
   danger: '#FF1744',
   info: '#00B0FF',
   
   // Accent colors
-  accent: '#6B46C1',
+  accent: '#53D337',
   gold: '#FFD700',
   
-  // Borders - Darker
-  border: '#1F1F35',
-  borderLight: '#2A2A40',
+  // Borders - Darker with green tint
+  border: '#1F351F',
+  borderLight: '#2A402A',
 };
 
 const shadows = {
