@@ -3,6 +3,7 @@ import { useState } from 'react';
 import { useAuth } from '../../src/context/AuthContext';
 import { useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
+import { colors } from '../../src/theme';
 
 export default function Register() {
   const [username, setUsername] = useState('');
