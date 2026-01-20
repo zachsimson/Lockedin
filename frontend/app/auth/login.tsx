@@ -13,17 +13,24 @@ export default function Login() {
   const router = useRouter();
 
   const handleLogin = async () => {
+    console.log('[Login] Button pressed');
+    Alert.alert('Debug', 'Login button pressed - processing...'); // Debug alert
+    
     if (!email || !password) {
       Alert.alert('Error', 'Please fill in all fields');
       return;
     }
 
     setLoading(true);
+    console.log('[Login] Attempting login with:', email);
+    
     try {
       await login(email, password);
+      console.log('[Login] Login successful, navigating...');
       router.replace('/(tabs)/home');
     } catch (error: any) {
-      Alert.alert('Login Failed', error.message);
+      console.error('[Login] Error:', error);
+      Alert.alert('Login Failed', error.message || 'Unknown error occurred');
     } finally {
       setLoading(false);
     }
