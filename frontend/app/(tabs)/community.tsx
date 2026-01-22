@@ -398,22 +398,24 @@ export default function Community() {
       )}
 
       {activeSection === 'media' && (
-        <ScrollView 
-          contentContainerStyle={styles.mediaContent}
+        <FlatList
+          data={mediaContent}
+          renderItem={renderMediaItem}
+          keyExtractor={(item) => item.id}
+          pagingEnabled
+          showsVerticalScrollIndicator={false}
+          snapToAlignment="start"
+          decelerationRate="fast"
+          contentContainerStyle={styles.mediaListVertical}
           refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}
-        >
-          <Text style={styles.sectionTitle}>Inspiration & Learning</Text>
-          <Text style={styles.sectionSubtitle}>TED Talks, videos & recovery stories</Text>
-          
-          <FlatList
-            horizontal
-            data={mediaContent}
-            renderItem={renderMediaItem}
-            keyExtractor={(item) => item.id}
-            showsHorizontalScrollIndicator={false}
-            contentContainerStyle={styles.mediaList}
-          />
-        </ScrollView>
+          ListEmptyComponent={
+            <View style={styles.emptyState}>
+              <Ionicons name="play-circle" size={48} color={colors.textMuted} />
+              <Text style={styles.emptyText}>No videos yet</Text>
+              <Text style={styles.emptySubtext}>Inspirational content coming soon!</Text>
+            </View>
+          }
+        />
       )}
 
       {activeSection === 'chat' && (
