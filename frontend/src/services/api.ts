@@ -2,25 +2,25 @@ import axios from 'axios';
 import storage from './storage';
 import { Platform } from 'react-native';
 
-// Get the backend URL
-// For both web and mobile, we use the full backend URL 
-// because Expo dev server doesn't proxy API requests
+// Get the backend URL from environment variable
+// EXPO_PUBLIC_BACKEND_URL must be set in .env for both web and mobile
 const getApiUrl = () => {
   const backendUrl = process.env.EXPO_PUBLIC_BACKEND_URL;
   console.log('[API] EXPO_PUBLIC_BACKEND_URL:', backendUrl);
   
-  // Use the environment variable if available, otherwise use the default
+  // Use the environment variable if available
   if (backendUrl) {
     return backendUrl;
   }
   
-  // Fallback for web development
+  // Fallback for web development only - use current origin
   if (Platform.OS === 'web' && typeof window !== 'undefined') {
-    // Use current host if we're on web
     return window.location.origin;
   }
   
-  return 'https://gamblefree.preview.emergentagent.com';
+  // For mobile, EXPO_PUBLIC_BACKEND_URL must be set
+  console.warn('[API] EXPO_PUBLIC_BACKEND_URL not set - API calls may fail on mobile');
+  return '';
 };
 
 const API_URL = getApiUrl();
