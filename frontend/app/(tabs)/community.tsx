@@ -271,29 +271,50 @@ export default function Community() {
     );
   };
 
-  const renderMediaItem = ({ item }: { item: Media }) => (
+  const renderMediaItem = ({ item, index }: { item: Media; index: number }) => (
     <Pressable 
-      style={styles.mediaCard}
+      style={styles.mediaCardVertical}
       onPress={() => Linking.openURL(item.video_url)}
     >
-      <Image source={{ uri: item.thumbnail_url }} style={styles.mediaThumbnail} />
-      <View style={styles.mediaOverlay}>
-        <View style={styles.playButton}>
-          <Ionicons name="play" size={24} color="#FFF" />
+      <Image source={{ uri: item.thumbnail_url }} style={styles.mediaThumbnailVertical} />
+      <View style={styles.mediaOverlayVertical}>
+        {/* Play Button */}
+        <View style={styles.playButtonVertical}>
+          <Ionicons name="play" size={48} color="#FFF" />
         </View>
-        <View style={styles.mediaDuration}>
-          <Text style={styles.durationText}>{item.duration}</Text>
+        
+        {/* Right Side Actions */}
+        <View style={styles.mediaActions}>
+          <Pressable style={styles.mediaActionButton}>
+            <Ionicons name="heart-outline" size={28} color="#FFF" />
+            <Text style={styles.mediaActionText}>Like</Text>
+          </Pressable>
+          <Pressable style={styles.mediaActionButton}>
+            <Ionicons name="chatbubble-outline" size={26} color="#FFF" />
+            <Text style={styles.mediaActionText}>Comment</Text>
+          </Pressable>
+          <Pressable style={styles.mediaActionButton}>
+            <Ionicons name="share-outline" size={28} color="#FFF" />
+            <Text style={styles.mediaActionText}>Share</Text>
+          </Pressable>
         </View>
-      </View>
-      <View style={styles.mediaInfo}>
-        <Text style={styles.mediaTitle} numberOfLines={2}>{item.title}</Text>
-        <View style={styles.mediaSource}>
-          <Ionicons 
-            name={item.source_type === 'TED' ? 'mic' : item.source_type === 'STORY' ? 'heart' : 'logo-youtube'} 
-            size={12} 
-            color={colors.textMuted} 
-          />
-          <Text style={styles.sourceText}>{item.source_type}</Text>
+        
+        {/* Bottom Info */}
+        <View style={styles.mediaInfoVertical}>
+          <View style={styles.mediaSourceBadge}>
+            <Ionicons 
+              name={item.source_type === 'TED' ? 'mic' : item.source_type === 'STORY' ? 'heart' : 'logo-youtube'} 
+              size={14} 
+              color="#FFF" 
+            />
+            <Text style={styles.mediaSourceText}>{item.source_type}</Text>
+          </View>
+          <Text style={styles.mediaTitleVertical} numberOfLines={2}>{item.title}</Text>
+          <Text style={styles.mediaDescVertical} numberOfLines={2}>{item.description}</Text>
+          <View style={styles.mediaDurationBadge}>
+            <Ionicons name="time-outline" size={12} color="#FFF" />
+            <Text style={styles.mediaDurationText}>{item.duration}</Text>
+          </View>
         </View>
       </View>
     </Pressable>
