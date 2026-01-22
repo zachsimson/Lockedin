@@ -1180,6 +1180,453 @@ async def get_user_achievements(
         "all_achievements": ACHIEVEMENTS
     }
 
+# ============= PREMIUM EMOJIS & REACTIONS =============
+
+@app.get("/api/emojis")
+async def get_premium_emojis(current_user: dict = Depends(get_current_user)):
+    """Get all premium emoji options for reactions"""
+    return {"emojis": PREMIUM_EMOJIS}
+
+@app.post("/api/reactions")
+async def add_reaction(
+    reaction: ReactionCreate,
+    current_user: dict = Depends(get_current_user)
+):
+    """Add a reaction to an activity or chat message"""
+    if reaction.emoji_id not in PREMIUM_EMOJIS:
+        raise HTTPException(status_code=400, detail="Invalid emoji")
+    
+    # Check if already reacted with this emoji
+    existing = await reactions_collection.find_one({
+        "user_id": current_user["_id"],
+        "target_type": reaction.target_type,
+        "target_id": reaction.target_id,
+        "emoji_id": reaction.emoji_id
+    })
+    
+    if existing:
+        # Remove reaction (toggle)
+        await reactions_collection.delete_one({"_id": existing["_id"]})
+        return {"action": "removed", "emoji_id": reaction.emoji_id}
+    
+    # Add reaction
+    reaction_doc = {
+        "user_id": current_user["_id"],
+        "username": current_user.get("username"),
+        "emoji_id": reaction.emoji_id,
+        "target_type": reaction.target_type,
+        "target_id": reaction.target_id,
+        "created_at": datetime.utcnow()
+    }
+    
+    await reactions_collection.insert_one(reaction_doc)
+    
+    # Broadcast reaction update
+    await sio.emit("reaction_update", {
+        "target_type": reaction.target_type,
+        "target_id": reaction.target_id,
+        "emoji_id": reaction.emoji_id,
+        "action": "added"
+    })
+    
+    return {"action": "added", "emoji_id": reaction.emoji_id}
+
+@app.get("/api/reactions/{target_type}/{target_id}")
+async def get_reactions(
+    target_type: str,
+    target_id: str,
+    current_user: dict = Depends(get_current_user)
+):
+    """Get all reactions for a target"""
+    reactions = await reactions_collection.find({
+        "target_type": target_type,
+        "target_id": target_id
+    }).to_list(500)
+    
+    # Group by emoji
+    reaction_counts = {}
+    user_reactions = []
+    
+    for r in reactions:
+        emoji_id = r["emoji_id"]
+        if emoji_id not in reaction_counts:
+            reaction_counts[emoji_id] = 0
+        reaction_counts[emoji_id] += 1
+        
+        if r["user_id"] == current_user["_id"]:
+            user_reactions.append(emoji_id)
+    
+    return {
+        "counts": reaction_counts,
+        "user_reactions": user_reactions,
+        "total": len(reactions)
+    }
+
+# ============= MEDIA / INSPIRATION ENDPOINTS =============
+
+@app.get("/api/media")
+async def get_media_content(current_user: dict = Depends(get_current_user)):
+    """Get inspirational media content"""
+    # Try to get from database first
+    media_list = await media_collection.find().sort("created_at", -1).to_list(50)
+    
+    if not media_list:
+        # Return default content if no custom content exists
+        return {"media": DEFAULT_MEDIA}
+    
+    return {"media": serialize_doc(media_list)}
+
+@app.post("/api/admin/media")
+async def add_media(
+    title: str,
+    description: str,
+    source_type: str,
+    video_url: str,
+    thumbnail_url: str,
+    duration: str,
+    current_user: dict = Depends(get_current_admin)
+):
+    """Admin: Add new media content"""
+    media_doc = {
+        "title": title,
+        "description": description,
+        "source_type": source_type,
+        "video_url": video_url,
+        "thumbnail_url": thumbnail_url,
+        "duration": duration,
+        "created_at": datetime.utcnow()
+    }
+    
+    result = await media_collection.insert_one(media_doc)
+    media_doc["_id"] = str(result.inserted_id)
+    
+    return {"message": "Media added", "media": media_doc}
+
+# ============= LIVE CHAT ENDPOINTS =============
+
+@app.get("/api/chat/messages")
+async def get_chat_messages(
+    limit: int = 50,
+    before: Optional[str] = None,
+    current_user: dict = Depends(get_current_user)
+):
+    """Get public chat messages"""
+    query = {}
+    if before:
+        query["created_at"] = {"$lt": datetime.fromisoformat(before)}
+    
+    messages = await chat_messages_collection.find(query).sort(
+        "created_at", -1
+    ).limit(limit).to_list(limit)
+    
+    # Reverse to get chronological order
+    messages.reverse()
+    
+    # Get reactions for each message
+    for msg in messages:
+        msg_id = str(msg["_id"])
+        reactions = await reactions_collection.find({
+            "target_type": "chat",
+            "target_id": msg_id
+        }).to_list(100)
+        
+        reaction_counts = {}
+        for r in reactions:
+            emoji_id = r["emoji_id"]
+            if emoji_id not in reaction_counts:
+                reaction_counts[emoji_id] = 0
+            reaction_counts[emoji_id] += 1
+        
+        msg["reactions"] = reaction_counts
+    
+    return {"messages": serialize_doc(messages)}
+
+@app.post("/api/chat/messages")
+async def send_chat_message(
+    message: ChatMessageCreate,
+    current_user: dict = Depends(get_current_user)
+):
+    """Send a chat message"""
+    user = await users_collection.find_one({"_id": ObjectId(current_user["_id"])})
+    
+    if user.get("is_blocked", False):
+        raise HTTPException(status_code=403, detail="You are blocked from chatting")
+    
+    # Filter content
+    filtered_content = filter_profanity(message.content)
+    
+    msg_doc = {
+        "user_id": current_user["_id"],
+        "username": user.get("username"),
+        "avatar_id": user.get("avatar_id", "shield"),
+        "content": filtered_content,
+        "reply_to": message.reply_to,
+        "created_at": datetime.utcnow()
+    }
+    
+    result = await chat_messages_collection.insert_one(msg_doc)
+    msg_doc["_id"] = str(result.inserted_id)
+    msg_doc["reactions"] = {}
+    
+    # Broadcast to all connected clients
+    await sio.emit("new_chat_message", serialize_doc(msg_doc))
+    
+    return {"message": serialize_doc(msg_doc)}
+
+@app.delete("/api/admin/chat/{message_id}")
+async def delete_chat_message(
+    message_id: str,
+    current_user: dict = Depends(get_current_admin)
+):
+    """Admin: Delete a chat message"""
+    result = await chat_messages_collection.delete_one({"_id": ObjectId(message_id)})
+    
+    if result.deleted_count == 0:
+        raise HTTPException(status_code=404, detail="Message not found")
+    
+    # Broadcast deletion
+    await sio.emit("chat_message_deleted", {"message_id": message_id})
+    
+    return {"message": "Message deleted"}
+
+# ============= FRIENDS SYSTEM =============
+
+@app.get("/api/friends")
+async def get_friends(current_user: dict = Depends(get_current_user)):
+    """Get user's friends and pending requests"""
+    user_id = current_user["_id"]
+    
+    # Get accepted friends
+    friends = await friends_collection.find({
+        "$or": [
+            {"requester_id": user_id, "status": "accepted"},
+            {"receiver_id": user_id, "status": "accepted"}
+        ]
+    }).to_list(500)
+    
+    # Get pending requests (incoming)
+    pending_incoming = await friends_collection.find({
+        "receiver_id": user_id,
+        "status": "pending"
+    }).to_list(100)
+    
+    # Get pending requests (outgoing)
+    pending_outgoing = await friends_collection.find({
+        "requester_id": user_id,
+        "status": "pending"
+    }).to_list(100)
+    
+    # Get friend user details
+    friend_ids = set()
+    for f in friends:
+        if f["requester_id"] == user_id:
+            friend_ids.add(f["receiver_id"])
+        else:
+            friend_ids.add(f["requester_id"])
+    
+    friend_users = []
+    for fid in friend_ids:
+        user = await users_collection.find_one(
+            {"_id": ObjectId(fid)},
+            {"password": 0, "email": 0}
+        )
+        if user:
+            friend_users.append(serialize_doc(user))
+    
+    return {
+        "friends": friend_users,
+        "pending_incoming": serialize_doc(pending_incoming),
+        "pending_outgoing": serialize_doc(pending_outgoing)
+    }
+
+@app.post("/api/friends/request")
+async def send_friend_request(
+    request: FriendRequest,
+    current_user: dict = Depends(get_current_user)
+):
+    """Send a friend request"""
+    user_id = current_user["_id"]
+    receiver_id = request.receiver_id
+    
+    if user_id == receiver_id:
+        raise HTTPException(status_code=400, detail="Cannot friend yourself")
+    
+    # Check if receiver exists
+    receiver = await users_collection.find_one({"_id": ObjectId(receiver_id)})
+    if not receiver:
+        raise HTTPException(status_code=404, detail="User not found")
+    
+    # Check if already friends or pending
+    existing = await friends_collection.find_one({
+        "$or": [
+            {"requester_id": user_id, "receiver_id": receiver_id},
+            {"requester_id": receiver_id, "receiver_id": user_id}
+        ]
+    })
+    
+    if existing:
+        if existing["status"] == "accepted":
+            raise HTTPException(status_code=400, detail="Already friends")
+        elif existing["status"] == "pending":
+            raise HTTPException(status_code=400, detail="Request already pending")
+        elif existing["status"] == "blocked":
+            raise HTTPException(status_code=403, detail="Unable to send request")
+    
+    # Create friend request
+    friend_doc = {
+        "requester_id": user_id,
+        "receiver_id": receiver_id,
+        "status": "pending",
+        "created_at": datetime.utcnow()
+    }
+    
+    await friends_collection.insert_one(friend_doc)
+    
+    # Notify receiver
+    await sio.emit(f"friend_request_{receiver_id}", {
+        "from_user_id": user_id,
+        "from_username": current_user.get("username")
+    })
+    
+    return {"message": "Friend request sent"}
+
+@app.post("/api/friends/accept/{requester_id}")
+async def accept_friend_request(
+    requester_id: str,
+    current_user: dict = Depends(get_current_user)
+):
+    """Accept a friend request"""
+    user_id = current_user["_id"]
+    
+    result = await friends_collection.update_one(
+        {
+            "requester_id": requester_id,
+            "receiver_id": user_id,
+            "status": "pending"
+        },
+        {
+            "$set": {
+                "status": "accepted",
+                "accepted_at": datetime.utcnow()
+            }
+        }
+    )
+    
+    if result.modified_count == 0:
+        raise HTTPException(status_code=404, detail="Friend request not found")
+    
+    # Notify requester
+    await sio.emit(f"friend_accepted_{requester_id}", {
+        "user_id": user_id,
+        "username": current_user.get("username")
+    })
+    
+    return {"message": "Friend request accepted"}
+
+@app.post("/api/friends/decline/{requester_id}")
+async def decline_friend_request(
+    requester_id: str,
+    current_user: dict = Depends(get_current_user)
+):
+    """Decline a friend request"""
+    user_id = current_user["_id"]
+    
+    result = await friends_collection.delete_one({
+        "requester_id": requester_id,
+        "receiver_id": user_id,
+        "status": "pending"
+    })
+    
+    if result.deleted_count == 0:
+        raise HTTPException(status_code=404, detail="Friend request not found")
+    
+    return {"message": "Friend request declined"}
+
+@app.delete("/api/friends/{friend_id}")
+async def remove_friend(
+    friend_id: str,
+    current_user: dict = Depends(get_current_user)
+):
+    """Remove a friend"""
+    user_id = current_user["_id"]
+    
+    result = await friends_collection.delete_one({
+        "$or": [
+            {"requester_id": user_id, "receiver_id": friend_id, "status": "accepted"},
+            {"requester_id": friend_id, "receiver_id": user_id, "status": "accepted"}
+        ]
+    })
+    
+    if result.deleted_count == 0:
+        raise HTTPException(status_code=404, detail="Friend not found")
+    
+    return {"message": "Friend removed"}
+
+@app.get("/api/friends/status/{user_id}")
+async def get_friend_status(
+    user_id: str,
+    current_user: dict = Depends(get_current_user)
+):
+    """Get friendship status with a user"""
+    my_id = current_user["_id"]
+    
+    if my_id == user_id:
+        return {"status": "self"}
+    
+    friend = await friends_collection.find_one({
+        "$or": [
+            {"requester_id": my_id, "receiver_id": user_id},
+            {"requester_id": user_id, "receiver_id": my_id}
+        ]
+    })
+    
+    if not friend:
+        return {"status": "none"}
+    
+    if friend["status"] == "accepted":
+        return {"status": "friends"}
+    elif friend["status"] == "pending":
+        if friend["requester_id"] == my_id:
+            return {"status": "pending_outgoing"}
+        else:
+            return {"status": "pending_incoming"}
+    elif friend["status"] == "blocked":
+        return {"status": "blocked"}
+    
+    return {"status": "none"}
+
+@app.get("/api/community/suggested")
+async def get_suggested_connections(
+    limit: int = 10,
+    current_user: dict = Depends(get_current_user)
+):
+    """Get suggested users to connect with"""
+    user_id = current_user["_id"]
+    
+    # Get existing friends/requests
+    existing = await friends_collection.find({
+        "$or": [
+            {"requester_id": user_id},
+            {"receiver_id": user_id}
+        ]
+    }).to_list(500)
+    
+    exclude_ids = {user_id}
+    for e in existing:
+        exclude_ids.add(e["requester_id"])
+        exclude_ids.add(e["receiver_id"])
+    
+    # Get random users not in exclude list
+    pipeline = [
+        {"$match": {"_id": {"$nin": [ObjectId(eid) for eid in exclude_ids]}}},
+        {"$sample": {"size": limit}},
+        {"$project": {"password": 0, "email": 0}}
+    ]
+    
+    suggestions = await users_collection.aggregate(pipeline).to_list(limit)
+    
+    return {"suggestions": serialize_doc(suggestions)}
+
 # ============= ADMIN ENDPOINTS =============
 
 @app.get("/api/admin/users")
