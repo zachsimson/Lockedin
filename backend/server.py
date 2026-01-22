@@ -30,6 +30,9 @@ db = client[DB_NAME]
 users_collection = db.users
 messages_collection = db.messages
 settings_collection = db.settings
+community_activity_collection = db.community_activity
+achievements_collection = db.achievements
+user_achievements_collection = db.user_achievements
 
 # Password hashing
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
