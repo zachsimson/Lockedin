@@ -33,6 +33,11 @@ settings_collection = db.settings
 community_activity_collection = db.community_activity
 achievements_collection = db.achievements
 user_achievements_collection = db.user_achievements
+# New collections for community expansion
+chat_messages_collection = db.chat_messages
+media_collection = db.media
+friends_collection = db.friends
+reactions_collection = db.reactions
 
 # Password hashing
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
