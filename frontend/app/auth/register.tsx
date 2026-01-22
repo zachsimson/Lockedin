@@ -4,6 +4,7 @@ import { useAuth } from '../../src/context/AuthContext';
 import { useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { colors } from '../../src/theme';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 export default function Register() {
   const [username, setUsername] = useState('');
@@ -13,6 +14,7 @@ export default function Register() {
   const [loading, setLoading] = useState(false);
   const { register } = useAuth();
   const router = useRouter();
+  const insets = useSafeAreaInsets();
 
   const handleRegister = async () => {
     console.log('[Register] Button pressed');
@@ -47,24 +49,35 @@ export default function Register() {
       behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
       style={styles.container}
     >
-      <ScrollView contentContainerStyle={styles.scrollContent} keyboardShouldPersistTaps="handled">
+      <ScrollView 
+        contentContainerStyle={[styles.scrollContent, { paddingTop: insets.top + 10, paddingBottom: insets.bottom + 20 }]}
+        keyboardShouldPersistTaps="handled"
+        showsVerticalScrollIndicator={false}
+      >
+        {/* Back Button */}
         <Pressable 
           style={styles.backButton}
           onPress={() => router.back()}
+          hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
         >
-          <Ionicons name="arrow-back" size={24} color={colors.textPrimary} />
+          <Ionicons name="arrow-back" size={28} color={colors.textPrimary} />
         </Pressable>
 
-        <View style={styles.content}>
-          <View style={styles.header}>
-            <Ionicons name="shield-checkmark" size={60} color={colors.primary} />
-            <Text style={styles.title}>Join LockedIn</Text>
-            <Text style={styles.subtitle}>Start your recovery journey today</Text>
+        {/* Header */}
+        <View style={styles.header}>
+          <View style={styles.iconContainer}>
+            <Ionicons name="person-add" size={48} color={colors.primary} />
           </View>
+          <Text style={styles.title}>Join LockedIn</Text>
+          <Text style={styles.subtitle}>Start your recovery journey today</Text>
+        </View>
 
-          <View style={styles.form}>
-            <View style={styles.inputContainer}>
-              <Text style={styles.label}>Username</Text>
+        {/* Form */}
+        <View style={styles.form}>
+          <View style={styles.inputContainer}>
+            <Text style={styles.label}>USERNAME</Text>
+            <View style={styles.inputWrapper}>
+              <Ionicons name="person-outline" size={20} color={colors.textMuted} style={styles.inputIcon} />
               <TextInput
                 style={styles.input}
                 placeholder="Choose a username"
@@ -75,9 +88,12 @@ export default function Register() {
                 autoCorrect={false}
               />
             </View>
+          </View>
 
-            <View style={styles.inputContainer}>
-              <Text style={styles.label}>Email</Text>
+          <View style={styles.inputContainer}>
+            <Text style={styles.label}>EMAIL</Text>
+            <View style={styles.inputWrapper}>
+              <Ionicons name="mail-outline" size={20} color={colors.textMuted} style={styles.inputIcon} />
               <TextInput
                 style={styles.input}
                 placeholder="Enter your email"
@@ -89,12 +105,15 @@ export default function Register() {
                 autoCorrect={false}
               />
             </View>
+          </View>
 
-            <View style={styles.inputContainer}>
-              <Text style={styles.label}>Password</Text>
+          <View style={styles.inputContainer}>
+            <Text style={styles.label}>PASSWORD</Text>
+            <View style={styles.inputWrapper}>
+              <Ionicons name="lock-closed-outline" size={20} color={colors.textMuted} style={styles.inputIcon} />
               <TextInput
                 style={styles.input}
-                placeholder="Create a password (min 6 characters)"
+                placeholder="Min 6 characters"
                 placeholderTextColor={colors.textMuted}
                 value={password}
                 onChangeText={setPassword}
@@ -102,45 +121,47 @@ export default function Register() {
                 autoCapitalize="none"
               />
             </View>
+          </View>
 
-            <View style={styles.inputContainer}>
-              <Text style={styles.label}>Weekly Gambling Amount (Optional)</Text>
+          <View style={styles.inputContainer}>
+            <Text style={styles.label}>WEEKLY GAMBLING AMOUNT (OPTIONAL)</Text>
+            <View style={styles.inputWrapper}>
+              <Ionicons name="cash-outline" size={20} color={colors.textMuted} style={styles.inputIcon} />
               <TextInput
                 style={styles.input}
-                placeholder="How much did you spend per week?"
+                placeholder="$ per week (for savings tracker)"
                 placeholderTextColor={colors.textMuted}
                 value={weeklyAmount}
                 onChangeText={setWeeklyAmount}
                 keyboardType="decimal-pad"
               />
-              <Text style={styles.helpText}>
-                This helps calculate your savings over time
-              </Text>
             </View>
-
-            <Pressable
-              style={({ pressed }) => [
-                styles.button,
-                loading && styles.buttonDisabled,
-                pressed && styles.buttonPressed
-              ]}
-              onPress={handleRegister}
-              disabled={loading}
-            >
-              {loading ? (
-                <ActivityIndicator color="#fff" />
-              ) : (
-                <Text style={styles.buttonText}>Create Account</Text>
-              )}
-            </Pressable>
-
-            <View style={styles.footer}>
-              <Text style={styles.footerText}>Already have an account? </Text>
-              <Pressable onPress={() => router.push('/auth/login')}>
-                <Text style={styles.linkText}>Sign In</Text>
-              </Pressable>
-            </View>
+            <Text style={styles.helpText}>Helps calculate your money saved</Text>
           </View>
+
+          <Pressable
+            style={({ pressed }) => [
+              styles.button,
+              loading && styles.buttonDisabled,
+              pressed && styles.buttonPressed
+            ]}
+            onPress={handleRegister}
+            disabled={loading}
+          >
+            {loading ? (
+              <ActivityIndicator color="#000" size="small" />
+            ) : (
+              <Text style={styles.buttonText}>CREATE ACCOUNT</Text>
+            )}
+          </Pressable>
+        </View>
+
+        {/* Footer */}
+        <View style={styles.footer}>
+          <Text style={styles.footerText}>Already have an account? </Text>
+          <Pressable onPress={() => router.push('/auth/login')} hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}>
+            <Text style={styles.linkText}>Sign In</Text>
+          </Pressable>
         </View>
       </ScrollView>
     </KeyboardAvoidingView>
@@ -154,60 +175,79 @@ const styles = StyleSheet.create({
   },
   scrollContent: {
     flexGrow: 1,
+    paddingHorizontal: 24,
   },
   backButton: {
-    padding: 16,
-    marginTop: 40,
-  },
-  content: {
-    flex: 1,
-    padding: 24,
+    width: 44,
+    height: 44,
+    justifyContent: 'center',
+    alignItems: 'flex-start',
   },
   header: {
     alignItems: 'center',
-    marginBottom: 32,
-    marginTop: 20,
+    marginTop: 10,
+    marginBottom: 24,
+  },
+  iconContainer: {
+    width: 88,
+    height: 88,
+    borderRadius: 44,
+    backgroundColor: `${colors.primary}15`,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginBottom: 16,
   },
   title: {
-    fontSize: 32,
+    fontSize: 26,
     fontWeight: 'bold',
     color: colors.textPrimary,
-    marginTop: 16,
+    textAlign: 'center',
   },
   subtitle: {
-    fontSize: 16,
+    fontSize: 15,
     color: colors.textSecondary,
-    marginTop: 8,
+    marginTop: 6,
+    textAlign: 'center',
   },
   form: {
     width: '100%',
   },
   inputContainer: {
-    marginBottom: 20,
+    marginBottom: 16,
   },
   label: {
-    fontSize: 16,
+    fontSize: 12,
     fontWeight: '600',
-    color: colors.textPrimary,
+    color: colors.textMuted,
     marginBottom: 8,
+    letterSpacing: 0.5,
   },
-  input: {
+  inputWrapper: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: colors.cardBackground,
     borderWidth: 1,
     borderColor: colors.border,
     borderRadius: 12,
-    padding: 16,
+    paddingHorizontal: 14,
+  },
+  inputIcon: {
+    marginRight: 10,
+  },
+  input: {
+    flex: 1,
+    paddingVertical: 14,
     fontSize: 16,
-    backgroundColor: colors.cardBackground,
     color: colors.textPrimary,
   },
   helpText: {
-    fontSize: 14,
+    fontSize: 12,
     color: colors.textMuted,
-    marginTop: 4,
+    marginTop: 6,
   },
   button: {
     backgroundColor: colors.primary,
-    padding: 16,
+    paddingVertical: 16,
     borderRadius: 12,
     alignItems: 'center',
     justifyContent: 'center',
@@ -218,26 +258,28 @@ const styles = StyleSheet.create({
     opacity: 0.6,
   },
   buttonPressed: {
-    opacity: 0.8,
+    opacity: 0.9,
     transform: [{ scale: 0.98 }],
   },
   buttonText: {
-    color: '#fff',
-    fontSize: 18,
-    fontWeight: '600',
+    color: '#000',
+    fontSize: 15,
+    fontWeight: 'bold',
+    letterSpacing: 1,
   },
   footer: {
     flexDirection: 'row',
     justifyContent: 'center',
-    marginTop: 24,
-    marginBottom: 32,
+    alignItems: 'center',
+    paddingVertical: 20,
+    marginTop: 'auto',
   },
   footerText: {
-    fontSize: 16,
+    fontSize: 15,
     color: colors.textSecondary,
   },
   linkText: {
-    fontSize: 16,
+    fontSize: 15,
     color: colors.primary,
     fontWeight: '600',
   },
