@@ -12,6 +12,7 @@ import {
   Platform,
   Modal,
   Linking,
+  Dimensions,
 } from 'react-native';
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { useAuth } from '../../src/context/AuthContext';
