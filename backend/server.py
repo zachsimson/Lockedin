@@ -88,6 +88,47 @@ class RelapseReport(BaseModel):
 class MessageCreate(BaseModel):
     message: str = Field(..., min_length=1, max_length=2000)
 
+# VPN/Recovery Mode Models
+class VPNEnableRequest(BaseModel):
+    lock_duration: str = Field(..., description="Lock duration: 24h, 72h, 7d, 30d, permanent")
+
+class VPNUnlockRequest(BaseModel):
+    reason: str = Field(..., min_length=10, max_length=500)
+
+class VPNStatus(BaseModel):
+    recovery_mode_enabled: bool
+    lock_duration: Optional[str]
+    lock_started_at: Optional[str]
+    lock_expires_at: Optional[str]
+    unlock_requested: bool
+    unlock_requested_at: Optional[str]
+    unlock_request_reason: Optional[str]
+    unlock_approved: bool
+    unlock_approved_at: Optional[str]
+    unlock_effective_at: Optional[str]
+    cooldown_remaining_seconds: Optional[int]
+    can_disable: bool
+
+# Cooldown duration in hours
+VPN_COOLDOWN_HOURS = 24
+
+def calculate_lock_expiry(lock_duration: str, start_time: datetime) -> Optional[datetime]:
+    """Calculate when a lock expires based on duration"""
+    if lock_duration == "permanent":
+        return None  # Never expires
+    
+    duration_map = {
+        "24h": timedelta(hours=24),
+        "72h": timedelta(hours=72),
+        "7d": timedelta(days=7),
+        "30d": timedelta(days=30),
+    }
+    
+    delta = duration_map.get(lock_duration)
+    if delta:
+        return start_time + delta
+    return None
+
 # Helper functions
 def verify_password(plain_password: str, hashed_password: str) -> bool:
     return pwd_context.verify(plain_password, hashed_password)
