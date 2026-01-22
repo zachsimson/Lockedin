@@ -21,6 +21,8 @@ import { Ionicons } from '@expo/vector-icons';
 import { colors } from '../../src/theme';
 import api from '../../src/services/api';
 
+const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = Dimensions.get('window');
+
 // Avatar mappings
 const AVATAR_ICONS: { [key: string]: string } = {
   shield: 'shield-checkmark',
