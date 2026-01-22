@@ -1,14 +1,17 @@
-import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
+import { View, Text, Pressable, StyleSheet, Dimensions } from 'react-native';
 import { useAuth } from '../src/context/AuthContext';
 import { useRouter } from 'expo-router';
 import { useEffect } from 'react';
 import { Ionicons } from '@expo/vector-icons';
 import { colors } from '../src/theme';
-import { LinearGradient } from 'expo-linear-gradient';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
+
+const { width, height } = Dimensions.get('window');
 
 export default function Index() {
   const { user, loading } = useAuth();
   const router = useRouter();
+  const insets = useSafeAreaInsets();
 
   useEffect(() => {
     if (!loading) {
@@ -20,228 +23,186 @@ export default function Index() {
 
   if (loading) {
     return (
-      <LinearGradient
-        colors={['#1E0A3C', '#000000']}
-        style={styles.container}
-      >
+      <View style={styles.container}>
         <Text style={styles.loadingText}>Loading...</Text>
-      </LinearGradient>
+      </View>
     );
   }
 
   return (
-    <LinearGradient
-      colors={['#1E0A3C', '#000000']}
-      style={styles.container}
-    >
-      <View style={styles.content}>
-        {/* Logo */}
-        <View style={styles.logoContainer}>
-          <View style={styles.iconCircle}>
-            <Ionicons name="shield-checkmark" size={80} color="#8B5CF6" />
-          </View>
-          <Text style={styles.appName}>GambleFree</Text>
-          <Text style={styles.tagline}>Your Recovery, Your Rules</Text>
+    <View style={[styles.container, { paddingTop: insets.top, paddingBottom: insets.bottom + 20 }]}>
+      {/* Header */}
+      <View style={styles.header}>
+        <View style={styles.logoRow}>
+          <Ionicons name="shield-checkmark" size={32} color={colors.primary} />
+          <Text style={styles.logoText}>LockedIn</Text>
         </View>
+      </View>
 
-        {/* Stats Cards */}
-        <View style={styles.statsContainer}>
-          <View style={styles.statCard}>
-            <Text style={styles.statNumber}>15K+</Text>
-            <Text style={styles.statLabel}>Active Members</Text>
+      {/* Main Content */}
+      <View style={styles.mainContent}>
+        {/* Hero */}
+        <View style={styles.hero}>
+          <View style={styles.iconCircle}>
+            <Ionicons name="lock-closed" size={48} color={colors.primary} />
           </View>
-          <View style={styles.statCard}>
-            <Text style={styles.statNumber}>$5M+</Text>
-            <Text style={styles.statLabel}>Money Saved</Text>
-          </View>
+          <Text style={styles.heroTitle}>Lock out gambling.</Text>
+          <Text style={styles.heroTitle}>Lock in discipline.</Text>
+          <Text style={styles.heroSubtitle}>The recovery app that actually works</Text>
         </View>
 
         {/* Features */}
-        <View style={styles.featuresContainer}>
-          <View style={styles.featureItem}>
-            <View style={styles.featureIcon}>
-              <Ionicons name="lock-closed" size={24} color="#8B5CF6" />
-            </View>
-            <View style={styles.featureContent}>
-              <Text style={styles.featureTitle}>Block All Betting Apps</Text>
-              <Text style={styles.featureSubtext}>One swipe protection</Text>
-            </View>
+        <View style={styles.features}>
+          <View style={styles.featureRow}>
+            <Ionicons name="shield-checkmark" size={20} color={colors.primary} />
+            <Text style={styles.featureText}>Block 250+ gambling sites</Text>
           </View>
-
-          <View style={styles.featureItem}>
-            <View style={styles.featureIcon}>
-              <Ionicons name="people" size={24} color="#8B5CF6" />
-            </View>
-            <View style={styles.featureContent}>
-              <Text style={styles.featureTitle}>24/7 Community Support</Text>
-              <Text style={styles.featureSubtext}>Never face it alone</Text>
-            </View>
+          <View style={styles.featureRow}>
+            <Ionicons name="time" size={20} color={colors.primary} />
+            <Text style={styles.featureText}>24-hour unlock cooldown</Text>
           </View>
-
-          <View style={styles.featureItem}>
-            <View style={styles.featureIcon}>
-              <Ionicons name="trending-up" size={24} color="#8B5CF6" />
-            </View>
-            <View style={styles.featureContent}>
-              <Text style={styles.featureTitle}>Track Your Progress</Text>
-              <Text style={styles.featureSubtext}>Live timer & savings</Text>
-            </View>
+          <View style={styles.featureRow}>
+            <Ionicons name="people" size={20} color={colors.primary} />
+            <Text style={styles.featureText}>Anonymous community support</Text>
           </View>
-        </View>
-
-        {/* Buttons */}
-        <View style={styles.buttonContainer}>
-          <TouchableOpacity
-            style={styles.primaryButton}
-            onPress={() => router.push('/auth/register')}
-          >
-            <Text style={styles.primaryButtonText}>Get Started Free</Text>
-            <Ionicons name="arrow-forward" size={20} color="#FFF" />
-          </TouchableOpacity>
-
-          <TouchableOpacity
-            style={styles.secondaryButton}
-            onPress={() => router.push('/auth/login')}
-          >
-            <Text style={styles.secondaryButtonText}>I Have an Account</Text>
-          </TouchableOpacity>
+          <View style={styles.featureRow}>
+            <Ionicons name="stats-chart" size={20} color={colors.primary} />
+            <Text style={styles.featureText}>Track money saved</Text>
+          </View>
         </View>
       </View>
-    </LinearGradient>
+
+      {/* Buttons */}
+      <View style={styles.buttonContainer}>
+        <Pressable
+          style={({ pressed }) => [styles.primaryButton, pressed && styles.buttonPressed]}
+          onPress={() => router.push('/auth/register')}
+        >
+          <Text style={styles.primaryButtonText}>GET STARTED FREE</Text>
+          <Ionicons name="arrow-forward" size={20} color="#000" />
+        </Pressable>
+
+        <Pressable
+          style={({ pressed }) => [styles.secondaryButton, pressed && styles.buttonPressed]}
+          onPress={() => router.push('/auth/login')}
+        >
+          <Text style={styles.secondaryButtonText}>I Have an Account</Text>
+        </Pressable>
+      </View>
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
+    backgroundColor: colors.background,
+    paddingHorizontal: 24,
   },
-  content: {
+  header: {
+    paddingVertical: 16,
+  },
+  logoRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
+  },
+  logoText: {
+    fontSize: 22,
+    fontWeight: 'bold',
+    color: colors.textPrimary,
+    letterSpacing: 1,
+  },
+  mainContent: {
     flex: 1,
     justifyContent: 'center',
-    alignItems: 'center',
-    padding: 24,
   },
-  logoContainer: {
+  hero: {
     alignItems: 'center',
     marginBottom: 40,
   },
   iconCircle: {
-    width: 120,
-    height: 120,
-    borderRadius: 60,
-    backgroundColor: 'rgba(139, 92, 246, 0.15)',
+    width: 100,
+    height: 100,
+    borderRadius: 50,
+    backgroundColor: `${colors.primary}20`,
     justifyContent: 'center',
     alignItems: 'center',
-    marginBottom: 20,
+    marginBottom: 24,
     borderWidth: 2,
-    borderColor: '#8B5CF6',
+    borderColor: colors.primary,
   },
-  appName: {
-    fontSize: 48,
+  heroTitle: {
+    fontSize: 28,
     fontWeight: 'bold',
-    color: '#FFF',
-    marginBottom: 8,
+    color: colors.textPrimary,
+    textAlign: 'center',
+    lineHeight: 36,
   },
-  tagline: {
-    fontSize: 18,
-    color: 'rgba(255,255,255,0.7)',
+  heroSubtitle: {
+    fontSize: 16,
+    color: colors.textSecondary,
+    marginTop: 12,
+    textAlign: 'center',
   },
-  statsContainer: {
-    flexDirection: 'row',
-    gap: 16,
-    marginBottom: 40,
-    width: '100%',
-  },
-  statCard: {
-    flex: 1,
-    backgroundColor: 'rgba(15, 10, 31, 0.8)',
+  features: {
+    backgroundColor: colors.cardBackground,
     borderRadius: 16,
     padding: 20,
-    alignItems: 'center',
+    gap: 16,
     borderWidth: 1,
-    borderColor: '#2D1B4E',
+    borderColor: colors.border,
   },
-  statNumber: {
-    fontSize: 32,
-    fontWeight: 'bold',
-    color: '#8B5CF6',
-    marginBottom: 4,
-  },
-  statLabel: {
-    fontSize: 14,
-    color: 'rgba(255,255,255,0.6)',
-  },
-  featuresContainer: {
-    width: '100%',
-    marginBottom: 40,
-  },
-  featureItem: {
+  featureRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: 'rgba(15, 10, 31, 0.6)',
-    borderRadius: 16,
-    padding: 16,
-    marginBottom: 12,
-    borderWidth: 1,
-    borderColor: '#2D1B4E',
+    gap: 14,
   },
-  featureIcon: {
-    width: 48,
-    height: 48,
-    borderRadius: 24,
-    backgroundColor: '#0F0A1F',
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginRight: 16,
-    borderWidth: 1,
-    borderColor: '#8B5CF6',
-  },
-  featureContent: {
+  featureText: {
+    fontSize: 15,
+    color: colors.textSecondary,
     flex: 1,
   },
-  featureTitle: {
-    fontSize: 16,
-    fontWeight: '600',
-    color: '#FFF',
-    marginBottom: 2,
-  },
-  featureSubtext: {
-    fontSize: 14,
-    color: 'rgba(255,255,255,0.5)',
-  },
   buttonContainer: {
-    width: '100%',
     gap: 12,
+    paddingBottom: 10,
   },
   primaryButton: {
-    backgroundColor: '#8B5CF6',
+    backgroundColor: colors.primary,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    padding: 18,
-    borderRadius: 16,
-    gap: 8,
+    paddingVertical: 18,
+    borderRadius: 14,
+    gap: 10,
+  },
+  buttonPressed: {
+    opacity: 0.9,
+    transform: [{ scale: 0.98 }],
   },
   primaryButtonText: {
-    color: '#FFF',
-    fontSize: 18,
+    color: '#000',
+    fontSize: 16,
     fontWeight: 'bold',
+    letterSpacing: 1,
   },
   secondaryButton: {
     backgroundColor: 'transparent',
     borderWidth: 2,
-    borderColor: 'rgba(139, 92, 246, 0.5)',
-    padding: 18,
-    borderRadius: 16,
+    borderColor: colors.border,
+    paddingVertical: 16,
+    borderRadius: 14,
     alignItems: 'center',
   },
   secondaryButtonText: {
-    color: '#8B5CF6',
-    fontSize: 16,
+    color: colors.textSecondary,
+    fontSize: 15,
     fontWeight: '600',
   },
   loadingText: {
-    fontSize: 18,
-    color: '#FFF',
+    fontSize: 16,
+    color: colors.textSecondary,
+    textAlign: 'center',
+    marginTop: 100,
   },
 });
