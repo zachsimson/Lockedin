@@ -432,6 +432,10 @@ async def register(user_data: UserRegister):
         raise HTTPException(status_code=400, detail="Username already taken")
     
     # Create user
+    import random
+    avatar_ids = list(AVATAR_STYLES.keys())
+    default_avatar = random.choice(avatar_ids)
+    
     user_doc = {
         "username": user_data.username,
         "email": user_data.email,
@@ -445,7 +449,17 @@ async def register(user_data: UserRegister):
         "is_blocked": False,
         "blocking_enabled": False,
         "created_at": datetime.utcnow(),
-        "avatar_url": None
+        # Profile fields
+        "avatar_id": default_avatar,
+        "avatar_url": None,
+        "profile_photo_url": None,
+        "profile_visibility_mode": "avatar",  # "avatar" or "photo"
+        "bio": None,
+        # Recovery stats
+        "current_streak_days": 0,
+        "longest_streak_days": 0,
+        "total_resets": 0,
+        "total_check_ins": 0
     }
     
     result = await users_collection.insert_one(user_doc)
