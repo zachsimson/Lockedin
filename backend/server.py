@@ -471,33 +471,324 @@ async def get_chat_history(
     messages.reverse()  # Chronological order
     return {"messages": serialize_doc(messages)}
 
-# ============= BLOCKING ENDPOINTS =============
+# ============= RECOVERY MODE / VPN ENDPOINTS =============
 
 @app.get("/api/blocking/domains")
 async def get_blocked_domains(current_user: dict = Depends(get_current_user)):
+    """Get list of blocked gambling domains"""
     settings = await settings_collection.find_one({"_id": "app_settings"})
     return {"domains": settings.get("blocked_domains", [])}
 
+@app.get("/api/vpn/status")
+async def get_vpn_status(current_user: dict = Depends(get_current_user)):
+    """Get comprehensive VPN/Recovery Mode status including cooldown info"""
+    user = await users_collection.find_one(
+        {"_id": ObjectId(current_user["_id"])}
+    )
+    
+    recovery_mode_enabled = user.get("recovery_mode_enabled", False)
+    lock_duration = user.get("lock_duration")
+    lock_started_at = user.get("lock_started_at")
+    lock_expires_at = user.get("lock_expires_at")
+    
+    unlock_requested = user.get("unlock_requested", False)
+    unlock_requested_at = user.get("unlock_requested_at")
+    unlock_request_reason = user.get("unlock_request_reason")
+    
+    unlock_approved = user.get("unlock_approved", False)
+    unlock_approved_at = user.get("unlock_approved_at")
+    unlock_effective_at = user.get("unlock_effective_at")
+    
+    # Calculate cooldown remaining
+    cooldown_remaining_seconds = None
+    can_disable = False
+    
+    if unlock_approved and unlock_effective_at:
+        now = datetime.utcnow()
+        effective_time = unlock_effective_at if isinstance(unlock_effective_at, datetime) else datetime.fromisoformat(unlock_effective_at.replace('Z', '+00:00'))
+        
+        if now >= effective_time:
+            # Cooldown expired - can disable
+            can_disable = True
+            cooldown_remaining_seconds = 0
+        else:
+            # Still in cooldown
+            remaining = effective_time - now
+            cooldown_remaining_seconds = int(remaining.total_seconds())
+            can_disable = False
+    elif not recovery_mode_enabled:
+        # VPN not enabled, can enable anytime
+        can_disable = False
+    
+    return {
+        "recovery_mode_enabled": recovery_mode_enabled,
+        "lock_duration": lock_duration,
+        "lock_started_at": lock_started_at.isoformat() if lock_started_at else None,
+        "lock_expires_at": lock_expires_at.isoformat() if lock_expires_at else None,
+        "unlock_requested": unlock_requested,
+        "unlock_requested_at": unlock_requested_at.isoformat() if unlock_requested_at else None,
+        "unlock_request_reason": unlock_request_reason,
+        "unlock_approved": unlock_approved,
+        "unlock_approved_at": unlock_approved_at.isoformat() if unlock_approved_at else None,
+        "unlock_effective_at": unlock_effective_at.isoformat() if unlock_effective_at else None,
+        "cooldown_remaining_seconds": cooldown_remaining_seconds,
+        "can_disable": can_disable
+    }
+
+# Keep old endpoint for backward compatibility
+@app.get("/api/blocking/status")
+async def get_blocking_status(current_user: dict = Depends(get_current_user)):
+    """Legacy endpoint - redirects to VPN status"""
+    vpn_status = await get_vpn_status(current_user)
+    return {
+        "blocking_enabled": vpn_status["recovery_mode_enabled"],
+        "is_blocked": current_user.get("is_blocked", False),
+        "vpn_status": vpn_status
+    }
+
+@app.post("/api/vpn/enable")
+async def enable_vpn(
+    request: VPNEnableRequest,
+    current_user: dict = Depends(get_current_user)
+):
+    """Enable Recovery Mode with specified lock duration"""
+    valid_durations = ["24h", "72h", "7d", "30d", "permanent"]
+    if request.lock_duration not in valid_durations:
+        raise HTTPException(
+            status_code=400,
+            detail=f"Invalid lock duration. Must be one of: {', '.join(valid_durations)}"
+        )
+    
+    now = datetime.utcnow()
+    lock_expires_at = calculate_lock_expiry(request.lock_duration, now)
+    
+    await users_collection.update_one(
+        {"_id": ObjectId(current_user["_id"])},
+        {
+            "$set": {
+                "recovery_mode_enabled": True,
+                "blocking_enabled": True,  # Backward compatibility
+                "lock_duration": request.lock_duration,
+                "lock_started_at": now,
+                "lock_expires_at": lock_expires_at,
+                # Reset any pending unlock requests
+                "unlock_requested": False,
+                "unlock_requested_at": None,
+                "unlock_request_reason": None,
+                "unlock_approved": False,
+                "unlock_approved_at": None,
+                "unlock_effective_at": None
+            }
+        }
+    )
+    
+    return {
+        "message": "Recovery Mode enabled",
+        "lock_duration": request.lock_duration,
+        "lock_started_at": now.isoformat(),
+        "lock_expires_at": lock_expires_at.isoformat() if lock_expires_at else None
+    }
+
+# Legacy endpoint for backward compatibility
 @app.post("/api/blocking/enable")
-async def enable_blocking(
+async def enable_blocking_legacy(
     enabled: bool,
     current_user: dict = Depends(get_current_user)
 ):
+    """Legacy endpoint - use /api/vpn/enable instead"""
+    if enabled:
+        # Enable with default 24h lock
+        request = VPNEnableRequest(lock_duration="24h")
+        return await enable_vpn(request, current_user)
+    else:
+        # Check if user can disable
+        vpn_status = await get_vpn_status(current_user)
+        if vpn_status["recovery_mode_enabled"] and not vpn_status["can_disable"]:
+            raise HTTPException(
+                status_code=403,
+                detail="Cannot disable Recovery Mode. Request unlock and wait for cooldown."
+            )
+        
+        await users_collection.update_one(
+            {"_id": ObjectId(current_user["_id"])},
+            {"$set": {"blocking_enabled": False, "recovery_mode_enabled": False}}
+        )
+        return {"blocking_enabled": False}
+
+@app.post("/api/vpn/request-unlock")
+async def request_vpn_unlock(
+    request: VPNUnlockRequest,
+    current_user: dict = Depends(get_current_user)
+):
+    """Request to unlock/disable Recovery Mode - requires admin approval"""
+    user = await users_collection.find_one({"_id": ObjectId(current_user["_id"])})
+    
+    if not user.get("recovery_mode_enabled", False):
+        raise HTTPException(
+            status_code=400,
+            detail="Recovery Mode is not enabled"
+        )
+    
+    if user.get("unlock_requested", False):
+        raise HTTPException(
+            status_code=400,
+            detail="Unlock request already pending"
+        )
+    
+    now = datetime.utcnow()
+    
     await users_collection.update_one(
         {"_id": ObjectId(current_user["_id"])},
-        {"$set": {"blocking_enabled": enabled}}
+        {
+            "$set": {
+                "unlock_requested": True,
+                "unlock_requested_at": now,
+                "unlock_request_reason": request.reason
+            }
+        }
     )
-    return {"blocking_enabled": enabled}
-
-@app.get("/api/blocking/status")
-async def get_blocking_status(current_user: dict = Depends(get_current_user)):
-    user = await users_collection.find_one(
-        {"_id": ObjectId(current_user["_id"])},
-        {"blocking_enabled": 1, "is_blocked": 1}
-    )
+    
     return {
-        "blocking_enabled": user.get("blocking_enabled", False),
-        "is_blocked": user.get("is_blocked", False)
+        "message": "Unlock request submitted. Awaiting admin approval.",
+        "requested_at": now.isoformat()
+    }
+
+@app.post("/api/vpn/disable")
+async def disable_vpn(current_user: dict = Depends(get_current_user)):
+    """Disable Recovery Mode - only works if cooldown has expired"""
+    user = await users_collection.find_one({"_id": ObjectId(current_user["_id"])})
+    
+    if not user.get("recovery_mode_enabled", False):
+        raise HTTPException(
+            status_code=400,
+            detail="Recovery Mode is not enabled"
+        )
+    
+    # Check if unlock is approved and cooldown expired
+    unlock_approved = user.get("unlock_approved", False)
+    unlock_effective_at = user.get("unlock_effective_at")
+    
+    if not unlock_approved:
+        raise HTTPException(
+            status_code=403,
+            detail="Unlock not approved. Request unlock first."
+        )
+    
+    if unlock_effective_at:
+        now = datetime.utcnow()
+        effective_time = unlock_effective_at if isinstance(unlock_effective_at, datetime) else datetime.fromisoformat(str(unlock_effective_at).replace('Z', '+00:00'))
+        
+        if now < effective_time:
+            remaining = effective_time - now
+            hours = int(remaining.total_seconds() // 3600)
+            minutes = int((remaining.total_seconds() % 3600) // 60)
+            raise HTTPException(
+                status_code=403,
+                detail=f"Cooldown active. Changes take effect in {hours}h {minutes}m."
+            )
+    
+    # Cooldown expired - disable VPN
+    await users_collection.update_one(
+        {"_id": ObjectId(current_user["_id"])},
+        {
+            "$set": {
+                "recovery_mode_enabled": False,
+                "blocking_enabled": False,
+                "lock_duration": None,
+                "lock_started_at": None,
+                "lock_expires_at": None,
+                "unlock_requested": False,
+                "unlock_requested_at": None,
+                "unlock_request_reason": None,
+                "unlock_approved": False,
+                "unlock_approved_at": None,
+                "unlock_effective_at": None
+            }
+        }
+    )
+    
+    return {"message": "Recovery Mode disabled"}
+
+@app.post("/api/admin/approve-unlock/{user_id}")
+async def admin_approve_unlock(
+    user_id: str,
+    current_user: dict = Depends(get_current_admin)
+):
+    """Admin approves unlock request - sets 24 hour cooldown"""
+    user = await users_collection.find_one({"_id": ObjectId(user_id)})
+    
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found")
+    
+    if not user.get("unlock_requested", False):
+        raise HTTPException(
+            status_code=400,
+            detail="No pending unlock request"
+        )
+    
+    now = datetime.utcnow()
+    unlock_effective_at = now + timedelta(hours=VPN_COOLDOWN_HOURS)
+    
+    await users_collection.update_one(
+        {"_id": ObjectId(user_id)},
+        {
+            "$set": {
+                "unlock_approved": True,
+                "unlock_approved_at": now,
+                "unlock_effective_at": unlock_effective_at,
+                "unlock_approved_by": current_user["_id"]
+            }
+        }
+    )
+    
+    return {
+        "message": f"Unlock approved. Cooldown: {VPN_COOLDOWN_HOURS} hours.",
+        "approved_at": now.isoformat(),
+        "effective_at": unlock_effective_at.isoformat(),
+        "user_id": user_id
+    }
+
+@app.post("/api/admin/deny-unlock/{user_id}")
+async def admin_deny_unlock(
+    user_id: str,
+    reason: str = "Request denied by admin",
+    current_user: dict = Depends(get_current_admin)
+):
+    """Admin denies unlock request"""
+    user = await users_collection.find_one({"_id": ObjectId(user_id)})
+    
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found")
+    
+    await users_collection.update_one(
+        {"_id": ObjectId(user_id)},
+        {
+            "$set": {
+                "unlock_requested": False,
+                "unlock_requested_at": None,
+                "unlock_request_reason": None,
+                "unlock_denied_reason": reason
+            }
+        }
+    )
+    
+    return {
+        "message": "Unlock request denied",
+        "user_id": user_id,
+        "reason": reason
+    }
+
+@app.get("/api/admin/unlock-requests")
+async def get_unlock_requests(current_user: dict = Depends(get_current_admin)):
+    """Get all pending unlock requests"""
+    users = await users_collection.find(
+        {"unlock_requested": True},
+        {"password": 0, "gambling_history": 0}
+    ).to_list(100)
+    
+    return {
+        "requests": serialize_doc(users),
+        "count": len(users)
     }
 
 # ============= ADMIN ENDPOINTS =============
