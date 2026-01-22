@@ -78,6 +78,17 @@ export default function EditProfile() {
     minimal: 'Minimal',
   };
 
+  // Helper to find avatar in any category
+  const findAvatar = (avatarId: string) => {
+    for (const cat of Object.values(categories)) {
+      const found = cat.find(a => a.id === avatarId);
+      if (found) return found;
+    }
+    return { icon: 'shield-checkmark', color: colors.primary };
+  };
+
+  const selectedAvatarData = findAvatar(selectedAvatar);
+
   if (loading) {
     return (
       <View style={[styles.container, { paddingTop: insets.top }]}>
