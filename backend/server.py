@@ -129,8 +129,83 @@ ACHIEVEMENTS = [
     {"id": "sixty_days", "name": "Double Down", "description": "60 days clean", "threshold_days": 60, "icon": "ribbon"},
     {"id": "ninety_days", "name": "Quarter Champion", "description": "90 days clean", "threshold_days": 90, "icon": "trophy"},
     {"id": "six_months", "name": "Half Year Hero", "description": "180 days clean", "threshold_days": 180, "icon": "star"},
-    {"id": "one_year", "name": "Year of Freedom", "description": "365 days clean", "threshold_days": 365, "icon": "crown"},
+    {"id": "one_year", "name": "Year of Freedom", "description": "365 days clean", "threshold_days": 365, "icon": "ribbon"},
 ]
+
+# Custom Premium Emoji System
+PREMIUM_EMOJIS = {
+    "fire": {"emoji": "🔥", "name": "Streak Fire", "gradient": ["#FF512F", "#F09819"], "type": "milestone"},
+    "muscle": {"emoji": "💪", "name": "Strength", "gradient": ["#11998E", "#38EF7D"], "type": "support"},
+    "clap": {"emoji": "👏", "name": "Encouragement", "gradient": ["#667EEA", "#764BA2"], "type": "encourage"},
+    "heart": {"emoji": "❤️", "name": "Love", "gradient": ["#E53935", "#E35D5B"], "type": "support"},
+    "brain": {"emoji": "🧠", "name": "Mental Strength", "gradient": ["#A18CD1", "#FBC2EB"], "type": "wisdom"},
+    "star": {"emoji": "⭐", "name": "Star", "gradient": ["#F7971E", "#FFD200"], "type": "celebrate"},
+    "rocket": {"emoji": "🚀", "name": "Launch", "gradient": ["#00C6FB", "#005BEA"], "type": "progress"},
+    "trophy": {"emoji": "🏆", "name": "Champion", "gradient": ["#FFD700", "#FFA500"], "type": "milestone"},
+}
+
+# Default inspirational media content
+DEFAULT_MEDIA = [
+    {
+        "id": "ted_1",
+        "title": "The Power of Addiction and Recovery",
+        "description": "A powerful TED Talk about overcoming addiction and finding strength in vulnerability.",
+        "source_type": "TED",
+        "video_url": "https://www.youtube.com/watch?v=7Z9qJCbkfqY",
+        "thumbnail_url": "https://img.youtube.com/vi/7Z9qJCbkfqY/maxresdefault.jpg",
+        "duration": "15:24"
+    },
+    {
+        "id": "ted_2",
+        "title": "Everything You Think You Know About Addiction Is Wrong",
+        "description": "Johann Hari's groundbreaking talk that challenges how we think about addiction.",
+        "source_type": "TED",
+        "video_url": "https://www.youtube.com/watch?v=PY9DcIMGxMs",
+        "thumbnail_url": "https://img.youtube.com/vi/PY9DcIMGxMs/maxresdefault.jpg",
+        "duration": "14:42"
+    },
+    {
+        "id": "youtube_1",
+        "title": "Breaking the Cycle of Gambling Addiction",
+        "description": "Real stories of recovery and practical strategies to stay clean.",
+        "source_type": "YOUTUBE",
+        "video_url": "https://www.youtube.com/watch?v=OMjQ2aLBbk0",
+        "thumbnail_url": "https://img.youtube.com/vi/OMjQ2aLBbk0/maxresdefault.jpg",
+        "duration": "12:30"
+    },
+    {
+        "id": "story_1",
+        "title": "30 Days Clean: My Journey",
+        "description": "A community member shares their first month of recovery.",
+        "source_type": "STORY",
+        "video_url": "https://www.youtube.com/watch?v=dQw4w9WgXcQ",
+        "thumbnail_url": "https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=800",
+        "duration": "8:15"
+    },
+]
+
+# Chat models
+class ChatMessageCreate(BaseModel):
+    content: str = Field(..., min_length=1, max_length=1000)
+    reply_to: Optional[str] = None
+
+class ReactionCreate(BaseModel):
+    emoji_id: str
+    target_type: str  # "activity" or "chat"
+    target_id: str
+
+class FriendRequest(BaseModel):
+    receiver_id: str
+
+# Profanity filter (basic)
+BLOCKED_WORDS = ["spam", "scam", "http://", "https://", "@", ".com", ".net"]
+
+def filter_profanity(text: str) -> str:
+    """Basic profanity/link filter"""
+    filtered = text
+    for word in BLOCKED_WORDS:
+        filtered = filtered.replace(word, "***")
+    return filtered
 
 # VPN/Recovery Mode Models
 class VPNEnableRequest(BaseModel):
