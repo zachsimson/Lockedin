@@ -913,6 +913,193 @@ async def get_unlock_requests(current_user: dict = Depends(get_current_admin)):
         "count": len(users)
     }
 
+# ============= PROFILE ENDPOINTS =============
+
+@app.get("/api/profile")
+async def get_my_profile(current_user: dict = Depends(get_current_user)):
+    """Get current user's full profile"""
+    user = await users_collection.find_one(
+        {"_id": ObjectId(current_user["_id"])},
+        {"password": 0}
+    )
+    
+    # Get user's achievements
+    user_achievements = await user_achievements_collection.find(
+        {"user_id": current_user["_id"]}
+    ).to_list(100)
+    
+    # Map achievement IDs to full achievement data
+    achievements_list = []
+    for ua in user_achievements:
+        achievement = next((a for a in ACHIEVEMENTS if a["id"] == ua["achievement_id"]), None)
+        if achievement:
+            achievements_list.append({
+                **achievement,
+                "unlocked_at": ua["unlocked_at"].isoformat() if ua.get("unlocked_at") else None
+            })
+    
+    return {
+        "profile": serialize_doc(user),
+        "achievements": achievements_list,
+        "avatar_styles": AVATAR_STYLES
+    }
+
+@app.get("/api/profile/{user_id}")
+async def get_user_profile(user_id: str, current_user: dict = Depends(get_current_user)):
+    """Get a user's public profile"""
+    user = await users_collection.find_one(
+        {"_id": ObjectId(user_id)},
+        {
+            "password": 0, 
+            "email": 0, 
+            "gambling_history": 0,
+            "gambling_weekly_amount": 0
+        }
+    )
+    
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found")
+    
+    # Get user's achievements
+    user_achievements = await user_achievements_collection.find(
+        {"user_id": user_id}
+    ).to_list(100)
+    
+    achievements_list = []
+    for ua in user_achievements:
+        achievement = next((a for a in ACHIEVEMENTS if a["id"] == ua["achievement_id"]), None)
+        if achievement:
+            achievements_list.append({
+                **achievement,
+                "unlocked_at": ua["unlocked_at"].isoformat() if ua.get("unlocked_at") else None
+            })
+    
+    # Calculate streak from sobriety_start_date
+    sobriety_start = user.get("sobriety_start_date")
+    current_streak = 0
+    if sobriety_start:
+        delta = datetime.utcnow() - sobriety_start
+        current_streak = max(0, delta.days)
+    
+    return {
+        "profile": serialize_doc(user),
+        "current_streak_days": current_streak,
+        "achievements": achievements_list,
+        "all_achievements": ACHIEVEMENTS  # For showing locked/unlocked state
+    }
+
+@app.put("/api/profile")
+async def update_profile(
+    profile_data: ProfileUpdate,
+    current_user: dict = Depends(get_current_user)
+):
+    """Update current user's profile"""
+    update_fields = {}
+    
+    if profile_data.profile_visibility_mode:
+        if profile_data.profile_visibility_mode not in ["avatar", "photo"]:
+            raise HTTPException(status_code=400, detail="Invalid visibility mode")
+        update_fields["profile_visibility_mode"] = profile_data.profile_visibility_mode
+    
+    if profile_data.avatar_id:
+        if profile_data.avatar_id not in AVATAR_STYLES:
+            raise HTTPException(status_code=400, detail="Invalid avatar style")
+        update_fields["avatar_id"] = profile_data.avatar_id
+    
+    if profile_data.bio is not None:
+        update_fields["bio"] = profile_data.bio[:500]  # Limit bio length
+    
+    if update_fields:
+        update_fields["updated_at"] = datetime.utcnow()
+        await users_collection.update_one(
+            {"_id": ObjectId(current_user["_id"])},
+            {"$set": update_fields}
+        )
+    
+    return {"message": "Profile updated", "updated_fields": list(update_fields.keys())}
+
+@app.get("/api/avatars")
+async def get_avatar_styles(current_user: dict = Depends(get_current_user)):
+    """Get all available avatar styles"""
+    return {"avatars": AVATAR_STYLES}
+
+# ============= COMMUNITY ACTIVITY ENDPOINTS =============
+
+@app.get("/api/community/activity")
+async def get_community_activity(
+    limit: int = 50,
+    current_user: dict = Depends(get_current_user)
+):
+    """Get recent community activity feed"""
+    activities = await community_activity_collection.find().sort(
+        "created_at", -1
+    ).limit(limit).to_list(limit)
+    
+    return {"activities": serialize_doc(activities)}
+
+@app.post("/api/community/check-in")
+async def check_in(current_user: dict = Depends(get_current_user)):
+    """Record a daily check-in"""
+    user_id = current_user["_id"]
+    
+    # Update check-in count
+    await users_collection.update_one(
+        {"_id": ObjectId(user_id)},
+        {"$inc": {"total_check_ins": 1}}
+    )
+    
+    # Calculate current streak
+    user = await users_collection.find_one({"_id": ObjectId(user_id)})
+    sobriety_start = user.get("sobriety_start_date", datetime.utcnow())
+    streak_days = max(0, (datetime.utcnow() - sobriety_start).days)
+    
+    # Create activity
+    await create_community_activity(user_id, "CHECK_IN", f"{streak_days} days")
+    
+    # Check for new achievements
+    awarded = await check_and_award_achievements(user_id, streak_days)
+    
+    # Check for milestone (every 7 days)
+    if streak_days > 0 and streak_days % 7 == 0:
+        await create_community_activity(user_id, "STREAK_MILESTONE", f"{streak_days} days")
+    
+    return {
+        "message": "Check-in recorded",
+        "streak_days": streak_days,
+        "new_achievements": awarded
+    }
+
+# ============= ACHIEVEMENTS ENDPOINTS =============
+
+@app.get("/api/achievements")
+async def get_all_achievements(current_user: dict = Depends(get_current_user)):
+    """Get all available achievements"""
+    return {"achievements": ACHIEVEMENTS}
+
+@app.get("/api/achievements/user/{user_id}")
+async def get_user_achievements(
+    user_id: str,
+    current_user: dict = Depends(get_current_user)
+):
+    """Get a user's unlocked achievements"""
+    user_achievements = await user_achievements_collection.find(
+        {"user_id": user_id}
+    ).to_list(100)
+    
+    achievements_list = []
+    for ua in user_achievements:
+        achievement = next((a for a in ACHIEVEMENTS if a["id"] == ua["achievement_id"]), None)
+        if achievement:
+            achievements_list.append({
+                **achievement,
+                "unlocked_at": ua["unlocked_at"].isoformat() if ua.get("unlocked_at") else None
+            })
+    
+    return {
+        "achievements": achievements_list,
+        "all_achievements": ACHIEVEMENTS
+    }
+
 # ============= ADMIN ENDPOINTS =============
 
 @app.get("/api/admin/users")
