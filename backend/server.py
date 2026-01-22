@@ -1163,7 +1163,35 @@ async def update_profile(
 @app.get("/api/avatars")
 async def get_avatar_styles(current_user: dict = Depends(get_current_user)):
     """Get all available avatar styles"""
-    return {"avatars": AVATAR_STYLES}
+    # Group avatars by category
+    categories = {}
+    for avatar_id, avatar_data in AVATAR_STYLES.items():
+        category = avatar_data.get("category", "classic")
+        if category not in categories:
+            categories[category] = []
+        categories[category].append({
+            "id": avatar_id,
+            **avatar_data
+        })
+    
+    return {
+        "avatars": AVATAR_STYLES,
+        "categories": categories,
+        "total_count": len(AVATAR_STYLES)
+    }
+
+@app.get("/api/daily-quote")
+async def get_daily_quote():
+    """Get rotating daily quote based on current day"""
+    # Use day of year to determine quote
+    day_of_year = datetime.utcnow().timetuple().tm_yday
+    quote_index = day_of_year % len(DAILY_QUOTES)
+    
+    return {
+        "quote": DAILY_QUOTES[quote_index],
+        "quote_id": quote_index,
+        "all_quotes": DAILY_QUOTES  # For caching
+    }
 
 # ============= COMMUNITY ACTIVITY ENDPOINTS =============
 
