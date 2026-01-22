@@ -123,11 +123,11 @@ export default function EditProfile() {
       <ScrollView contentContainerStyle={styles.content}>
         {/* Current Avatar Preview */}
         <View style={styles.previewSection}>
-          <View style={[styles.avatarPreview, { borderColor: categories[activeCategory]?.find(a => a.id === selectedAvatar)?.color || colors.primary }]}>
+          <View style={[styles.avatarPreview, { borderColor: selectedAvatarData.color }]}>
             <Ionicons 
-              name={categories[activeCategory]?.find(a => a.id === selectedAvatar)?.icon as any || 'shield-checkmark'} 
+              name={selectedAvatarData.icon as any} 
               size={64} 
-              color={categories[activeCategory]?.find(a => a.id === selectedAvatar)?.color || colors.primary} 
+              color={selectedAvatarData.color} 
             />
           </View>
           <Text style={styles.previewLabel}>Your Avatar</Text>
