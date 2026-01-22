@@ -772,7 +772,7 @@ const styles = StyleSheet.create({
     flexGrow: 1,
   },
   mediaCardVertical: {
-    height: 600,
+    height: SCREEN_HEIGHT - 200, // Full screen minus header and tabs
     backgroundColor: '#000',
     marginBottom: 2,
   },
