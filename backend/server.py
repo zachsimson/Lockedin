@@ -347,6 +347,75 @@ async def startup_db():
         })
     
     logger.info("Database initialized")
+    
+    # Initialize achievements
+    for achievement in ACHIEVEMENTS:
+        existing = await achievements_collection.find_one({"id": achievement["id"]})
+        if not existing:
+            await achievements_collection.insert_one(achievement)
+    
+    # Create indexes for new collections
+    await community_activity_collection.create_index([("created_at", -1)])
+    await community_activity_collection.create_index("user_id")
+    await user_achievements_collection.create_index("user_id")
+
+# Helper function to create community activity
+async def create_community_activity(user_id: str, activity_type: str, activity_value: str = None):
+    """Create and broadcast a community activity event"""
+    user = await users_collection.find_one({"_id": ObjectId(user_id)})
+    if not user:
+        return
+    
+    activity = {
+        "user_id": user_id,
+        "username": user.get("username", "Anonymous"),
+        "avatar_id": user.get("avatar_id", "shield"),
+        "profile_photo_url": user.get("profile_photo_url"),
+        "profile_visibility_mode": user.get("profile_visibility_mode", "avatar"),
+        "activity_type": activity_type,
+        "activity_value": activity_value,
+        "created_at": datetime.utcnow()
+    }
+    
+    result = await community_activity_collection.insert_one(activity)
+    activity["_id"] = str(result.inserted_id)
+    
+    # Broadcast to connected clients
+    await sio.emit("community_activity", serialize_doc(activity))
+    
+    return activity
+
+# Helper function to check and award achievements
+async def check_and_award_achievements(user_id: str, streak_days: int):
+    """Check if user has earned new achievements based on streak"""
+    awarded = []
+    
+    for achievement in ACHIEVEMENTS:
+        if streak_days >= achievement["threshold_days"]:
+            # Check if already awarded
+            existing = await user_achievements_collection.find_one({
+                "user_id": user_id,
+                "achievement_id": achievement["id"]
+            })
+            
+            if not existing:
+                # Award achievement
+                await user_achievements_collection.insert_one({
+                    "user_id": user_id,
+                    "achievement_id": achievement["id"],
+                    "unlocked_at": datetime.utcnow()
+                })
+                
+                awarded.append(achievement)
+                
+                # Create community activity for achievement
+                await create_community_activity(
+                    user_id,
+                    "ACHIEVEMENT_UNLOCKED",
+                    achievement["name"]
+                )
+    
+    return awarded
 
 # ============= AUTH ENDPOINTS =============
 
