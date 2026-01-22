@@ -91,6 +91,42 @@ class RelapseReport(BaseModel):
 class MessageCreate(BaseModel):
     message: str = Field(..., min_length=1, max_length=2000)
 
+# Profile & Achievement Models
+class ProfileUpdate(BaseModel):
+    profile_visibility_mode: Optional[str] = None  # "avatar" or "photo"
+    avatar_id: Optional[str] = None
+    bio: Optional[str] = None
+
+class CommunityActivityCreate(BaseModel):
+    activity_type: str  # CHECK_IN, RESET, STREAK_MILESTONE, ACHIEVEMENT_UNLOCKED
+    activity_value: Optional[str] = None
+
+# Avatar definitions - system-generated avatar styles
+AVATAR_STYLES = {
+    "shield": {"icon": "shield-checkmark", "color": "#00F5A0"},
+    "phoenix": {"icon": "flame", "color": "#FF6B6B"},
+    "mountain": {"icon": "triangle", "color": "#4ECDC4"},
+    "star": {"icon": "star", "color": "#FFE66D"},
+    "diamond": {"icon": "diamond", "color": "#A78BFA"},
+    "lightning": {"icon": "flash", "color": "#F59E0B"},
+    "heart": {"icon": "heart", "color": "#EC4899"},
+    "rocket": {"icon": "rocket", "color": "#3B82F6"},
+    "crown": {"icon": "trophy", "color": "#FBBF24"},
+    "anchor": {"icon": "fitness", "color": "#10B981"},
+}
+
+# Achievement definitions
+ACHIEVEMENTS = [
+    {"id": "first_day", "name": "First Step", "description": "Complete your first clean day", "threshold_days": 1, "icon": "footsteps"},
+    {"id": "one_week", "name": "One Week Warrior", "description": "7 days clean", "threshold_days": 7, "icon": "calendar"},
+    {"id": "two_weeks", "name": "Fortnight Fighter", "description": "14 days clean", "threshold_days": 14, "icon": "shield"},
+    {"id": "one_month", "name": "Monthly Master", "description": "30 days clean", "threshold_days": 30, "icon": "medal"},
+    {"id": "sixty_days", "name": "Double Down", "description": "60 days clean", "threshold_days": 60, "icon": "ribbon"},
+    {"id": "ninety_days", "name": "Quarter Champion", "description": "90 days clean", "threshold_days": 90, "icon": "trophy"},
+    {"id": "six_months", "name": "Half Year Hero", "description": "180 days clean", "threshold_days": 180, "icon": "star"},
+    {"id": "one_year", "name": "Year of Freedom", "description": "365 days clean", "threshold_days": 365, "icon": "crown"},
+]
+
 # VPN/Recovery Mode Models
 class VPNEnableRequest(BaseModel):
     lock_duration: str = Field(..., description="Lock duration: 24h, 72h, 7d, 30d, permanent")
