@@ -180,6 +180,18 @@ backend:
         agent: "testing"
         comment: "✅ ALL ADMIN TESTS PASSED: User management, user blocking/unblocking, admin stats dashboard all functioning correctly. Role-based access control working properly."
 
+  - task: "Chess System API"
+    implemented: true
+    working: true
+    file: "/app/backend/server.py"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: false
+    status_history:
+      - working: true
+        agent: "main"
+        comment: "Implemented complete chess system: game creation, server-validated moves using python-chess, ELO rating system, matchmaking queue, leaderboards, in-game chat. All chess rules enforced server-side (check, checkmate, stalemate, draws). Tested with curl commands - all endpoints working correctly."
+
 frontend:
   - task: "Authentication Screens"
     implemented: true
