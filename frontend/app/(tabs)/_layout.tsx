@@ -43,11 +43,11 @@ export default function TabLayout() {
         }}
       />
       <Tabs.Screen
-        name="community"
+        name="chess"
         options={{
-          title: 'Community',
+          title: 'Chess',
           tabBarIcon: ({ color, size }) => (
-            <Ionicons name="people" size={24} color={color} />
+            <Ionicons name="game-controller" size={24} color={color} />
           ),
         }}
       />
@@ -56,7 +56,7 @@ export default function TabLayout() {
         options={{
           title: 'Tools',
           tabBarIcon: ({ color, size }) => (
-            <Ionicons name="shield" size={24} color={color} />
+            <Ionicons name="construct" size={24} color={color} />
           ),
         }}
       />
@@ -67,6 +67,13 @@ export default function TabLayout() {
           tabBarIcon: ({ color, size }) => (
             <Ionicons name="logo-discord" size={24} color={color} />
           ),
+        }}
+      />
+      {/* Hide community tab - features moved to Tools */}
+      <Tabs.Screen
+        name="community"
+        options={{
+          href: null,
         }}
       />
     </Tabs>
