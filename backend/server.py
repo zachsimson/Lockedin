@@ -1812,6 +1812,809 @@ async def update_discord_link(
     )
     return {"message": "Discord link updated"}
 
+# ============= CHESS SYSTEM =============
+
+import chess
+import random as chess_random
+
+# Chess collections
+chess_games_collection = db.chess_games
+chess_moves_collection = db.chess_moves
+chess_stats_collection = db.chess_stats
+chess_queue_collection = db.chess_queue
+
+# Chess models
+class ChessGameCreate(BaseModel):
+    mode: str = Field(..., description="quick, ranked, casual, friend")
+    opponent_id: Optional[str] = None  # Required for friend matches
+    time_control: Optional[str] = "10+0"  # minutes+increment
+
+class ChessMoveRequest(BaseModel):
+    game_id: str
+    from_square: str
+    to_square: str
+    promotion: Optional[str] = None  # "q", "r", "b", "n"
+
+class ChessResign(BaseModel):
+    game_id: str
+
+# ELO calculation
+def calculate_elo_change(winner_rating: int, loser_rating: int, draw: bool = False) -> tuple:
+    """Calculate ELO rating changes"""
+    K = 32  # K-factor
+    expected_winner = 1 / (1 + 10 ** ((loser_rating - winner_rating) / 400))
+    expected_loser = 1 - expected_winner
+    
+    if draw:
+        winner_change = int(K * (0.5 - expected_winner))
+        loser_change = int(K * (0.5 - expected_loser))
+    else:
+        winner_change = int(K * (1 - expected_winner))
+        loser_change = int(K * (0 - expected_loser))
+    
+    return winner_change, loser_change
+
+# Initialize chess stats for user
+async def ensure_chess_stats(user_id: str):
+    """Ensure user has chess stats initialized"""
+    existing = await chess_stats_collection.find_one({"user_id": user_id})
+    if not existing:
+        await chess_stats_collection.insert_one({
+            "user_id": user_id,
+            "rating": 1200,  # Starting ELO
+            "wins": 0,
+            "losses": 0,
+            "draws": 0,
+            "games_played": 0,
+            "win_streak": 0,
+            "best_win_streak": 0,
+            "created_at": datetime.utcnow(),
+            "updated_at": datetime.utcnow()
+        })
+    return await chess_stats_collection.find_one({"user_id": user_id})
+
+@app.post("/api/chess/create")
+async def create_chess_game(
+    request: ChessGameCreate,
+    current_user: dict = Depends(get_current_user)
+):
+    """Create a new chess game"""
+    user_id = current_user["_id"]
+    
+    # Ensure user has chess stats
+    await ensure_chess_stats(user_id)
+    
+    valid_modes = ["quick", "ranked", "casual", "friend"]
+    if request.mode not in valid_modes:
+        raise HTTPException(status_code=400, detail=f"Invalid mode. Must be one of: {valid_modes}")
+    
+    if request.mode == "friend":
+        if not request.opponent_id:
+            raise HTTPException(status_code=400, detail="opponent_id required for friend matches")
+        
+        # Check opponent exists and is a friend
+        opponent = await users_collection.find_one({"_id": ObjectId(request.opponent_id)})
+        if not opponent:
+            raise HTTPException(status_code=404, detail="Opponent not found")
+        
+        # Ensure opponent has chess stats
+        await ensure_chess_stats(request.opponent_id)
+        
+        # Randomly assign colors
+        if chess_random.random() > 0.5:
+            white_id, black_id = user_id, request.opponent_id
+        else:
+            white_id, black_id = request.opponent_id, user_id
+        
+        # Create game
+        game_doc = {
+            "player_white_id": white_id,
+            "player_black_id": black_id,
+            "mode": request.mode,
+            "time_control": request.time_control,
+            "game_state": chess.STARTING_FEN,
+            "status": "active",
+            "result": None,
+            "winner_id": None,
+            "move_count": 0,
+            "last_move_at": None,
+            "created_at": datetime.utcnow(),
+            "completed_at": None
+        }
+        
+        result = await chess_games_collection.insert_one(game_doc)
+        game_doc["_id"] = str(result.inserted_id)
+        
+        # Notify opponent via socket
+        await sio.emit(f"chess_invite_{request.opponent_id}", {
+            "game_id": str(result.inserted_id),
+            "from_user_id": user_id,
+            "from_username": current_user.get("username")
+        })
+        
+        return {"game": serialize_doc(game_doc), "your_color": "white" if white_id == user_id else "black"}
+    
+    else:
+        # Quick/Ranked/Casual - add to matchmaking queue
+        # Check if already in queue
+        existing = await chess_queue_collection.find_one({
+            "user_id": user_id,
+            "status": "waiting"
+        })
+        
+        if existing:
+            # Already in queue, return queue status
+            return {"status": "queued", "queue_id": str(existing["_id"])}
+        
+        # Get user rating for matchmaking
+        stats = await chess_stats_collection.find_one({"user_id": user_id})
+        user_rating = stats.get("rating", 1200) if stats else 1200
+        
+        # Try to find a match
+        rating_range = 200 if request.mode == "ranked" else 500
+        
+        potential_opponent = await chess_queue_collection.find_one({
+            "user_id": {"$ne": user_id},
+            "mode": request.mode,
+            "status": "waiting",
+            "rating": {"$gte": user_rating - rating_range, "$lte": user_rating + rating_range}
+        })
+        
+        if potential_opponent:
+            # Found a match! Create game
+            opponent_id = potential_opponent["user_id"]
+            
+            # Remove opponent from queue
+            await chess_queue_collection.update_one(
+                {"_id": potential_opponent["_id"]},
+                {"$set": {"status": "matched"}}
+            )
+            
+            # Randomly assign colors
+            if chess_random.random() > 0.5:
+                white_id, black_id = user_id, opponent_id
+            else:
+                white_id, black_id = opponent_id, user_id
+            
+            game_doc = {
+                "player_white_id": white_id,
+                "player_black_id": black_id,
+                "mode": request.mode,
+                "time_control": request.time_control,
+                "game_state": chess.STARTING_FEN,
+                "status": "active",
+                "result": None,
+                "winner_id": None,
+                "move_count": 0,
+                "last_move_at": None,
+                "created_at": datetime.utcnow(),
+                "completed_at": None
+            }
+            
+            result = await chess_games_collection.insert_one(game_doc)
+            game_id = str(result.inserted_id)
+            game_doc["_id"] = game_id
+            
+            # Notify both players
+            await sio.emit(f"chess_match_found_{user_id}", {
+                "game_id": game_id,
+                "your_color": "white" if white_id == user_id else "black"
+            })
+            await sio.emit(f"chess_match_found_{opponent_id}", {
+                "game_id": game_id,
+                "your_color": "white" if white_id == opponent_id else "black"
+            })
+            
+            return {
+                "status": "matched",
+                "game": serialize_doc(game_doc),
+                "your_color": "white" if white_id == user_id else "black"
+            }
+        
+        else:
+            # No match found, add to queue
+            queue_doc = {
+                "user_id": user_id,
+                "username": current_user.get("username"),
+                "mode": request.mode,
+                "time_control": request.time_control,
+                "rating": user_rating,
+                "status": "waiting",
+                "created_at": datetime.utcnow()
+            }
+            
+            result = await chess_queue_collection.insert_one(queue_doc)
+            
+            return {"status": "queued", "queue_id": str(result.inserted_id)}
+
+@app.delete("/api/chess/queue")
+async def leave_queue(current_user: dict = Depends(get_current_user)):
+    """Leave the matchmaking queue"""
+    user_id = current_user["_id"]
+    
+    result = await chess_queue_collection.delete_many({
+        "user_id": user_id,
+        "status": "waiting"
+    })
+    
+    return {"message": "Left queue", "removed": result.deleted_count}
+
+@app.get("/api/chess/game/{game_id}")
+async def get_chess_game(
+    game_id: str,
+    current_user: dict = Depends(get_current_user)
+):
+    """Get chess game state"""
+    game = await chess_games_collection.find_one({"_id": ObjectId(game_id)})
+    
+    if not game:
+        raise HTTPException(status_code=404, detail="Game not found")
+    
+    user_id = current_user["_id"]
+    
+    # Check if user is a player
+    if user_id not in [game["player_white_id"], game["player_black_id"]]:
+        raise HTTPException(status_code=403, detail="You are not a player in this game")
+    
+    # Get player info
+    white_user = await users_collection.find_one(
+        {"_id": ObjectId(game["player_white_id"])},
+        {"password": 0, "email": 0}
+    )
+    black_user = await users_collection.find_one(
+        {"_id": ObjectId(game["player_black_id"])},
+        {"password": 0, "email": 0}
+    )
+    
+    # Get move history
+    moves = await chess_moves_collection.find(
+        {"game_id": game_id}
+    ).sort("created_at", 1).to_list(500)
+    
+    # Parse board for legal moves
+    board = chess.Board(game["game_state"])
+    legal_moves = [move.uci() for move in board.legal_moves]
+    
+    # Determine whose turn
+    turn = "white" if board.turn else "black"
+    your_color = "white" if game["player_white_id"] == user_id else "black"
+    is_your_turn = turn == your_color
+    
+    # Check game status
+    is_check = board.is_check()
+    is_checkmate = board.is_checkmate()
+    is_stalemate = board.is_stalemate()
+    is_draw = board.is_insufficient_material() or board.can_claim_fifty_moves() or board.can_claim_threefold_repetition()
+    
+    return {
+        "game": serialize_doc(game),
+        "white_player": serialize_doc(white_user),
+        "black_player": serialize_doc(black_user),
+        "moves": serialize_doc(moves),
+        "legal_moves": legal_moves,
+        "turn": turn,
+        "your_color": your_color,
+        "is_your_turn": is_your_turn,
+        "is_check": is_check,
+        "is_checkmate": is_checkmate,
+        "is_stalemate": is_stalemate,
+        "is_draw": is_draw,
+        "fen": game["game_state"]
+    }
+
+@app.post("/api/chess/move")
+async def make_chess_move(
+    move_request: ChessMoveRequest,
+    current_user: dict = Depends(get_current_user)
+):
+    """Make a chess move - SERVER VALIDATED"""
+    user_id = current_user["_id"]
+    
+    game = await chess_games_collection.find_one({"_id": ObjectId(move_request.game_id)})
+    
+    if not game:
+        raise HTTPException(status_code=404, detail="Game not found")
+    
+    if game["status"] != "active":
+        raise HTTPException(status_code=400, detail="Game is not active")
+    
+    # Check if user is a player
+    is_white = game["player_white_id"] == user_id
+    is_black = game["player_black_id"] == user_id
+    
+    if not is_white and not is_black:
+        raise HTTPException(status_code=403, detail="You are not a player in this game")
+    
+    # Load board
+    board = chess.Board(game["game_state"])
+    
+    # Check if it's user's turn
+    if board.turn and not is_white:
+        raise HTTPException(status_code=400, detail="Not your turn (White to move)")
+    if not board.turn and not is_black:
+        raise HTTPException(status_code=400, detail="Not your turn (Black to move)")
+    
+    # Parse and validate move
+    try:
+        from_sq = chess.parse_square(move_request.from_square)
+        to_sq = chess.parse_square(move_request.to_square)
+        
+        # Handle promotion
+        promotion = None
+        if move_request.promotion:
+            promotion_map = {"q": chess.QUEEN, "r": chess.ROOK, "b": chess.BISHOP, "n": chess.KNIGHT}
+            promotion = promotion_map.get(move_request.promotion.lower())
+        
+        move = chess.Move(from_sq, to_sq, promotion=promotion)
+        
+        # Validate move is legal
+        if move not in board.legal_moves:
+            raise HTTPException(status_code=400, detail="Illegal move")
+        
+        # Make move
+        san = board.san(move)
+        board.push(move)
+        
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=f"Invalid move format: {str(e)}")
+    
+    # Store move in history
+    move_doc = {
+        "game_id": move_request.game_id,
+        "player_id": user_id,
+        "from_square": move_request.from_square,
+        "to_square": move_request.to_square,
+        "promotion": move_request.promotion,
+        "san": san,
+        "fen_after": board.fen(),
+        "move_number": game["move_count"] + 1,
+        "created_at": datetime.utcnow()
+    }
+    await chess_moves_collection.insert_one(move_doc)
+    
+    # Update game state
+    update_data = {
+        "game_state": board.fen(),
+        "move_count": game["move_count"] + 1,
+        "last_move_at": datetime.utcnow()
+    }
+    
+    # Check for game end conditions
+    game_result = None
+    winner_id = None
+    
+    if board.is_checkmate():
+        winner_id = user_id
+        game_result = "checkmate"
+        update_data["status"] = "completed"
+        update_data["result"] = game_result
+        update_data["winner_id"] = winner_id
+        update_data["completed_at"] = datetime.utcnow()
+    elif board.is_stalemate():
+        game_result = "stalemate"
+        update_data["status"] = "completed"
+        update_data["result"] = game_result
+        update_data["completed_at"] = datetime.utcnow()
+    elif board.is_insufficient_material():
+        game_result = "insufficient_material"
+        update_data["status"] = "completed"
+        update_data["result"] = game_result
+        update_data["completed_at"] = datetime.utcnow()
+    elif board.can_claim_fifty_moves():
+        game_result = "fifty_moves"
+        update_data["status"] = "completed"
+        update_data["result"] = game_result
+        update_data["completed_at"] = datetime.utcnow()
+    elif board.can_claim_threefold_repetition():
+        game_result = "threefold_repetition"
+        update_data["status"] = "completed"
+        update_data["result"] = game_result
+        update_data["completed_at"] = datetime.utcnow()
+    
+    await chess_games_collection.update_one(
+        {"_id": ObjectId(move_request.game_id)},
+        {"$set": update_data}
+    )
+    
+    # Update stats if game ended
+    if game_result:
+        await update_chess_stats_after_game(
+            game["player_white_id"],
+            game["player_black_id"],
+            winner_id,
+            game["mode"]
+        )
+        
+        # Create community activity for win
+        if winner_id:
+            winner = await users_collection.find_one({"_id": ObjectId(winner_id)})
+            await create_community_activity(
+                winner_id,
+                "CHESS_WIN",
+                f"won by {game_result}"
+            )
+    
+    # Notify opponent via socket
+    opponent_id = game["player_black_id"] if is_white else game["player_white_id"]
+    await sio.emit(f"chess_move_{opponent_id}", {
+        "game_id": move_request.game_id,
+        "move": {
+            "from": move_request.from_square,
+            "to": move_request.to_square,
+            "san": san,
+            "promotion": move_request.promotion
+        },
+        "fen": board.fen(),
+        "is_check": board.is_check(),
+        "is_checkmate": board.is_checkmate(),
+        "game_result": game_result
+    })
+    
+    # Get legal moves for response
+    legal_moves = [m.uci() for m in board.legal_moves]
+    
+    return {
+        "success": True,
+        "san": san,
+        "fen": board.fen(),
+        "legal_moves": legal_moves,
+        "is_check": board.is_check(),
+        "is_checkmate": board.is_checkmate(),
+        "is_stalemate": board.is_stalemate(),
+        "game_result": game_result,
+        "winner_id": winner_id
+    }
+
+async def update_chess_stats_after_game(white_id: str, black_id: str, winner_id: Optional[str], mode: str):
+    """Update chess stats after game completion"""
+    # Ensure both players have stats
+    white_stats = await ensure_chess_stats(white_id)
+    black_stats = await ensure_chess_stats(black_id)
+    
+    is_draw = winner_id is None
+    is_ranked = mode == "ranked"
+    
+    # Calculate ELO changes (only for ranked)
+    white_elo_change = 0
+    black_elo_change = 0
+    
+    if is_ranked:
+        if is_draw:
+            white_elo_change, black_elo_change = calculate_elo_change(
+                white_stats["rating"], black_stats["rating"], draw=True
+            )
+        elif winner_id == white_id:
+            white_elo_change, _ = calculate_elo_change(white_stats["rating"], black_stats["rating"])
+            _, black_elo_change = calculate_elo_change(black_stats["rating"], white_stats["rating"])
+            black_elo_change = -abs(black_elo_change)
+        else:
+            _, white_elo_change = calculate_elo_change(white_stats["rating"], black_stats["rating"])
+            black_elo_change, _ = calculate_elo_change(black_stats["rating"], white_stats["rating"])
+            white_elo_change = -abs(white_elo_change)
+    
+    # Update white player stats
+    white_update = {
+        "$inc": {"games_played": 1},
+        "$set": {"updated_at": datetime.utcnow()}
+    }
+    if is_draw:
+        white_update["$inc"]["draws"] = 1
+        white_update["$set"]["win_streak"] = 0
+    elif winner_id == white_id:
+        white_update["$inc"]["wins"] = 1
+        white_update["$inc"]["win_streak"] = 1
+        new_streak = white_stats.get("win_streak", 0) + 1
+        if new_streak > white_stats.get("best_win_streak", 0):
+            white_update["$set"]["best_win_streak"] = new_streak
+    else:
+        white_update["$inc"]["losses"] = 1
+        white_update["$set"]["win_streak"] = 0
+    
+    if is_ranked:
+        white_update["$inc"]["rating"] = white_elo_change
+    
+    await chess_stats_collection.update_one({"user_id": white_id}, white_update)
+    
+    # Update black player stats
+    black_update = {
+        "$inc": {"games_played": 1},
+        "$set": {"updated_at": datetime.utcnow()}
+    }
+    if is_draw:
+        black_update["$inc"]["draws"] = 1
+        black_update["$set"]["win_streak"] = 0
+    elif winner_id == black_id:
+        black_update["$inc"]["wins"] = 1
+        black_update["$inc"]["win_streak"] = 1
+        new_streak = black_stats.get("win_streak", 0) + 1
+        if new_streak > black_stats.get("best_win_streak", 0):
+            black_update["$set"]["best_win_streak"] = new_streak
+    else:
+        black_update["$inc"]["losses"] = 1
+        black_update["$set"]["win_streak"] = 0
+    
+    if is_ranked:
+        black_update["$inc"]["rating"] = black_elo_change
+    
+    await chess_stats_collection.update_one({"user_id": black_id}, black_update)
+
+@app.post("/api/chess/resign")
+async def resign_chess_game(
+    resign: ChessResign,
+    current_user: dict = Depends(get_current_user)
+):
+    """Resign from a chess game"""
+    user_id = current_user["_id"]
+    
+    game = await chess_games_collection.find_one({"_id": ObjectId(resign.game_id)})
+    
+    if not game:
+        raise HTTPException(status_code=404, detail="Game not found")
+    
+    if game["status"] != "active":
+        raise HTTPException(status_code=400, detail="Game is not active")
+    
+    # Check if user is a player
+    is_white = game["player_white_id"] == user_id
+    is_black = game["player_black_id"] == user_id
+    
+    if not is_white and not is_black:
+        raise HTTPException(status_code=403, detail="You are not a player in this game")
+    
+    # Opponent wins
+    winner_id = game["player_black_id"] if is_white else game["player_white_id"]
+    
+    await chess_games_collection.update_one(
+        {"_id": ObjectId(resign.game_id)},
+        {
+            "$set": {
+                "status": "completed",
+                "result": "resignation",
+                "winner_id": winner_id,
+                "completed_at": datetime.utcnow()
+            }
+        }
+    )
+    
+    # Update stats
+    await update_chess_stats_after_game(
+        game["player_white_id"],
+        game["player_black_id"],
+        winner_id,
+        game["mode"]
+    )
+    
+    # Notify opponent
+    await sio.emit(f"chess_resign_{winner_id}", {
+        "game_id": resign.game_id,
+        "resigned_by": user_id
+    })
+    
+    return {"message": "You resigned", "winner_id": winner_id}
+
+@app.get("/api/chess/stats/{user_id}")
+async def get_chess_stats(
+    user_id: str,
+    current_user: dict = Depends(get_current_user)
+):
+    """Get chess stats for a user"""
+    stats = await ensure_chess_stats(user_id)
+    
+    user = await users_collection.find_one(
+        {"_id": ObjectId(user_id)},
+        {"password": 0, "email": 0}
+    )
+    
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found")
+    
+    return {
+        "stats": serialize_doc(stats),
+        "user": serialize_doc(user)
+    }
+
+@app.get("/api/chess/stats")
+async def get_my_chess_stats(current_user: dict = Depends(get_current_user)):
+    """Get current user's chess stats"""
+    stats = await ensure_chess_stats(current_user["_id"])
+    return {"stats": serialize_doc(stats)}
+
+@app.get("/api/chess/leaderboard")
+async def get_chess_leaderboard(
+    type: str = "rating",
+    limit: int = 20,
+    current_user: dict = Depends(get_current_user)
+):
+    """Get chess leaderboard"""
+    valid_types = ["rating", "wins", "games"]
+    if type not in valid_types:
+        raise HTTPException(status_code=400, detail=f"Invalid type. Must be one of: {valid_types}")
+    
+    sort_field = {
+        "rating": "rating",
+        "wins": "wins",
+        "games": "games_played"
+    }[type]
+    
+    # Get top players
+    top_players = await chess_stats_collection.find().sort(
+        sort_field, -1
+    ).limit(limit).to_list(limit)
+    
+    # Enrich with user data
+    leaderboard = []
+    for i, stats in enumerate(top_players):
+        user = await users_collection.find_one(
+            {"_id": ObjectId(stats["user_id"])},
+            {"password": 0, "email": 0}
+        )
+        if user:
+            leaderboard.append({
+                "rank": i + 1,
+                "user_id": stats["user_id"],
+                "username": user.get("username"),
+                "avatar_id": user.get("avatar_id", "shield"),
+                "rating": stats.get("rating", 1200),
+                "wins": stats.get("wins", 0),
+                "losses": stats.get("losses", 0),
+                "draws": stats.get("draws", 0),
+                "games_played": stats.get("games_played", 0)
+            })
+    
+    # Get current user's rank
+    my_stats = await chess_stats_collection.find_one({"user_id": current_user["_id"]})
+    my_rank = None
+    if my_stats:
+        higher_count = await chess_stats_collection.count_documents({
+            sort_field: {"$gt": my_stats.get(sort_field, 0)}
+        })
+        my_rank = higher_count + 1
+    
+    return {
+        "leaderboard": leaderboard,
+        "type": type,
+        "my_rank": my_rank,
+        "my_stats": serialize_doc(my_stats) if my_stats else None
+    }
+
+@app.get("/api/chess/active-games")
+async def get_active_games(current_user: dict = Depends(get_current_user)):
+    """Get user's active chess games"""
+    user_id = current_user["_id"]
+    
+    games = await chess_games_collection.find({
+        "$or": [
+            {"player_white_id": user_id},
+            {"player_black_id": user_id}
+        ],
+        "status": "active"
+    }).sort("created_at", -1).to_list(20)
+    
+    # Enrich with opponent info
+    enriched_games = []
+    for game in games:
+        opponent_id = game["player_black_id"] if game["player_white_id"] == user_id else game["player_white_id"]
+        opponent = await users_collection.find_one(
+            {"_id": ObjectId(opponent_id)},
+            {"password": 0, "email": 0}
+        )
+        
+        board = chess.Board(game["game_state"])
+        turn = "white" if board.turn else "black"
+        your_color = "white" if game["player_white_id"] == user_id else "black"
+        
+        enriched_games.append({
+            **serialize_doc(game),
+            "opponent": serialize_doc(opponent),
+            "your_color": your_color,
+            "is_your_turn": turn == your_color,
+            "is_check": board.is_check()
+        })
+    
+    return {"games": enriched_games}
+
+@app.get("/api/chess/history")
+async def get_game_history(
+    limit: int = 20,
+    current_user: dict = Depends(get_current_user)
+):
+    """Get user's completed chess games"""
+    user_id = current_user["_id"]
+    
+    games = await chess_games_collection.find({
+        "$or": [
+            {"player_white_id": user_id},
+            {"player_black_id": user_id}
+        ],
+        "status": "completed"
+    }).sort("completed_at", -1).limit(limit).to_list(limit)
+    
+    # Enrich with opponent info
+    enriched_games = []
+    for game in games:
+        opponent_id = game["player_black_id"] if game["player_white_id"] == user_id else game["player_white_id"]
+        opponent = await users_collection.find_one(
+            {"_id": ObjectId(opponent_id)},
+            {"password": 0, "email": 0}
+        )
+        
+        your_color = "white" if game["player_white_id"] == user_id else "black"
+        did_win = game.get("winner_id") == user_id
+        is_draw = game.get("winner_id") is None
+        
+        enriched_games.append({
+            **serialize_doc(game),
+            "opponent": serialize_doc(opponent),
+            "your_color": your_color,
+            "result_for_you": "draw" if is_draw else ("win" if did_win else "loss")
+        })
+    
+    return {"games": enriched_games}
+
+# Chess chat endpoint (in-game chat)
+@app.get("/api/chess/chat/{game_id}")
+async def get_chess_chat(
+    game_id: str,
+    current_user: dict = Depends(get_current_user)
+):
+    """Get in-game chess chat messages"""
+    game = await chess_games_collection.find_one({"_id": ObjectId(game_id)})
+    
+    if not game:
+        raise HTTPException(status_code=404, detail="Game not found")
+    
+    user_id = current_user["_id"]
+    if user_id not in [game["player_white_id"], game["player_black_id"]]:
+        raise HTTPException(status_code=403, detail="You are not a player in this game")
+    
+    # Get chat messages for this game
+    messages = await chat_messages_collection.find({
+        "chess_game_id": game_id
+    }).sort("created_at", 1).to_list(100)
+    
+    return {"messages": serialize_doc(messages)}
+
+@app.post("/api/chess/chat/{game_id}")
+async def send_chess_chat(
+    game_id: str,
+    message: ChatMessageCreate,
+    current_user: dict = Depends(get_current_user)
+):
+    """Send in-game chess chat message"""
+    game = await chess_games_collection.find_one({"_id": ObjectId(game_id)})
+    
+    if not game:
+        raise HTTPException(status_code=404, detail="Game not found")
+    
+    user_id = current_user["_id"]
+    if user_id not in [game["player_white_id"], game["player_black_id"]]:
+        raise HTTPException(status_code=403, detail="You are not a player in this game")
+    
+    user = await users_collection.find_one({"_id": ObjectId(user_id)})
+    
+    if user.get("is_blocked", False):
+        raise HTTPException(status_code=403, detail="You are blocked from chatting")
+    
+    filtered_content = filter_profanity(message.content)
+    
+    msg_doc = {
+        "chess_game_id": game_id,
+        "user_id": user_id,
+        "username": user.get("username"),
+        "avatar_id": user.get("avatar_id", "shield"),
+        "content": filtered_content,
+        "created_at": datetime.utcnow()
+    }
+    
+    result = await chat_messages_collection.insert_one(msg_doc)
+    msg_doc["_id"] = str(result.inserted_id)
+    
+    # Notify opponent
+    opponent_id = game["player_black_id"] if game["player_white_id"] == user_id else game["player_white_id"]
+    await sio.emit(f"chess_chat_{opponent_id}", serialize_doc(msg_doc))
+    
+    return {"message": serialize_doc(msg_doc)}
+
 # ============= SOCKET.IO HANDLERS =============
 
 # Active connections: {user_id: [sid]}
