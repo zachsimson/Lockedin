@@ -362,13 +362,20 @@ export default function Community() {
         {[
           { id: 'feed', icon: 'pulse', label: 'Feed' },
           { id: 'media', icon: 'play-circle', label: 'Learn' },
+          { id: 'chess', icon: 'game-controller', label: 'Chess' },
           { id: 'chat', icon: 'chatbubbles', label: 'Chat' },
           { id: 'friends', icon: 'people', label: 'Connect' },
         ].map((tab) => (
           <Pressable
             key={tab.id}
             style={[styles.tab, activeSection === tab.id && styles.tabActive]}
-            onPress={() => setActiveSection(tab.id as any)}
+            onPress={() => {
+              if (tab.id === 'chess') {
+                router.push('/chess');
+              } else {
+                setActiveSection(tab.id as any);
+              }
+            }}
           >
             <Ionicons 
               name={tab.icon as any} 
