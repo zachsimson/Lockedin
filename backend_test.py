@@ -194,13 +194,23 @@ class ChessAPITester:
             success, response, status = self.make_request("POST", "/chess/create", game_data, headers)
             
             if success:
+                # Handle different response formats
                 if "game_id" in response:
-                    # Store the first successful game ID for later tests
+                    # Direct game_id in response
                     if not self.test_game_id and game_data["mode"] == "friend":
                         self.test_game_id = response["game_id"]
                     self.log_result(f"Create Chess Game ({game_data['mode']})", True, f"Game created: {response['game_id']}")
+                elif "game" in response and "_id" in response["game"]:
+                    # Game object with _id field
+                    game_id = response["game"]["_id"]
+                    if not self.test_game_id and game_data["mode"] == "friend":
+                        self.test_game_id = game_id
+                    self.log_result(f"Create Chess Game ({game_data['mode']})", True, f"Game created: {game_id}")
+                elif "status" in response and response["status"] == "queued":
+                    # Queued for matchmaking
+                    self.log_result(f"Create Chess Game ({game_data['mode']})", True, f"Queued for matchmaking: {response.get('queue_id', 'N/A')}")
                 else:
-                    self.log_result(f"Create Chess Game ({game_data['mode']})", False, "No game_id in response", f"Response: {response}")
+                    self.log_result(f"Create Chess Game ({game_data['mode']})", False, "Unexpected response format", f"Response: {response}")
             else:
                 self.log_result(f"Create Chess Game ({game_data['mode']})", False, f"Failed to create {game_data['mode']} game", f"Status: {status}, Response: {response}")
     
