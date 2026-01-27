@@ -389,20 +389,27 @@ class ChessAPITester:
         game_data = {"mode": "casual"}
         success, response, status = self.make_request("POST", "/chess/create", game_data, headers)
         
-        if success and "game_id" in response:
-            game_id = response["game_id"]
+        if success:
+            game_id = None
+            if "game_id" in response:
+                game_id = response["game_id"]
+            elif "game" in response and "_id" in response["game"]:
+                game_id = response["game"]["_id"]
             
-            # Get game state to check status tracking
-            success2, response2, status2 = self.make_request("GET", f"/chess/game/{game_id}", headers=headers)
-            
-            if success2 and "status" in response2:
-                valid_statuses = ["active", "waiting", "completed", "checkmate", "stalemate", "draw"]
-                if response2["status"] in valid_statuses:
-                    self.log_result("Game Status Tracking", True, f"Game status properly tracked: {response2['status']}")
+            if game_id:
+                # Get game state to check status tracking
+                success2, response2, status2 = self.make_request("GET", f"/chess/game/{game_id}", headers=headers)
+                
+                if success2 and "status" in response2:
+                    valid_statuses = ["active", "waiting", "completed", "checkmate", "stalemate", "draw"]
+                    if response2["status"] in valid_statuses:
+                        self.log_result("Game Status Tracking", True, f"Game status properly tracked: {response2['status']}")
+                    else:
+                        self.log_result("Game Status Tracking", False, f"Invalid game status: {response2['status']}")
                 else:
-                    self.log_result("Game Status Tracking", False, f"Invalid game status: {response2['status']}")
+                    self.log_result("Game Status Tracking", False, "No status field in game state")
             else:
-                self.log_result("Game Status Tracking", False, "No status field in game state")
+                self.log_result("Checkmate Detection Setup", False, "Could not extract game ID from response")
         else:
             self.log_result("Checkmate Detection Setup", False, "Could not create test game for checkmate detection")
     
