@@ -129,10 +129,12 @@ class ChessAPITester:
         
         success, response, status = self.make_request("GET", "/chess/stats", headers=headers)
         if success:
+            # Check if response has stats object
+            stats = response.get("stats", response)
             required_fields = ["rating", "wins", "losses", "draws", "games_played"]
-            has_all_fields = all(field in response for field in required_fields)
+            has_all_fields = all(field in stats for field in required_fields)
             if has_all_fields:
-                self.log_result("Get Current User Chess Stats", True, f"Stats retrieved: Rating {response.get('rating', 'N/A')}")
+                self.log_result("Get Current User Chess Stats", True, f"Stats retrieved: Rating {stats.get('rating', 'N/A')}")
             else:
                 self.log_result("Get Current User Chess Stats", False, "Missing required fields", f"Response: {response}")
         else:
