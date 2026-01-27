@@ -102,7 +102,7 @@ export default function Community() {
   const router = useRouter();
   const chatListRef = useRef<FlatList>(null);
   
-  const [activeSection, setActiveSection] = useState<'feed' | 'media' | 'chat' | 'friends'>('feed');
+  const [activeSection, setActiveSection] = useState<'feed' | 'media' | 'chess' | 'chat' | 'friends'>('feed');
   const [activities, setActivities] = useState<CommunityActivity[]>([]);
   const [chatMessages, setChatMessages] = useState<ChatMessage[]>([]);
   const [mediaContent, setMediaContent] = useState<Media[]>([]);
