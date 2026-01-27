@@ -102,7 +102,7 @@
 # Testing Data - Main Agent and testing sub agent both should log testing data below this section
 #====================================================================================================
 
-user_problem_statement: "Anti-gambling support app with VPN blocking, subscription billing, community chat, recovery tracking, and admin controls"
+user_problem_statement: "Anti-gambling support app with VPN blocking, subscription billing, community chat, recovery tracking, admin controls, and integrated Chess feature"
 
 backend:
   - task: "User Authentication (JWT)"
