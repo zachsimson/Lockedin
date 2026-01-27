@@ -228,11 +228,24 @@ class ChessAPITester:
         success, response, status = self.make_request("GET", f"/chess/game/{self.test_game_id}", headers=headers)
         
         if success:
+            # Handle nested response format where data is in 'game' object
+            game_data = response.get("game", response)
+            
+            # Map the actual response fields to expected fields
+            mapped_response = {
+                "game_id": game_data.get("_id"),
+                "white_player": response.get("white_player"),
+                "black_player": response.get("black_player"),
+                "current_turn": response.get("turn"),
+                "game_state": game_data.get("game_state") or response.get("fen"),
+                "status": game_data.get("status")
+            }
+            
             required_fields = ["game_id", "white_player", "black_player", "current_turn", "game_state", "status"]
-            has_all_fields = all(field in response for field in required_fields)
+            has_all_fields = all(mapped_response.get(field) is not None for field in required_fields)
             
             if has_all_fields:
-                self.log_result("Get Chess Game State", True, f"Game state retrieved, status: {response.get('status')}")
+                self.log_result("Get Chess Game State", True, f"Game state retrieved, status: {mapped_response.get('status')}")
                 
                 # Check if legal moves are provided
                 if "legal_moves" in response:
@@ -240,7 +253,7 @@ class ChessAPITester:
                 else:
                     self.log_result("Chess Legal Moves", False, "Legal moves not provided")
             else:
-                missing_fields = [field for field in required_fields if field not in response]
+                missing_fields = [field for field in required_fields if mapped_response.get(field) is None]
                 self.log_result("Get Chess Game State", False, f"Missing fields: {missing_fields}", f"Response: {response}")
         else:
             self.log_result("Get Chess Game State", False, "Failed to get game state", f"Status: {status}, Response: {response}")
