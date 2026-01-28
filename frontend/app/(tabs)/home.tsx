@@ -315,48 +315,63 @@ export default function Home() {
           </View>
         )}
 
-        {/* Community Activity */}
+        {/* Community Activity - Premium Card Layout */}
         <View style={styles.sectionHeader}>
           <Text style={styles.sectionTitle}>Community Activity</Text>
-          <Text style={styles.sectionSubtitle}>Live updates</Text>
+          <Text style={styles.sectionSubtitle}>Your recovery community is thriving</Text>
         </View>
 
-        <View style={styles.activityCard}>
-          {activities.length === 0 ? (
-            <View style={styles.emptyActivity}>
-              <Ionicons name="people" size={32} color={colors.textMuted} />
-              <Text style={styles.emptyText}>No activity yet</Text>
+        {activities.length === 0 ? (
+          <View style={styles.emptyActivityCard}>
+            <View style={styles.emptyActivityIcon}>
+              <Ionicons name="people" size={36} color={colors.textMuted} />
             </View>
-          ) : (
-            activities.slice(0, 8).map((activity, index) => {
+            <Text style={styles.emptyActivityTitle}>No activity yet</Text>
+            <Text style={styles.emptyActivitySubtitle}>Be the first to check in today!</Text>
+          </View>
+        ) : (
+          <View style={styles.activityGrid}>
+            {activities.slice(0, 6).map((activity, index) => {
               const avatarIcon = AVATAR_ICONS[activity.avatar_id] || 'shield-checkmark';
               const avatarColor = AVATAR_COLORS[activity.avatar_id] || '#00F5A0';
               const activityStyle = ACTIVITY_ICONS[activity.activity_type] || { icon: 'ellipse', color: colors.textMuted };
+              const isOnline = Math.random() > 0.4; // Simulated online status
               
               return (
                 <Pressable
-                  key={activity._id || index}
-                  style={[styles.activityItem, index === 7 && styles.activityItemLast]}
+                  key={`activity-card-${activity._id || index}`}
+                  style={styles.activityCardNew}
                   onPress={() => navigateToProfile(activity.user_id)}
                 >
-                  <View style={[styles.avatar, { borderColor: avatarColor }]}>
-                    <Ionicons name={avatarIcon as any} size={18} color={avatarColor} />
+                  {/* Status indicator */}
+                  <View style={[styles.onlineIndicator, { backgroundColor: isOnline ? '#22C55E' : colors.textMuted }]} />
+                  
+                  {/* Avatar */}
+                  <View style={[styles.avatarNew, { borderColor: avatarColor, backgroundColor: `${avatarColor}15` }]}>
+                    <Ionicons name={avatarIcon as any} size={22} color={avatarColor} />
                   </View>
-                  <View style={styles.activityContent}>
-                    <Text style={styles.activityText}>
-                      <Text style={styles.activityUser}>{activity.username}</Text>
-                      {' '}{getActivityMessage(activity)}
+                  
+                  {/* User Info */}
+                  <Text style={styles.activityUserNew} numberOfLines={1}>{activity.username}</Text>
+                  
+                  {/* Activity Badge */}
+                  <View style={[styles.activityBadge, { backgroundColor: `${activityStyle.color}20` }]}>
+                    <Ionicons name={activityStyle.icon as any} size={12} color={activityStyle.color} />
+                    <Text style={[styles.activityBadgeText, { color: activityStyle.color }]}>
+                      {activity.activity_type === 'CHECK_IN' ? 'Checked In' :
+                       activity.activity_type === 'RESET' ? 'Reset' :
+                       activity.activity_type === 'STREAK_MILESTONE' ? activity.activity_value :
+                       'Achievement'}
                     </Text>
-                    <Text style={styles.activityTime}>{formatTimeAgo(activity.created_at)}</Text>
                   </View>
-                  <View style={[styles.activityTypeIcon, { backgroundColor: `${activityStyle.color}20` }]}>
-                    <Ionicons name={activityStyle.icon as any} size={14} color={activityStyle.color} />
-                  </View>
+                  
+                  {/* Time */}
+                  <Text style={styles.activityTimeNew}>{formatTimeAgo(activity.created_at)}</Text>
                 </Pressable>
               );
-            })
-          )}
-        </View>
+            })}
+          </View>
+        )}
       </ScrollView>
     </View>
   );
