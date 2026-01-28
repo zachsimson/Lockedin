@@ -437,31 +437,43 @@ const styles = StyleSheet.create({
     borderWidth: 1, borderColor: colors.primary, flexDirection: 'row', justifyContent: 'center', gap: 12,
   },
   checkedInText: { fontSize: 16, fontWeight: '700', color: colors.primary, letterSpacing: 1 },
-  sectionHeader: { marginBottom: 12 },
-  sectionTitle: { fontSize: 18, fontWeight: 'bold', color: colors.textPrimary },
-  sectionSubtitle: { fontSize: 12, color: colors.textMuted, marginTop: 2 },
-  activityCard: {
-    backgroundColor: colors.cardBackground, borderRadius: 16,
-    overflow: 'hidden', borderWidth: 1, borderColor: colors.border,
+  sectionHeader: { marginBottom: 16 },
+  sectionTitle: { fontSize: 20, fontWeight: 'bold', color: colors.textPrimary },
+  sectionSubtitle: { fontSize: 13, color: colors.textMuted, marginTop: 4 },
+  // NEW: Premium Activity Grid
+  activityGrid: {
+    flexDirection: 'row', flexWrap: 'wrap', gap: 12,
   },
-  emptyActivity: { padding: 32, alignItems: 'center', gap: 8 },
-  emptyText: { fontSize: 14, color: colors.textMuted },
-  activityItem: {
-    flexDirection: 'row', alignItems: 'center', padding: 14,
-    borderBottomWidth: 1, borderBottomColor: colors.border,
+  activityCardNew: {
+    width: '47%', backgroundColor: colors.cardBackground, borderRadius: 16,
+    padding: 16, alignItems: 'center', borderWidth: 1, borderColor: colors.border,
+    position: 'relative', minHeight: 140,
   },
-  activityItemLast: { borderBottomWidth: 0 },
-  avatar: {
-    width: 40, height: 40, borderRadius: 20,
-    backgroundColor: colors.surface, justifyContent: 'center', alignItems: 'center',
-    borderWidth: 2, marginRight: 12,
+  onlineIndicator: {
+    position: 'absolute', top: 12, right: 12, width: 8, height: 8, borderRadius: 4,
   },
-  activityContent: { flex: 1 },
-  activityText: { fontSize: 14, color: colors.textSecondary, lineHeight: 20 },
-  activityUser: { fontWeight: '600', color: colors.textPrimary },
-  activityTime: { fontSize: 11, color: colors.textMuted, marginTop: 4 },
-  activityTypeIcon: {
-    width: 28, height: 28, borderRadius: 14,
-    justifyContent: 'center', alignItems: 'center', marginLeft: 8,
+  avatarNew: {
+    width: 52, height: 52, borderRadius: 26, justifyContent: 'center', alignItems: 'center',
+    borderWidth: 2, marginBottom: 10,
   },
+  activityUserNew: {
+    fontSize: 14, fontWeight: '600', color: colors.textPrimary,
+    textAlign: 'center', marginBottom: 8,
+  },
+  activityBadge: {
+    flexDirection: 'row', alignItems: 'center', gap: 4,
+    paddingHorizontal: 10, paddingVertical: 4, borderRadius: 12,
+  },
+  activityBadgeText: { fontSize: 11, fontWeight: '600' },
+  activityTimeNew: { fontSize: 11, color: colors.textMuted, marginTop: 6 },
+  emptyActivityCard: {
+    backgroundColor: colors.cardBackground, borderRadius: 20, padding: 40,
+    alignItems: 'center', borderWidth: 1, borderColor: colors.border,
+  },
+  emptyActivityIcon: {
+    width: 72, height: 72, borderRadius: 36, backgroundColor: colors.surface,
+    justifyContent: 'center', alignItems: 'center', marginBottom: 16,
+  },
+  emptyActivityTitle: { fontSize: 16, fontWeight: '600', color: colors.textPrimary },
+  emptyActivitySubtitle: { fontSize: 13, color: colors.textMuted, marginTop: 4 },
 });
