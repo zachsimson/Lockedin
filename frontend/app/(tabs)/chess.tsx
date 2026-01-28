@@ -642,10 +642,17 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     paddingVertical: 12,
     gap: 4,
+    position: 'relative',
   },
   tabActive: {
     borderBottomWidth: 2,
     borderBottomColor: colors.primary,
+  },
+  tabIconWrapper: {
+    width: 24,
+    height: 24,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   tabIconContainer: {
     position: 'relative',
@@ -665,6 +672,18 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     paddingHorizontal: 4,
+  },
+  tabBadgeAbsolute: {
+    position: 'absolute',
+    top: 6,
+    right: 10,
+    backgroundColor: colors.primary,
+    borderRadius: 9,
+    minWidth: 16,
+    height: 16,
+    justifyContent: 'center',
+    alignItems: 'center',
+    paddingHorizontal: 3,
   },
   tabBadgeText: {
     fontSize: 10,
