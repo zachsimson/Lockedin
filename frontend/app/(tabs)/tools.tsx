@@ -478,10 +478,10 @@ export default function Tools() {
       >
         {[
           { id: 'all', label: 'All', icon: 'apps' },
-          { id: 'YOUTUBE', label: 'YouTube', icon: 'logo-youtube' },
+          { id: 'YOUTUBE', label: 'YouTube', icon: 'play-circle' },
           { id: 'TIKTOK', label: 'TikTok', icon: 'musical-notes' },
           { id: 'TED', label: 'TED', icon: 'mic' },
-          { id: 'TWITTER', label: 'Twitter', icon: 'logo-twitter' },
+          { id: 'TWITTER', label: 'Twitter', icon: 'chatbubble-ellipses' },
           { id: 'ARTICLE', label: 'Articles', icon: 'document-text' },
         ].map((filter) => (
           <Pressable
