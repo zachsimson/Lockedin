@@ -99,6 +99,8 @@ export default function ChessTab() {
   const [refreshing, setRefreshing] = useState(false);
   const [queuing, setQueuing] = useState(false);
   const [queueMode, setQueueMode] = useState<string | null>(null);
+  const [friends, setFriends] = useState<any[]>([]);
+  const [showFriendsList, setShowFriendsList] = useState(false);
   
   // Settings state - loaded from storage
   const [boardTheme, setBoardTheme] = useState<BoardTheme>('classic');
