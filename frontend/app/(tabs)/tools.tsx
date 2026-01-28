@@ -413,46 +413,46 @@ export default function Tools() {
       <View style={styles.vpnInstructionsCard}>
         <View style={styles.vpnInstructionsHeader}>
           <Ionicons name="help-circle" size={24} color={colors.primary} />
-          <Text style={styles.vpnInstructionsTitle}>How Site Blocking Works</Text>
+          <Text style={styles.vpnInstructionsTitle}>How LockedIn Blocking Works</Text>
         </View>
         
         <View style={styles.vpnStep}>
           <View style={styles.vpnStepNumber}><Text style={styles.vpnStepNumberText}>1</Text></View>
           <View style={styles.vpnStepContent}>
-            <Text style={styles.vpnStepTitle}>In-App Protection</Text>
-            <Text style={styles.vpnStepDesc}>When enabled, LockedIn blocks gambling URLs opened from within the app.</Text>
+            <Text style={styles.vpnStepTitle}>Activate Protection Above</Text>
+            <Text style={styles.vpnStepDesc}>Tap "ACTIVATE PROTECTION" to enable LockedIn's site blocker. All gambling URLs will be blocked.</Text>
           </View>
         </View>
 
         <View style={styles.vpnStep}>
           <View style={styles.vpnStepNumber}><Text style={styles.vpnStepNumberText}>2</Text></View>
           <View style={styles.vpnStepContent}>
-            <Text style={styles.vpnStepTitle}>Device-Level Protection (Optional)</Text>
-            <Text style={styles.vpnStepDesc}>For full device blocking, configure your phone's DNS settings:</Text>
+            <Text style={styles.vpnStepTitle}>Full Device Protection</Text>
+            <Text style={styles.vpnStepDesc}>For blocking outside the app, add LockedIn's DNS to your phone settings:</Text>
           </View>
         </View>
 
         <View style={styles.vpnInstructionBox}>
           <Text style={styles.vpnInstructionPlatform}>📱 iPhone / iOS</Text>
-          <Text style={styles.vpnInstructionText}>Settings → Wi-Fi → (i) → Configure DNS → Manual → Add Server: 1.1.1.3 (Cloudflare Family)</Text>
+          <Text style={styles.vpnInstructionText}>Settings → Wi-Fi → Tap (i) on your network → Configure DNS → Manual → Add our server when prompted</Text>
         </View>
 
         <View style={styles.vpnInstructionBox}>
           <Text style={styles.vpnInstructionPlatform}>🤖 Android</Text>
-          <Text style={styles.vpnInstructionText}>Settings → Network → Private DNS → Custom → dns.adguard-dns.com</Text>
+          <Text style={styles.vpnInstructionText}>Settings → Network & Internet → Private DNS → Enter LockedIn DNS when prompted</Text>
         </View>
 
         <View style={styles.vpnStep}>
           <View style={styles.vpnStepNumber}><Text style={styles.vpnStepNumberText}>3</Text></View>
           <View style={styles.vpnStepContent}>
-            <Text style={styles.vpnStepTitle}>Browser Extensions</Text>
-            <Text style={styles.vpnStepDesc}>Install blockers like "Gamban" or "BetBlocker" for comprehensive protection.</Text>
+            <Text style={styles.vpnStepTitle}>24-Hour Cooldown</Text>
+            <Text style={styles.vpnStepDesc}>Once enabled, protection cannot be disabled for 24 hours. This prevents impulsive decisions during urges.</Text>
           </View>
         </View>
 
         <View style={styles.vpnNote}>
           <Ionicons name="shield-checkmark" size={16} color={colors.primary} />
-          <Text style={styles.vpnNoteText}>Combining all methods provides the strongest protection against gambling urges.</Text>
+          <Text style={styles.vpnNoteText}>LockedIn blocks {blockedDomains.length}+ gambling sites including casinos, sportsbooks, and betting platforms.</Text>
         </View>
       </View>
     </ScrollView>
