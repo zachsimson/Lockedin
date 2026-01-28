@@ -1394,6 +1394,50 @@ async def add_media(
 
 # ============= LIVE CHAT ENDPOINTS =============
 
+@app.get("/api/community/chat")
+async def get_community_chat(
+    limit: int = 50,
+    current_user: dict = Depends(get_current_user)
+):
+    """Get community chat messages (alias for /api/chat/messages)"""
+    messages = await chat_messages_collection.find({
+        "chess_game_id": {"$exists": False}  # Exclude in-game chess chat
+    }).sort("created_at", -1).limit(limit).to_list(limit)
+    
+    # Reverse to show oldest first
+    messages.reverse()
+    
+    return {"messages": serialize_doc(messages)}
+
+@app.post("/api/community/chat")
+async def send_community_chat(
+    message: ChatMessageCreate,
+    current_user: dict = Depends(get_current_user)
+):
+    """Send a message to community chat"""
+    user = await users_collection.find_one({"_id": ObjectId(current_user["_id"])})
+    
+    if user.get("is_blocked", False):
+        raise HTTPException(status_code=403, detail="You are blocked from chatting")
+    
+    filtered_content = filter_profanity(message.content)
+    
+    msg_doc = {
+        "user_id": current_user["_id"],
+        "username": user.get("username"),
+        "avatar_id": user.get("avatar_id", "shield"),
+        "content": filtered_content,
+        "created_at": datetime.utcnow()
+    }
+    
+    result = await chat_messages_collection.insert_one(msg_doc)
+    msg_doc["_id"] = str(result.inserted_id)
+    
+    # Broadcast via socket
+    await sio.emit("community_chat_message", serialize_doc(msg_doc))
+    
+    return {"message": serialize_doc(msg_doc)}
+
 @app.get("/api/chat/messages")
 async def get_chat_messages(
     limit: int = 50,
