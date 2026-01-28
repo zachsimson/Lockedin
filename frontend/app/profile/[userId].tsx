@@ -70,7 +70,7 @@ export default function ProfileScreen() {
   const sendFriendRequest = async () => {
     setActionLoading(true);
     try {
-      await api.post('/api/friends/request', { friend_id: userId });
+      await api.post('/api/friends/request', { receiver_id: userId });
       setFriendStatus('pending_sent');
       Alert.alert('Success', 'Friend request sent!');
     } catch (error: any) {
