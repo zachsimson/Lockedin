@@ -279,7 +279,7 @@ export default function ChessTab() {
       {/* Stats Card */}
       <View style={styles.statsCard}>
         <Text style={styles.statsTitle}>YOUR RATING</Text>
-        <Text style={styles.ratingNumber}>{myStats?.rating || 1200}</Text>
+        <Text style={styles.ratingNumber}>{myStats?.rating || 1000}</Text>
         <View style={styles.statsRow}>
           <View style={styles.statItem}>
             <Text style={styles.statValue}>{myStats?.wins || 0}</Text>
