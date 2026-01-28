@@ -256,7 +256,7 @@ export default function Home() {
           </Pressable>
         </View>
         <View style={styles.streakBadge}>
-          <Ionicons name="flame" size={28} color={colors.gold} />
+          <PremiumStreakIcon size={36} animated={true} />
           <Text style={styles.streakNumber}>{daysSober}</Text>
         </View>
       </View>
