@@ -970,26 +970,6 @@ const styles = StyleSheet.create({
   addButton: {
     marginTop: 8, backgroundColor: colors.primary, paddingHorizontal: 10, paddingVertical: 5, borderRadius: 10,
   },
-  // Socials Section
-  socialsContent: { padding: 20 },
-  socialsTitle: { fontSize: 22, fontWeight: 'bold', color: colors.textPrimary, marginBottom: 4 },
-  socialsSubtitle: { fontSize: 14, color: colors.textMuted, marginBottom: 24 },
-  socialsList: { gap: 12 },
-  socialItem: {
-    flexDirection: 'row', alignItems: 'center', backgroundColor: colors.cardBackground,
-    borderRadius: 16, padding: 16, gap: 14, borderWidth: 1, borderColor: colors.border,
-  },
-  socialIcon: {
-    width: 48, height: 48, borderRadius: 12, justifyContent: 'center', alignItems: 'center',
-  },
-  socialInfo: { flex: 1 },
-  socialName: { fontSize: 16, fontWeight: '600', color: colors.textPrimary },
-  socialHandle: { fontSize: 13, color: colors.textMuted, marginTop: 2 },
-  socialsCta: {
-    marginTop: 24, backgroundColor: colors.surface, borderRadius: 16, padding: 20,
-    alignItems: 'center',
-  },
-  socialsCtaText: { fontSize: 14, color: colors.textSecondary, textAlign: 'center', lineHeight: 20 },
   // Feed Section
   feedList: { padding: 16 },
   feedHeader: { marginBottom: 16 },
