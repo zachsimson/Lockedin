@@ -761,13 +761,14 @@ export default function Tools() {
         <Text style={styles.headerSubtitle}>Recovery resources & community</Text>
       </View>
 
-      {/* Reordered Tabs: Lock, Learn, Chat, Connect, Feed */}
+      {/* Reordered Tabs: Lock, Learn, Chat, Connect, Socials, Feed */}
       <View style={styles.tabBar}>
         {[
           { id: 'lock', icon: 'shield', label: 'Lock' },
           { id: 'learn', icon: 'play-circle', label: 'Learn' },
           { id: 'chat', icon: 'chatbubbles', label: 'Chat' },
           { id: 'connect', icon: 'people', label: 'Connect' },
+          { id: 'socials', icon: 'share-social', label: 'Socials' },
           { id: 'feed', icon: 'pulse', label: 'Feed' },
         ].map((tab) => (
           <Pressable
@@ -793,6 +794,7 @@ export default function Tools() {
       {activeSection === 'learn' && renderLearnSection()}
       {activeSection === 'chat' && renderChatSection()}
       {activeSection === 'connect' && renderConnectSection()}
+      {activeSection === 'socials' && renderSocialsSection()}
       {activeSection === 'feed' && renderFeedSection()}
 
       {/* Enable Modal */}
