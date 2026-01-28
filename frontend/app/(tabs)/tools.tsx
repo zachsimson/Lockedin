@@ -951,10 +951,36 @@ const styles = StyleSheet.create({
   vpnInstructionPlatform: { fontSize: 13, fontWeight: '600', color: colors.textPrimary, marginBottom: 6 },
   vpnInstructionText: { fontSize: 12, color: colors.textMuted, lineHeight: 18 },
   vpnNote: {
-    flexDirection: 'row', alignItems: 'center', gap: 10,
-    backgroundColor: `${colors.primary}15`, borderRadius: 10, padding: 14, marginTop: 8,
+    flexDirection: 'row', alignItems: 'flex-start', gap: 10,
+    backgroundColor: `${colors.primary}15`, borderRadius: 10, padding: 14, marginTop: 12,
   },
   vpnNoteText: { flex: 1, fontSize: 13, color: colors.textSecondary, lineHeight: 18 },
+  // Protection Status
+  protectionStatus: {
+    flexDirection: 'row', alignItems: 'center', gap: 12,
+    backgroundColor: colors.surface, borderRadius: 10, padding: 14, marginBottom: 16,
+  },
+  protectionIndicator: {
+    width: 40, height: 40, borderRadius: 20, backgroundColor: colors.cardBackground,
+    justifyContent: 'center', alignItems: 'center', borderWidth: 2, borderColor: colors.border,
+  },
+  protectionActive: { backgroundColor: colors.primary, borderColor: colors.primary },
+  protectionInfo: { flex: 1 },
+  protectionLabel: { fontSize: 14, fontWeight: '600', color: colors.textPrimary },
+  protectionDesc: { fontSize: 12, color: colors.textMuted, marginTop: 2 },
+  vpnDivider: { height: 1, backgroundColor: colors.border, marginVertical: 16 },
+  vpnSectionTitle: { fontSize: 15, fontWeight: '600', color: colors.textPrimary, marginBottom: 8 },
+  vpnSectionDesc: { fontSize: 13, color: colors.textMuted, marginBottom: 16, lineHeight: 18 },
+  vpnInstructionSteps: { fontSize: 13, color: colors.textSecondary, lineHeight: 22 },
+  dnsHighlight: { fontWeight: 'bold', color: colors.primary, fontFamily: Platform.OS === 'ios' ? 'Menlo' : 'monospace' },
+  blockedCountCard: {
+    flexDirection: 'row', alignItems: 'center', gap: 14,
+    backgroundColor: 'rgba(220, 38, 38, 0.1)', borderRadius: 12, padding: 16, marginTop: 16,
+    borderWidth: 1, borderColor: 'rgba(220, 38, 38, 0.2)',
+  },
+  blockedCountInfo: { flex: 1 },
+  blockedCountNumber: { fontSize: 24, fontWeight: 'bold', color: '#DC2626' },
+  blockedCountLabel: { fontSize: 12, color: colors.textMuted },
   // Learn Section
   learnList: { padding: 16, gap: 16 },
   updateCard: {
