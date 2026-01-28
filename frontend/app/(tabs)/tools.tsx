@@ -409,50 +409,70 @@ export default function Tools() {
         <Ionicons name="chevron-forward" size={20} color="rgba(255,255,255,0.6)" />
       </Pressable>
 
-      {/* VPN Setup Instructions */}
+      {/* How LockedIn Blocking Works */}
       <View style={styles.vpnInstructionsCard}>
         <View style={styles.vpnInstructionsHeader}>
-          <Ionicons name="help-circle" size={24} color={colors.primary} />
-          <Text style={styles.vpnInstructionsTitle}>How LockedIn Blocking Works</Text>
+          <Ionicons name="shield" size={24} color={colors.primary} />
+          <Text style={styles.vpnInstructionsTitle}>How LockedIn Protection Works</Text>
         </View>
         
-        <View style={styles.vpnStep}>
-          <View style={styles.vpnStepNumber}><Text style={styles.vpnStepNumberText}>1</Text></View>
-          <View style={styles.vpnStepContent}>
-            <Text style={styles.vpnStepTitle}>Activate Protection Above</Text>
-            <Text style={styles.vpnStepDesc}>Tap "ACTIVATE PROTECTION" to enable LockedIn's site blocker. All gambling URLs will be blocked.</Text>
+        {/* What's Active */}
+        <View style={styles.protectionStatus}>
+          <View style={[styles.protectionIndicator, isEnabled && styles.protectionActive]}>
+            <Ionicons name={isEnabled ? "checkmark-circle" : "ellipse-outline"} size={20} color={isEnabled ? "#000" : colors.textMuted} />
+          </View>
+          <View style={styles.protectionInfo}>
+            <Text style={styles.protectionLabel}>In-App Blocking</Text>
+            <Text style={styles.protectionDesc}>
+              {isEnabled ? "Active - All gambling links blocked within LockedIn" : "Not active - Enable above"}
+            </Text>
           </View>
         </View>
 
-        <View style={styles.vpnStep}>
-          <View style={styles.vpnStepNumber}><Text style={styles.vpnStepNumberText}>2</Text></View>
-          <View style={styles.vpnStepContent}>
-            <Text style={styles.vpnStepTitle}>Full Device Protection</Text>
-            <Text style={styles.vpnStepDesc}>For blocking outside the app, add LockedIn's DNS to your phone settings:</Text>
-          </View>
+        <View style={styles.vpnDivider} />
+        
+        <Text style={styles.vpnSectionTitle}>📱 Full Device Protection (Manual Setup)</Text>
+        <Text style={styles.vpnSectionDesc}>
+          To block gambling sites in Safari, Chrome, and other browsers, configure your device's DNS:
+        </Text>
+
+        <View style={styles.vpnInstructionBox}>
+          <Text style={styles.vpnInstructionPlatform}>iPhone / iOS</Text>
+          <Text style={styles.vpnInstructionSteps}>
+            1. Open Settings → Wi-Fi{'\n'}
+            2. Tap ⓘ next to your network{'\n'}
+            3. Tap "Configure DNS" → "Manual"{'\n'}
+            4. Delete existing servers{'\n'}
+            5. Add: <Text style={styles.dnsHighlight}>94.140.14.15</Text>{'\n'}
+            6. Add: <Text style={styles.dnsHighlight}>94.140.15.16</Text>{'\n'}
+            7. Tap "Save"
+          </Text>
         </View>
 
         <View style={styles.vpnInstructionBox}>
-          <Text style={styles.vpnInstructionPlatform}>📱 iPhone / iOS</Text>
-          <Text style={styles.vpnInstructionText}>Settings → Wi-Fi → Tap (i) on your network → Configure DNS → Manual → Add our server when prompted</Text>
-        </View>
-
-        <View style={styles.vpnInstructionBox}>
-          <Text style={styles.vpnInstructionPlatform}>🤖 Android</Text>
-          <Text style={styles.vpnInstructionText}>Settings → Network & Internet → Private DNS → Enter LockedIn DNS when prompted</Text>
-        </View>
-
-        <View style={styles.vpnStep}>
-          <View style={styles.vpnStepNumber}><Text style={styles.vpnStepNumberText}>3</Text></View>
-          <View style={styles.vpnStepContent}>
-            <Text style={styles.vpnStepTitle}>24-Hour Cooldown</Text>
-            <Text style={styles.vpnStepDesc}>Once enabled, protection cannot be disabled for 24 hours. This prevents impulsive decisions during urges.</Text>
-          </View>
+          <Text style={styles.vpnInstructionPlatform}>Android</Text>
+          <Text style={styles.vpnInstructionSteps}>
+            1. Open Settings → Network & Internet{'\n'}
+            2. Tap "Private DNS"{'\n'}
+            3. Select "Private DNS provider hostname"{'\n'}
+            4. Enter: <Text style={styles.dnsHighlight}>family.adguard-dns.com</Text>{'\n'}
+            5. Tap "Save"
+          </Text>
         </View>
 
         <View style={styles.vpnNote}>
-          <Ionicons name="shield-checkmark" size={16} color={colors.primary} />
-          <Text style={styles.vpnNoteText}>LockedIn blocks {blockedDomains.length}+ gambling sites including casinos, sportsbooks, and betting platforms.</Text>
+          <Ionicons name="information-circle" size={18} color={colors.primary} />
+          <Text style={styles.vpnNoteText}>
+            These DNS servers (AdGuard Family) block gambling, adult content, and malware. This works system-wide - in all apps and browsers.
+          </Text>
+        </View>
+
+        <View style={styles.blockedCountCard}>
+          <Ionicons name="ban" size={24} color="#DC2626" />
+          <View style={styles.blockedCountInfo}>
+            <Text style={styles.blockedCountNumber}>{blockedDomains.length}+</Text>
+            <Text style={styles.blockedCountLabel}>Gambling sites in our blocklist</Text>
+          </View>
         </View>
       </View>
     </ScrollView>
