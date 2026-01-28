@@ -59,7 +59,9 @@ export default function ProfileScreen() {
       setAchievements(profileRes.data.achievements || []);
       setAllAchievements(profileRes.data.all_achievements || []);
       setCurrentStreak(profileRes.data.current_streak_days || 0);
-      setFriendStatus(friendRes.data.status as FriendStatus);
+      setFriendStatus(friendRes.data.status === 'pending_outgoing' ? 'pending_sent' : 
+                     friendRes.data.status === 'pending_incoming' ? 'pending_received' : 
+                     friendRes.data.status as FriendStatus);
     } catch (error) {
       console.error('Failed to load profile:', error);
     } finally { setLoading(false); }
