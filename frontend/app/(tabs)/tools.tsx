@@ -22,6 +22,7 @@ import { useRouter } from 'expo-router';
 import { LinearGradient } from 'expo-linear-gradient';
 import { colors } from '../../src/theme';
 import { useAuth } from '../../src/context/AuthContext';
+import { useBlocker } from '../../src/context/BlockerContext';
 import api from '../../src/services/api';
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
