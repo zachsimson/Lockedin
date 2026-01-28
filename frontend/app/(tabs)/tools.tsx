@@ -903,6 +903,38 @@ const styles = StyleSheet.create({
   emergencyContent: { flex: 1 },
   emergencyTitle: { fontSize: 13, fontWeight: '600', color: 'rgba(255,255,255,0.8)' },
   emergencyText: { fontSize: 17, fontWeight: 'bold', color: '#FFF' },
+  // VPN Instructions Styles
+  vpnInstructionsCard: {
+    backgroundColor: colors.cardBackground, borderRadius: 16, padding: 20,
+    borderWidth: 1, borderColor: colors.border, marginTop: 16,
+  },
+  vpnInstructionsHeader: {
+    flexDirection: 'row', alignItems: 'center', gap: 10, marginBottom: 20,
+  },
+  vpnInstructionsTitle: {
+    fontSize: 16, fontWeight: '600', color: colors.textPrimary,
+  },
+  vpnStep: {
+    flexDirection: 'row', alignItems: 'flex-start', gap: 12, marginBottom: 16,
+  },
+  vpnStepNumber: {
+    width: 28, height: 28, borderRadius: 14, backgroundColor: colors.primary,
+    justifyContent: 'center', alignItems: 'center',
+  },
+  vpnStepNumberText: { fontSize: 14, fontWeight: 'bold', color: '#000' },
+  vpnStepContent: { flex: 1 },
+  vpnStepTitle: { fontSize: 14, fontWeight: '600', color: colors.textPrimary, marginBottom: 4 },
+  vpnStepDesc: { fontSize: 13, color: colors.textSecondary, lineHeight: 18 },
+  vpnInstructionBox: {
+    backgroundColor: colors.surface, borderRadius: 10, padding: 14, marginBottom: 12, marginLeft: 40,
+  },
+  vpnInstructionPlatform: { fontSize: 13, fontWeight: '600', color: colors.textPrimary, marginBottom: 6 },
+  vpnInstructionText: { fontSize: 12, color: colors.textMuted, lineHeight: 18 },
+  vpnNote: {
+    flexDirection: 'row', alignItems: 'center', gap: 10,
+    backgroundColor: `${colors.primary}15`, borderRadius: 10, padding: 14, marginTop: 8,
+  },
+  vpnNoteText: { flex: 1, fontSize: 13, color: colors.textSecondary, lineHeight: 18 },
   // Learn Section
   learnList: { padding: 16, gap: 16 },
   updateCard: {
