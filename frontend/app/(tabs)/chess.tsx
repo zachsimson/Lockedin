@@ -573,21 +573,21 @@ export default function ChessTab() {
             style={[styles.tab, activeSection === tab.id && styles.tabActive]}
             onPress={() => setActiveSection(tab.id as ChessSection)}
           >
-            <View style={styles.tabIconContainer}>
+            <View style={styles.tabIconWrapper}>
               <Ionicons 
                 name={tab.icon as any} 
                 size={20} 
                 color={activeSection === tab.id ? colors.primary : colors.textMuted} 
               />
-              {tab.badge && tab.badge > 0 && (
-                <View style={styles.tabBadge}>
-                  <Text style={styles.tabBadgeText}>{tab.badge}</Text>
-                </View>
-              )}
             </View>
             <Text style={[styles.tabLabel, activeSection === tab.id && styles.tabLabelActive]}>
               {tab.label}
             </Text>
+            {tab.badge !== undefined && tab.badge > 0 && (
+              <View style={styles.tabBadgeAbsolute}>
+                <Text style={styles.tabBadgeText}>{tab.badge}</Text>
+              </View>
+            )}
           </Pressable>
         ))}
       </View>
