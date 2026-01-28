@@ -21,11 +21,27 @@ const { width: SCREEN_WIDTH } = Dimensions.get('window');
 const BOARD_SIZE = Math.min(SCREEN_WIDTH - 32, 400);
 const SQUARE_SIZE = BOARD_SIZE / 8;
 
-// Chess piece Unicode characters
-const PIECES: { [key: string]: string } = {
-  'K': '♔', 'Q': '♕', 'R': '♖', 'B': '♗', 'N': '♘', 'P': '♙',
-  'k': '♚', 'q': '♛', 'r': '♜', 'b': '♝', 'n': '♞', 'p': '♟',
+// Modern Chess Pieces - UNIFIED consistent styling for both sides
+const PIECE_SETS = {
+  standard: {
+    K: '♔', Q: '♕', R: '♖', B: '♗', N: '♘', P: '♙',
+    k: '♚', q: '♛', r: '♜', b: '♝', n: '♞', p: '♟',
+  },
+  modern: {
+    K: '♔', Q: '♕', R: '♖', B: '♗', N: '♘', P: '♙',
+    k: '♚', q: '♛', r: '♜', b: '♝', n: '♞', p: '♟',
+  },
 };
+
+// Board color themes
+const BOARD_THEMES = {
+  classic: { light: '#F0D9B5', dark: '#B58863', name: 'Classic' },
+  dark: { light: '#4A4A4A', dark: '#2D2D2D', name: 'Dark' },
+  green: { light: '#EEEED2', dark: '#769656', name: 'Tournament' },
+};
+
+type BoardTheme = 'classic' | 'dark' | 'green';
+type PieceStyle = 'standard' | 'modern';
 
 interface Move {
   from: string;
@@ -55,6 +71,10 @@ export default function ChessGame() {
   const params = useLocalSearchParams();
   const gameId = params.gameId as string;
   
+  // Read settings from URL params
+  const boardTheme = (params.theme as BoardTheme) || 'classic';
+  const pieceStyle = (params.style as PieceStyle) || 'modern';
+  
   const [gameState, setGameState] = useState<GameState | null>(null);
   const [loading, setLoading] = useState(true);
   const [selectedSquare, setSelectedSquare] = useState<string | null>(null);
@@ -63,6 +83,17 @@ export default function ChessGame() {
   const [chatMessages, setChatMessages] = useState<any[]>([]);
   const [chatInput, setChatInput] = useState('');
   const [showChat, setShowChat] = useState(false);
+
+  // Get board colors based on selected theme
+  const getBoardColors = useCallback(() => {
+    return BOARD_THEMES[boardTheme] || BOARD_THEMES.classic;
+  }, [boardTheme]);
+
+  // Get piece character based on selected style
+  const getPiece = useCallback((piece: string) => {
+    const pieceSet = PIECE_SETS[pieceStyle] || PIECE_SETS.modern;
+    return pieceSet[piece as keyof typeof pieceSet] || '';
+  }, [pieceStyle]);
 
   useEffect(() => {
     if (gameId) {
@@ -242,15 +273,17 @@ export default function ChessGame() {
     
     const board = parseFEN(gameState.fen);
     const isFlipped = gameState.your_color === 'black';
+    const boardColors = getBoardColors();
+    const isModern = pieceStyle === 'modern';
     
     return (
       <View style={styles.boardContainer}>
-        <View style={styles.board}>
+        <View style={[styles.board, { borderColor: boardColors.dark }]}>
           {Array.from({ length: 8 }).map((_, rowIndex) => {
             const displayRow = isFlipped ? 7 - rowIndex : rowIndex;
             
             return (
-              <View key={rowIndex} style={styles.row}>
+              <View key={`row-${rowIndex}`} style={styles.row}>
                 {Array.from({ length: 8 }).map((_, colIndex) => {
                   const displayCol = isFlipped ? 7 - colIndex : colIndex;
                   const squareName = getSquareName(displayRow, displayCol);
@@ -262,24 +295,25 @@ export default function ChessGame() {
                   const isCheck = gameState.is_check && piece.toLowerCase() === 'k' && 
                     ((gameState.turn === 'white' && piece === 'K') || (gameState.turn === 'black' && piece === 'k'));
                   
+                  // Dynamic square background color
+                  let squareColor = isLight ? boardColors.light : boardColors.dark;
+                  if (isSelected) squareColor = '#F6F669';
+                  else if (isLastMoveSquare) squareColor = 'rgba(155, 199, 0, 0.4)';
+                  else if (isCheck) squareColor = '#FF6B6B';
+                  
                   return (
                     <Pressable
-                      key={colIndex}
-                      style={[
-                        styles.square,
-                        isLight ? styles.lightSquare : styles.darkSquare,
-                        isSelected && styles.selectedSquare,
-                        isLastMoveSquare && styles.lastMoveSquare,
-                        isCheck && styles.checkSquare,
-                      ]}
+                      key={`square-${rowIndex}-${colIndex}`}
+                      style={[styles.square, { backgroundColor: squareColor }]}
                       onPress={() => handleSquarePress(displayRow, displayCol)}
                     >
                       {piece && (
                         <Text style={[
                           styles.piece,
-                          piece === piece.toUpperCase() ? styles.whitePiece : styles.blackPiece
+                          piece === piece.toUpperCase() ? styles.whitePiece : styles.blackPiece,
+                          isModern && styles.modernPiece,
                         ]}>
-                          {PIECES[piece]}
+                          {getPiece(piece)}
                         </Text>
                       )}
                       {isValidMove && !piece && (
@@ -298,8 +332,8 @@ export default function ChessGame() {
         
         {/* File labels */}
         <View style={styles.fileLabels}>
-          {(isFlipped ? 'hgfedcba' : 'abcdefgh').split('').map((file) => (
-            <Text key={file} style={styles.label}>{file}</Text>
+          {(isFlipped ? 'hgfedcba' : 'abcdefgh').split('').map((file, index) => (
+            <Text key={`file-${index}`} style={styles.label}>{file}</Text>
           ))}
         </View>
       </View>
@@ -387,7 +421,7 @@ export default function ChessGame() {
           <Text style={styles.movesTitle}>Move History</Text>
           <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.movesList}>
             {gameState.moves?.map((move: any, index: number) => (
-              <View key={index} style={styles.moveItem}>
+              <View key={`move-${index}`} style={styles.moveItem}>
                 <Text style={styles.moveNumber}>{Math.floor(index / 2) + 1}.</Text>
                 <Text style={styles.moveText}>{move.san}</Text>
               </View>
@@ -424,7 +458,7 @@ export default function ChessGame() {
           </View>
           <FlatList
             data={chatMessages}
-            keyExtractor={(item) => item._id}
+            keyExtractor={(item, index) => `chat-${item._id || index}`}
             renderItem={({ item }) => (
               <View style={[styles.chatMessage, item.user_id === user?._id && styles.myMessage]}>
                 <Text style={styles.chatUsername}>{item.username}</Text>
@@ -554,7 +588,6 @@ const styles = StyleSheet.create({
     width: BOARD_SIZE,
     height: BOARD_SIZE,
     borderWidth: 3,
-    borderColor: colors.border,
     borderRadius: 4,
     overflow: 'hidden',
   },
@@ -567,21 +600,6 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
   },
-  lightSquare: {
-    backgroundColor: '#E8D5B5',
-  },
-  darkSquare: {
-    backgroundColor: '#B58863',
-  },
-  selectedSquare: {
-    backgroundColor: '#F6F669',
-  },
-  lastMoveSquare: {
-    backgroundColor: 'rgba(155, 199, 0, 0.4)',
-  },
-  checkSquare: {
-    backgroundColor: '#FF6B6B',
-  },
   piece: {
     fontSize: SQUARE_SIZE * 0.75,
   },
@@ -592,10 +610,13 @@ const styles = StyleSheet.create({
     textShadowRadius: 2,
   },
   blackPiece: {
-    color: '#000000',
+    color: '#1A1A1A',
     textShadowColor: 'rgba(255,255,255,0.3)',
     textShadowOffset: { width: 1, height: 1 },
     textShadowRadius: 1,
+  },
+  modernPiece: {
+    fontWeight: '900',
   },
   validMoveIndicator: {
     width: SQUARE_SIZE * 0.3,
