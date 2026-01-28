@@ -171,17 +171,19 @@ export default function ChessTab() {
   const loadData = async () => {
     setLoading(true);
     try {
-      const [statsRes, leaderboardRes, activeRes, historyRes] = await Promise.all([
+      const [statsRes, leaderboardRes, activeRes, historyRes, friendsRes] = await Promise.all([
         api.get('/api/chess/stats'),
         api.get('/api/chess/leaderboard?type=rating&limit=20'),
         api.get('/api/chess/active-games'),
         api.get('/api/chess/history?limit=10'),
+        api.get('/api/friends'),
       ]);
       
       setMyStats(statsRes.data.stats);
       setLeaderboard(leaderboardRes.data.leaderboard || []);
       setActiveGames(activeRes.data.games || []);
       setGameHistory(historyRes.data.games || []);
+      setFriends(friendsRes.data.friends || []);
     } catch (error) {
       console.error('Failed to load chess data:', error);
     } finally {
@@ -194,6 +196,20 @@ export default function ChessTab() {
     await loadData();
     setRefreshing(false);
   }, []);
+
+  const challengeFriend = async (friendId: string) => {
+    setShowFriendsList(false);
+    try {
+      const response = await api.post('/api/chess/create', { mode: 'friend', friend_id: friendId });
+      if (response.data.game) {
+        router.push(`/chess/game?gameId=${response.data.game._id}&theme=${boardTheme}&style=${pieceStyle}`);
+      } else {
+        Alert.alert('Challenge Sent', 'Waiting for your friend to accept!');
+      }
+    } catch (error: any) {
+      Alert.alert('Error', error.response?.data?.detail || 'Failed to create challenge');
+    }
+  };
 
   const startGame = async (mode: string) => {
     setQueuing(true);
