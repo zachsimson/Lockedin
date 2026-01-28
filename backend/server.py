@@ -1861,7 +1861,7 @@ async def ensure_chess_stats(user_id: str):
     if not existing:
         await chess_stats_collection.insert_one({
             "user_id": user_id,
-            "rating": 1200,  # Starting ELO
+            "rating": 1000,  # Starting ELO
             "wins": 0,
             "losses": 0,
             "draws": 0,
