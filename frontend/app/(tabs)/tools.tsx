@@ -159,6 +159,7 @@ type ToolSection = 'lock' | 'learn' | 'chat' | 'connect' | 'feed';
 export default function Tools() {
   const { user } = useAuth();
   const router = useRouter();
+  const { isBlocking, enableBlocking, disableBlocking, checkIfBlocked, blockedDomains: globalBlockedDomains } = useBlocker();
   
   const [activeSection, setActiveSection] = useState<ToolSection>('lock');
   
