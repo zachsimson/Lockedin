@@ -10,10 +10,11 @@ import {
   Alert,
   Dimensions,
 } from 'react-native';
-import { useState, useEffect, useCallback, useRef } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useAuth } from '../../src/context/AuthContext';
 import { useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import { colors } from '../../src/theme';
 import api from '../../src/services/api';
 
@@ -23,35 +24,36 @@ const SQUARE_SIZE = BOARD_SIZE / 8;
 
 // Avatar mappings
 const AVATAR_ICONS: { [key: string]: string } = {
-  shield: 'shield-checkmark',
-  phoenix: 'flame',
-  mountain: 'triangle',
-  star: 'star',
-  diamond: 'diamond',
-  lightning: 'flash',
-  heart: 'heart',
-  rocket: 'rocket',
-  crown: 'trophy',
-  anchor: 'fitness',
+  shield: 'shield-checkmark', phoenix: 'flame', mountain: 'triangle', star: 'star',
+  diamond: 'diamond', lightning: 'flash', heart: 'heart', rocket: 'rocket',
+  crown: 'trophy', anchor: 'fitness',
 };
 
 const AVATAR_COLORS: { [key: string]: string } = {
-  shield: '#00F5A0',
-  phoenix: '#FF6B6B',
-  mountain: '#4ECDC4',
-  star: '#FFE66D',
-  diamond: '#A78BFA',
-  lightning: '#F59E0B',
-  heart: '#EC4899',
-  rocket: '#3B82F6',
-  crown: '#FBBF24',
-  anchor: '#10B981',
+  shield: '#00F5A0', phoenix: '#FF6B6B', mountain: '#4ECDC4', star: '#FFE66D',
+  diamond: '#A78BFA', lightning: '#F59E0B', heart: '#EC4899', rocket: '#3B82F6',
+  crown: '#FBBF24', anchor: '#10B981',
 };
 
-// Chess piece Unicode characters
-const PIECES: { [key: string]: string } = {
-  'K': '♔', 'Q': '♕', 'R': '♖', 'B': '♗', 'N': '♘', 'P': '♙',
-  'k': '♚', 'q': '♛', 'r': '♜', 'b': '♝', 'n': '♞', 'p': '♟',
+// Modern Chess Pieces - Clean SVG-style Unicode with consistent styling
+const PIECE_SETS = {
+  standard: {
+    // Classic Unicode chess pieces
+    K: '♔', Q: '♕', R: '♖', B: '♗', N: '♘', P: '♙',
+    k: '♚', q: '♛', r: '♜', b: '♝', n: '♞', p: '♟',
+  },
+  modern: {
+    // Modern filled chess pieces (same Unicode, different styling applied via CSS)
+    K: '♔', Q: '♕', R: '♖', B: '♗', N: '♘', P: '♙',
+    k: '♚', q: '♛', r: '♜', b: '♝', n: '♞', p: '♟',
+  },
+};
+
+// Board color themes
+const BOARD_THEMES = {
+  classic: { light: '#F0D9B5', dark: '#B58863', name: 'Classic' },
+  dark: { light: '#4A4A4A', dark: '#2D2D2D', name: 'Dark' },
+  green: { light: '#EEEED2', dark: '#769656', name: 'Tournament' },
 };
 
 interface LeaderboardEntry {
@@ -75,6 +77,14 @@ interface ActiveGame {
 }
 
 type ChessSection = 'play' | 'active' | 'leaderboard' | 'settings';
+type BoardTheme = 'classic' | 'dark' | 'green';
+type PieceStyle = 'standard' | 'modern';
+
+// Settings storage keys
+const SETTINGS_KEYS = {
+  BOARD_THEME: '@chess_board_theme',
+  PIECE_STYLE: '@chess_piece_style',
+};
 
 export default function ChessTab() {
   const { user } = useAuth();
@@ -90,13 +100,71 @@ export default function ChessTab() {
   const [queuing, setQueuing] = useState(false);
   const [queueMode, setQueueMode] = useState<string | null>(null);
   
-  // Settings state
-  const [boardTheme, setBoardTheme] = useState<'classic' | 'dark' | 'green'>('classic');
-  const [pieceStyle, setPieceStyle] = useState<'standard' | 'modern'>('standard');
+  // Settings state - loaded from storage
+  const [boardTheme, setBoardTheme] = useState<BoardTheme>('classic');
+  const [pieceStyle, setPieceStyle] = useState<PieceStyle>('modern');
+  const [settingsLoaded, setSettingsLoaded] = useState(false);
+
+  // Load settings from storage on mount
+  useEffect(() => {
+    loadSettings();
+  }, []);
 
   useEffect(() => {
     loadData();
   }, []);
+
+  // Load settings from AsyncStorage
+  const loadSettings = async () => {
+    try {
+      const [savedTheme, savedStyle] = await Promise.all([
+        AsyncStorage.getItem(SETTINGS_KEYS.BOARD_THEME),
+        AsyncStorage.getItem(SETTINGS_KEYS.PIECE_STYLE),
+      ]);
+      
+      if (savedTheme && ['classic', 'dark', 'green'].includes(savedTheme)) {
+        setBoardTheme(savedTheme as BoardTheme);
+      }
+      if (savedStyle && ['standard', 'modern'].includes(savedStyle)) {
+        setPieceStyle(savedStyle as PieceStyle);
+      }
+    } catch (error) {
+      console.error('Failed to load settings:', error);
+    } finally {
+      setSettingsLoaded(true);
+    }
+  };
+
+  // Save and apply board theme
+  const changeBoardTheme = async (theme: BoardTheme) => {
+    setBoardTheme(theme);
+    try {
+      await AsyncStorage.setItem(SETTINGS_KEYS.BOARD_THEME, theme);
+    } catch (error) {
+      console.error('Failed to save board theme:', error);
+    }
+  };
+
+  // Save and apply piece style
+  const changePieceStyle = async (style: PieceStyle) => {
+    setPieceStyle(style);
+    try {
+      await AsyncStorage.setItem(SETTINGS_KEYS.PIECE_STYLE, style);
+    } catch (error) {
+      console.error('Failed to save piece style:', error);
+    }
+  };
+
+  // Get current board colors based on theme
+  const getBoardColors = useCallback(() => {
+    return BOARD_THEMES[boardTheme] || BOARD_THEMES.classic;
+  }, [boardTheme]);
+
+  // Get piece character based on style
+  const getPiece = useCallback((piece: string) => {
+    const pieceSet = PIECE_SETS[pieceStyle] || PIECE_SETS.modern;
+    return pieceSet[piece as keyof typeof pieceSet] || '';
+  }, [pieceStyle]);
 
   const loadData = async () => {
     setLoading(true);
@@ -125,30 +193,7 @@ export default function ChessTab() {
     setRefreshing(false);
   }, []);
 
-  const startGame = async (mode: string, botDifficulty?: string) => {
-    if (mode === 'bot') {
-      // Start bot game - create a game against AI
-      try {
-        const response = await api.post('/api/chess/create', { 
-          mode: 'casual',
-          is_bot: true,
-          bot_difficulty: botDifficulty || 'medium'
-        });
-        
-        if (response.data.game) {
-          router.push(`/chess/game?gameId=${response.data.game._id}`);
-        }
-      } catch (error: any) {
-        // If bot not supported yet, inform user
-        Alert.alert(
-          'Practice Mode',
-          'Bot games coming soon! For now, try Quick Match to play against other users.',
-          [{ text: 'OK' }]
-        );
-      }
-      return;
-    }
-    
+  const startGame = async (mode: string) => {
     setQueuing(true);
     setQueueMode(mode);
     
@@ -156,7 +201,7 @@ export default function ChessTab() {
       const response = await api.post('/api/chess/create', { mode });
       
       if (response.data.status === 'matched') {
-        router.push(`/chess/game?gameId=${response.data.game._id}`);
+        router.push(`/chess/game?gameId=${response.data.game._id}&theme=${boardTheme}&style=${pieceStyle}`);
       } else if (response.data.status === 'queued') {
         Alert.alert(
           'Searching for Opponent',
@@ -167,7 +212,7 @@ export default function ChessTab() {
           ]
         );
       } else if (response.data.game) {
-        router.push(`/chess/game?gameId=${response.data.game._id}`);
+        router.push(`/chess/game?gameId=${response.data.game._id}&theme=${boardTheme}&style=${pieceStyle}`);
       }
     } catch (error: any) {
       Alert.alert('Error', error.response?.data?.detail || 'Failed to start game');
@@ -175,6 +220,10 @@ export default function ChessTab() {
       setQueuing(false);
       setQueueMode(null);
     }
+  };
+
+  const startBotGame = (difficulty: string) => {
+    router.push(`/chess/bot?difficulty=${difficulty}&theme=${boardTheme}&style=${pieceStyle}`);
   };
 
   const pollForMatch = async () => {
@@ -189,7 +238,7 @@ export default function ChessTab() {
         
         if (newGames.length > activeGames.length) {
           const newGame = newGames[0];
-          router.push(`/chess/game?gameId=${newGame._id}`);
+          router.push(`/chess/game?gameId=${newGame._id}&theme=${boardTheme}&style=${pieceStyle}`);
           return;
         }
         
@@ -217,16 +266,8 @@ export default function ChessTab() {
     setQueueMode(null);
   };
 
-  const getBoardColors = () => {
-    switch (boardTheme) {
-      case 'dark': return { light: '#4A4A4A', dark: '#2D2D2D' };
-      case 'green': return { light: '#EEEED2', dark: '#769656' };
-      default: return { light: '#E8D5B5', dark: '#B58863' };
-    }
-  };
-
-  // Mini board preview for active games
-  const renderMiniBoard = (fen: string) => {
+  // Mini board preview for active games - uses current theme settings
+  const renderMiniBoard = (fen: string, gameId: string) => {
     const boardColors = getBoardColors();
     const rows = fen.split(' ')[0].split('/');
     const board: string[][] = [];
@@ -245,22 +286,23 @@ export default function ChessTab() {
     
     return (
       <View style={styles.miniBoard}>
-        {board.map((row, i) => (
-          <View key={i} style={styles.miniBoardRow}>
-            {row.map((piece, j) => (
+        {board.map((row, rowIdx) => (
+          <View key={`${gameId}-row-${rowIdx}`} style={styles.miniBoardRow}>
+            {row.map((piece, colIdx) => (
               <View 
-                key={j} 
+                key={`${gameId}-${rowIdx}-${colIdx}`}
                 style={[
                   styles.miniSquare,
-                  { backgroundColor: (i + j) % 2 === 0 ? boardColors.light : boardColors.dark }
+                  { backgroundColor: (rowIdx + colIdx) % 2 === 0 ? boardColors.light : boardColors.dark }
                 ]}
               >
                 {piece && (
                   <Text style={[
                     styles.miniPiece,
-                    piece === piece.toUpperCase() ? styles.whitePiece : styles.blackPiece
+                    piece === piece.toUpperCase() ? styles.whitePieceMini : styles.blackPieceMini,
+                    pieceStyle === 'modern' && styles.modernPieceMini,
                   ]}>
-                    {PIECES[piece]}
+                    {getPiece(piece)}
                   </Text>
                 )}
               </View>
@@ -300,7 +342,6 @@ export default function ChessTab() {
 
       <Text style={styles.sectionTitle}>QUICK PLAY</Text>
       
-      {/* Quick Play - Instant Match */}
       <Pressable 
         style={[styles.gameMode, styles.quickPlayMode]}
         onPress={() => startGame('quick')}
@@ -322,13 +363,9 @@ export default function ChessTab() {
 
       <Text style={styles.sectionTitle}>GAME MODES</Text>
 
-      {/* Play a Friend */}
       <Pressable 
         style={styles.gameMode}
-        onPress={() => Alert.alert('Play a Friend', 'Select a friend from your friends list to challenge them!', [
-          { text: 'View Friends', onPress: () => router.push('/profile/edit') },
-          { text: 'Cancel', style: 'cancel' }
-        ])}
+        onPress={() => Alert.alert('Play a Friend', 'Select a friend from your friends list to challenge them!')}
       >
         <View style={styles.gameModeIcon}>
           <Ionicons name="people" size={28} color="#EC4899" />
@@ -340,7 +377,6 @@ export default function ChessTab() {
         <Ionicons name="chevron-forward" size={24} color={colors.textMuted} />
       </Pressable>
 
-      {/* Ranked Match */}
       <Pressable 
         style={[styles.gameMode, styles.rankedMode]}
         onPress={() => startGame('ranked')}
@@ -360,7 +396,6 @@ export default function ChessTab() {
         )}
       </Pressable>
 
-      {/* Practice vs Bot */}
       <Pressable 
         style={styles.gameMode}
         onPress={() => {
@@ -368,9 +403,9 @@ export default function ChessTab() {
             'Practice Mode',
             'Choose difficulty:',
             [
-              { text: 'Easy', onPress: () => router.push('/chess/bot?difficulty=easy') },
-              { text: 'Medium', onPress: () => router.push('/chess/bot?difficulty=medium') },
-              { text: 'Hard', onPress: () => router.push('/chess/bot?difficulty=hard') },
+              { text: 'Easy', onPress: () => startBotGame('easy') },
+              { text: 'Medium', onPress: () => startBotGame('medium') },
+              { text: 'Hard', onPress: () => startBotGame('hard') },
               { text: 'Cancel', style: 'cancel' }
             ]
           );
@@ -381,7 +416,7 @@ export default function ChessTab() {
         </View>
         <View style={styles.gameModeInfo}>
           <Text style={styles.gameModeTitle}>Practice vs Bot</Text>
-          <Text style={styles.gameModeDesc}>Play against AI (does not affect rating)</Text>
+          <Text style={styles.gameModeDesc}>Play offline against AI (no rating impact)</Text>
         </View>
         <Ionicons name="chevron-forward" size={24} color={colors.textMuted} />
       </Pressable>
@@ -391,13 +426,13 @@ export default function ChessTab() {
   const renderActiveGamesSection = () => (
     <FlatList
       data={activeGames}
-      keyExtractor={(item) => item._id}
+      keyExtractor={(item) => `active-game-${item._id}`}
       contentContainerStyle={styles.listContent}
       refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}
       renderItem={({ item }) => (
         <Pressable 
           style={styles.activeGameCard}
-          onPress={() => router.push(`/chess/game?gameId=${item._id}`)}
+          onPress={() => router.push(`/chess/game?gameId=${item._id}&theme=${boardTheme}&style=${pieceStyle}`)}
         >
           <View style={styles.gameCardContent}>
             <View style={styles.gameCardLeft}>
@@ -415,7 +450,7 @@ export default function ChessTab() {
                 </Text>
               </View>
             </View>
-            {item.game_state && renderMiniBoard(item.game_state)}
+            {item.game_state && renderMiniBoard(item.game_state, item._id)}
           </View>
           <View style={styles.gameCardFooter}>
             <Text style={styles.colorBadge}>Playing as {item.your_color}</Text>
@@ -439,7 +474,7 @@ export default function ChessTab() {
   const renderLeaderboardSection = () => (
     <FlatList
       data={leaderboard}
-      keyExtractor={(item, index) => `${item.user_id}-${index}`}
+      keyExtractor={(item, index) => `leaderboard-${item.user_id}-${index}`}
       contentContainerStyle={styles.listContent}
       refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}
       ListHeaderComponent={
@@ -487,56 +522,126 @@ export default function ChessTab() {
     />
   );
 
-  const renderSettingsSection = () => (
-    <ScrollView contentContainerStyle={styles.settingsContent}>
-      <Text style={styles.sectionTitle}>BOARD THEME</Text>
-      <View style={styles.themeOptions}>
-        {[
-          { id: 'classic', name: 'Classic', colors: ['#E8D5B5', '#B58863'] },
-          { id: 'dark', name: 'Dark', colors: ['#4A4A4A', '#2D2D2D'] },
-          { id: 'green', name: 'Tournament', colors: ['#EEEED2', '#769656'] },
-        ].map((theme) => (
-          <Pressable
-            key={theme.id}
-            style={[styles.themeOption, boardTheme === theme.id && styles.themeOptionSelected]}
-            onPress={() => setBoardTheme(theme.id as any)}
-          >
-            <View style={styles.themePreview}>
-              <View style={[styles.themeSquare, { backgroundColor: theme.colors[0] }]} />
-              <View style={[styles.themeSquare, { backgroundColor: theme.colors[1] }]} />
-              <View style={[styles.themeSquare, { backgroundColor: theme.colors[1] }]} />
-              <View style={[styles.themeSquare, { backgroundColor: theme.colors[0] }]} />
-            </View>
-            <Text style={styles.themeName}>{theme.name}</Text>
-          </Pressable>
-        ))}
-      </View>
+  // Settings section with live preview
+  const renderSettingsSection = () => {
+    const boardColors = getBoardColors();
+    
+    return (
+      <ScrollView contentContainerStyle={styles.settingsContent}>
+        {/* Live Preview Board */}
+        <View style={styles.previewSection}>
+          <Text style={styles.previewLabel}>LIVE PREVIEW</Text>
+          <View style={[styles.previewBoard, { borderColor: boardColors.dark }]}>
+            {['r','n','b','q','k','b','n','r'].map((piece, colIdx) => (
+              <View key={`preview-row0-${colIdx}`} style={styles.previewRow}>
+                <View style={[styles.previewSquare, { backgroundColor: colIdx % 2 === 0 ? boardColors.light : boardColors.dark }]}>
+                  <Text style={[styles.previewPiece, styles.blackPiecePreview, pieceStyle === 'modern' && styles.modernPiecePreview]}>
+                    {getPiece(piece)}
+                  </Text>
+                </View>
+              </View>
+            ))}
+          </View>
+          <View style={[styles.previewBoard, { borderColor: boardColors.dark, marginTop: -2 }]}>
+            {['p','p','p','p','p','p','p','p'].map((piece, colIdx) => (
+              <View key={`preview-row1-${colIdx}`} style={styles.previewRow}>
+                <View style={[styles.previewSquare, { backgroundColor: colIdx % 2 === 1 ? boardColors.light : boardColors.dark }]}>
+                  <Text style={[styles.previewPiece, styles.blackPiecePreview, pieceStyle === 'modern' && styles.modernPiecePreview]}>
+                    {getPiece(piece)}
+                  </Text>
+                </View>
+              </View>
+            ))}
+          </View>
+          <View style={[styles.previewBoard, { borderColor: boardColors.dark, marginTop: -2 }]}>
+            {['P','P','P','P','P','P','P','P'].map((piece, colIdx) => (
+              <View key={`preview-row6-${colIdx}`} style={styles.previewRow}>
+                <View style={[styles.previewSquare, { backgroundColor: colIdx % 2 === 0 ? boardColors.light : boardColors.dark }]}>
+                  <Text style={[styles.previewPiece, styles.whitePiecePreview, pieceStyle === 'modern' && styles.modernPiecePreview]}>
+                    {getPiece(piece)}
+                  </Text>
+                </View>
+              </View>
+            ))}
+          </View>
+          <View style={[styles.previewBoard, { borderColor: boardColors.dark, marginTop: -2 }]}>
+            {['R','N','B','Q','K','B','N','R'].map((piece, colIdx) => (
+              <View key={`preview-row7-${colIdx}`} style={styles.previewRow}>
+                <View style={[styles.previewSquare, { backgroundColor: colIdx % 2 === 1 ? boardColors.light : boardColors.dark }]}>
+                  <Text style={[styles.previewPiece, styles.whitePiecePreview, pieceStyle === 'modern' && styles.modernPiecePreview]}>
+                    {getPiece(piece)}
+                  </Text>
+                </View>
+              </View>
+            ))}
+          </View>
+        </View>
 
-      <Text style={styles.sectionTitle}>PIECE STYLE</Text>
-      <View style={styles.pieceOptions}>
-        {[
-          { id: 'standard', name: 'Standard', preview: '♔♕♖' },
-          { id: 'modern', name: 'Modern', preview: '♚♛♜' },
-        ].map((style) => (
-          <Pressable
-            key={style.id}
-            style={[styles.pieceOption, pieceStyle === style.id && styles.pieceOptionSelected]}
-            onPress={() => setPieceStyle(style.id as any)}
-          >
-            <Text style={styles.piecePreview}>{style.preview}</Text>
-            <Text style={styles.pieceName}>{style.name}</Text>
-          </Pressable>
-        ))}
-      </View>
+        <Text style={styles.sectionTitle}>BOARD THEME</Text>
+        <View style={styles.themeOptions}>
+          {Object.entries(BOARD_THEMES).map(([key, theme]) => (
+            <Pressable
+              key={`theme-${key}`}
+              style={[styles.themeOption, boardTheme === key && styles.themeOptionSelected]}
+              onPress={() => changeBoardTheme(key as BoardTheme)}
+            >
+              <View style={styles.themePreview}>
+                <View style={[styles.themeSquare, { backgroundColor: theme.light }]} />
+                <View style={[styles.themeSquare, { backgroundColor: theme.dark }]} />
+                <View style={[styles.themeSquare, { backgroundColor: theme.dark }]} />
+                <View style={[styles.themeSquare, { backgroundColor: theme.light }]} />
+              </View>
+              <Text style={[styles.themeName, boardTheme === key && styles.themeNameSelected]}>
+                {theme.name}
+              </Text>
+              {boardTheme === key && (
+                <Ionicons name="checkmark-circle" size={18} color={colors.primary} />
+              )}
+            </Pressable>
+          ))}
+        </View>
 
-      <View style={styles.infoCard}>
-        <Ionicons name="information-circle" size={24} color={colors.primary} />
-        <Text style={styles.infoText}>
-          Your preferences are saved automatically and will apply to all your games.
-        </Text>
-      </View>
-    </ScrollView>
-  );
+        <Text style={styles.sectionTitle}>PIECE STYLE</Text>
+        <View style={styles.pieceOptions}>
+          {[
+            { id: 'standard', name: 'Standard', desc: 'Classic outline pieces' },
+            { id: 'modern', name: 'Modern', desc: 'Clean filled pieces' },
+          ].map((style) => (
+            <Pressable
+              key={`style-${style.id}`}
+              style={[styles.pieceOption, pieceStyle === style.id && styles.pieceOptionSelected]}
+              onPress={() => changePieceStyle(style.id as PieceStyle)}
+            >
+              <View style={styles.piecePreviewContainer}>
+                <Text style={[
+                  styles.piecePreviewChar,
+                  style.id === 'modern' && styles.modernPieceDemo,
+                ]}>
+                  ♔♕♖
+                </Text>
+              </View>
+              <View style={styles.pieceOptionInfo}>
+                <Text style={[styles.pieceName, pieceStyle === style.id && styles.pieceNameSelected]}>
+                  {style.name}
+                </Text>
+                <Text style={styles.pieceDesc}>{style.desc}</Text>
+              </View>
+              {pieceStyle === style.id && (
+                <Ionicons name="checkmark-circle" size={18} color={colors.primary} />
+              )}
+            </Pressable>
+          ))}
+        </View>
+
+        <View style={styles.infoCard}>
+          <Ionicons name="checkmark-circle" size={20} color={colors.primary} />
+          <Text style={styles.infoText}>
+            Settings are saved automatically and apply to all games instantly.
+          </Text>
+        </View>
+      </ScrollView>
+    );
+  };
 
   if (loading && !myStats) {
     return (
@@ -554,13 +659,11 @@ export default function ChessTab() {
 
   return (
     <View style={styles.container}>
-      {/* Header */}
       <View style={styles.header}>
         <Text style={styles.headerTitle}>♟️ CHESS</Text>
         <Text style={styles.headerSubtitle}>A healthy distraction</Text>
       </View>
 
-      {/* Section Tabs */}
       <View style={styles.tabBar}>
         {[
           { id: 'play', icon: 'game-controller', label: 'Play' },
@@ -569,7 +672,7 @@ export default function ChessTab() {
           { id: 'settings', icon: 'settings', label: 'Settings' },
         ].map((tab) => (
           <Pressable
-            key={tab.id}
+            key={`tab-${tab.id}`}
             style={[styles.tab, activeSection === tab.id && styles.tabActive]}
             onPress={() => setActiveSection(tab.id as ChessSection)}
           >
@@ -592,7 +695,6 @@ export default function ChessTab() {
         ))}
       </View>
 
-      {/* Content */}
       {activeSection === 'play' && renderPlaySection()}
       {activeSection === 'active' && renderActiveGamesSection()}
       {activeSection === 'leaderboard' && renderLeaderboardSection()}
@@ -654,42 +756,6 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
-  tabIconContainer: {
-    position: 'relative',
-    width: 24,
-    height: 24,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  tabBadge: {
-    position: 'absolute',
-    top: -6,
-    right: -10,
-    backgroundColor: colors.primary,
-    borderRadius: 9,
-    minWidth: 18,
-    height: 18,
-    justifyContent: 'center',
-    alignItems: 'center',
-    paddingHorizontal: 4,
-  },
-  tabBadgeAbsolute: {
-    position: 'absolute',
-    top: 6,
-    right: 10,
-    backgroundColor: colors.primary,
-    borderRadius: 9,
-    minWidth: 16,
-    height: 16,
-    justifyContent: 'center',
-    alignItems: 'center',
-    paddingHorizontal: 3,
-  },
-  tabBadgeText: {
-    fontSize: 10,
-    fontWeight: 'bold',
-    color: '#000',
-  },
   tabLabel: {
     fontSize: 11,
     color: colors.textMuted,
@@ -698,7 +764,23 @@ const styles = StyleSheet.create({
   tabLabelActive: {
     color: colors.primary,
   },
-  // Play Section
+  tabBadgeAbsolute: {
+    position: 'absolute',
+    top: 6,
+    right: 12,
+    backgroundColor: colors.primary,
+    borderRadius: 8,
+    minWidth: 16,
+    height: 16,
+    justifyContent: 'center',
+    alignItems: 'center',
+    paddingHorizontal: 4,
+  },
+  tabBadgeText: {
+    fontSize: 10,
+    fontWeight: 'bold',
+    color: '#000',
+  },
   playContent: {
     padding: 16,
   },
@@ -794,7 +876,6 @@ const styles = StyleSheet.create({
     color: colors.textMuted,
     marginTop: 2,
   },
-  // Active Games
   listContent: {
     padding: 16,
   },
@@ -853,12 +934,19 @@ const styles = StyleSheet.create({
   },
   miniPiece: {
     fontSize: 6,
+    lineHeight: 7,
   },
-  whitePiece: {
+  whitePieceMini: {
     color: '#FFFFFF',
+    textShadowColor: '#000',
+    textShadowOffset: { width: 0.5, height: 0.5 },
+    textShadowRadius: 1,
   },
-  blackPiece: {
-    color: '#000000',
+  blackPieceMini: {
+    color: '#1A1A1A',
+  },
+  modernPieceMini: {
+    fontWeight: '900',
   },
   gameCardFooter: {
     flexDirection: 'row',
@@ -879,7 +967,6 @@ const styles = StyleSheet.create({
     color: colors.primary,
     textTransform: 'capitalize',
   },
-  // Leaderboard
   leaderboardHeader: {
     marginBottom: 16,
   },
@@ -955,16 +1042,61 @@ const styles = StyleSheet.create({
   settingsContent: {
     padding: 16,
   },
+  previewSection: {
+    backgroundColor: colors.cardBackground,
+    borderRadius: 12,
+    padding: 16,
+    marginBottom: 20,
+    alignItems: 'center',
+  },
+  previewLabel: {
+    fontSize: 10,
+    fontWeight: '600',
+    color: colors.textMuted,
+    letterSpacing: 1,
+    marginBottom: 12,
+  },
+  previewBoard: {
+    flexDirection: 'row',
+    borderWidth: 1,
+  },
+  previewRow: {
+    flexDirection: 'column',
+  },
+  previewSquare: {
+    width: 36,
+    height: 36,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  previewPiece: {
+    fontSize: 24,
+  },
+  whitePiecePreview: {
+    color: '#FFFFFF',
+    textShadowColor: '#000',
+    textShadowOffset: { width: 1, height: 1 },
+    textShadowRadius: 2,
+  },
+  blackPiecePreview: {
+    color: '#1A1A1A',
+    textShadowColor: 'rgba(255,255,255,0.3)',
+    textShadowOffset: { width: 0.5, height: 0.5 },
+    textShadowRadius: 1,
+  },
+  modernPiecePreview: {
+    fontWeight: '900',
+  },
   themeOptions: {
     flexDirection: 'row',
-    gap: 12,
+    gap: 10,
     marginBottom: 24,
   },
   themeOption: {
     flex: 1,
     backgroundColor: colors.cardBackground,
     borderRadius: 12,
-    padding: 16,
+    padding: 12,
     alignItems: 'center',
     borderWidth: 2,
     borderColor: colors.border,
@@ -978,57 +1110,83 @@ const styles = StyleSheet.create({
     width: 40,
     height: 40,
     marginBottom: 8,
+    borderRadius: 4,
+    overflow: 'hidden',
   },
   themeSquare: {
     width: 20,
     height: 20,
   },
   themeName: {
-    fontSize: 12,
-    color: colors.textPrimary,
-    fontWeight: '500',
+    fontSize: 11,
+    color: colors.textMuted,
+    fontWeight: '600',
+    marginBottom: 4,
+  },
+  themeNameSelected: {
+    color: colors.primary,
   },
   pieceOptions: {
-    flexDirection: 'row',
-    gap: 12,
+    gap: 10,
     marginBottom: 24,
   },
   pieceOption: {
-    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
     backgroundColor: colors.cardBackground,
     borderRadius: 12,
-    padding: 16,
-    alignItems: 'center',
+    padding: 14,
     borderWidth: 2,
     borderColor: colors.border,
+    gap: 12,
   },
   pieceOptionSelected: {
     borderColor: colors.primary,
   },
-  piecePreview: {
-    fontSize: 24,
-    marginBottom: 8,
+  piecePreviewContainer: {
+    width: 60,
+    alignItems: 'center',
+  },
+  piecePreviewChar: {
+    fontSize: 20,
+    color: colors.textPrimary,
+  },
+  modernPieceDemo: {
+    fontWeight: '900',
+    textShadowColor: '#000',
+    textShadowOffset: { width: 1, height: 1 },
+    textShadowRadius: 2,
+  },
+  pieceOptionInfo: {
+    flex: 1,
   },
   pieceName: {
-    fontSize: 12,
+    fontSize: 14,
+    fontWeight: '600',
     color: colors.textPrimary,
-    fontWeight: '500',
+  },
+  pieceNameSelected: {
+    color: colors.primary,
+  },
+  pieceDesc: {
+    fontSize: 12,
+    color: colors.textMuted,
+    marginTop: 2,
   },
   infoCard: {
     flexDirection: 'row',
     backgroundColor: colors.cardBackground,
     borderRadius: 12,
-    padding: 16,
+    padding: 14,
     alignItems: 'center',
     gap: 12,
   },
   infoText: {
     flex: 1,
-    fontSize: 13,
-    color: colors.textSecondary,
+    fontSize: 12,
+    color: colors.textMuted,
     lineHeight: 18,
   },
-  // Empty State
   emptyState: {
     alignItems: 'center',
     justifyContent: 'center',
