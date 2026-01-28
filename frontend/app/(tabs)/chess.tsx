@@ -1278,4 +1278,82 @@ const styles = StyleSheet.create({
     fontWeight: '600',
     color: '#000',
   },
+  // Friends List Styles
+  friendsListContainer: {
+    backgroundColor: colors.surface,
+    borderRadius: 12,
+    padding: 12,
+    marginBottom: 16,
+    borderWidth: 1,
+    borderColor: colors.border,
+  },
+  noFriendsCard: {
+    alignItems: 'center',
+    padding: 24,
+    gap: 8,
+  },
+  noFriendsText: {
+    fontSize: 15,
+    fontWeight: '600',
+    color: colors.textPrimary,
+  },
+  noFriendsSubtext: {
+    fontSize: 13,
+    color: colors.textMuted,
+  },
+  friendItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: colors.cardBackground,
+    borderRadius: 10,
+    padding: 12,
+    marginBottom: 8,
+  },
+  friendAvatar: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: colors.surface,
+    justifyContent: 'center',
+    alignItems: 'center',
+    borderWidth: 2,
+    marginRight: 12,
+  },
+  friendInfo: {
+    flex: 1,
+  },
+  friendName: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: colors.textPrimary,
+  },
+  friendOnlineStatus: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+    marginTop: 2,
+  },
+  onlineDot: {
+    width: 6,
+    height: 6,
+    borderRadius: 3,
+  },
+  friendStatusText: {
+    fontSize: 11,
+    color: colors.textMuted,
+  },
+  challengeBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#EC4899',
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    borderRadius: 16,
+    gap: 4,
+  },
+  challengeBtnText: {
+    fontSize: 12,
+    fontWeight: '600',
+    color: '#FFF',
+  },
 });
