@@ -368,9 +368,9 @@ export default function ChessTab() {
             'Practice Mode',
             'Choose difficulty:',
             [
-              { text: 'Easy', onPress: () => startGame('bot', 'easy') },
-              { text: 'Medium', onPress: () => startGame('bot', 'medium') },
-              { text: 'Hard', onPress: () => startGame('bot', 'hard') },
+              { text: 'Easy', onPress: () => router.push('/chess/bot?difficulty=easy') },
+              { text: 'Medium', onPress: () => router.push('/chess/bot?difficulty=medium') },
+              { text: 'Hard', onPress: () => router.push('/chess/bot?difficulty=hard') },
               { text: 'Cancel', style: 'cancel' }
             ]
           );
