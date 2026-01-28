@@ -274,7 +274,7 @@ export default function Tools() {
   };
 
   const handleDisableVPN = async () => {
-    Alert.alert('Disable Protection?', 'Are you sure?', [
+    Alert.alert('Disable Protection?', 'Are you sure? This will disable device-level blocking.', [
       { text: 'Cancel', style: 'cancel' },
       {
         text: 'Disable',
@@ -282,6 +282,7 @@ export default function Tools() {
         onPress: async () => {
           try {
             await api.post('/api/vpn/disable');
+            await disableBlocking(); // Disable device-level blocking
             await loadData();
           } catch (error: any) {
             Alert.alert('Error', error.response?.data?.detail || 'Failed');
