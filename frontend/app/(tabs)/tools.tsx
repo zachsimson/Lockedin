@@ -244,13 +244,14 @@ export default function Tools() {
     setRefreshing(false);
   }, []);
 
-  // VPN Handlers
+  // VPN Handlers - Now with device-level blocking integration
   const handleEnableRecoveryMode = async () => {
     try {
       await api.post('/api/vpn/enable', { lock_duration: selectedDuration });
+      await enableBlocking(); // Enable device-level blocking
       setShowEnableModal(false);
       await loadData();
-      Alert.alert('🛡️ Protection Active', 'Recovery Mode is now enabled. Stay strong!');
+      Alert.alert('🛡️ Protection Active', 'Recovery Mode is now enabled with device-level blocking. Stay strong!');
     } catch (error: any) {
       Alert.alert('Error', error.response?.data?.detail || 'Failed to enable');
     }
