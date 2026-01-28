@@ -152,8 +152,8 @@ const LOCK_DURATIONS = [
   { value: 'permanent', label: 'Permanent', description: 'Maximum commitment' },
 ];
 
-// Reordered tabs: Lock, Learn, Chat, Connect, Feed (Feed at END)
-type ToolSection = 'lock' | 'learn' | 'chat' | 'connect' | 'feed';
+// Reordered tabs: Lock, Learn, Chat, Connect, Socials, Feed (Feed at END)
+type ToolSection = 'lock' | 'learn' | 'chat' | 'connect' | 'socials' | 'feed';
 
 export default function Tools() {
   const { user } = useAuth();
