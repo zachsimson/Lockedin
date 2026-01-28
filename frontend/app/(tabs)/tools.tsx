@@ -408,6 +408,53 @@ export default function Tools() {
         </View>
         <Ionicons name="chevron-forward" size={20} color="rgba(255,255,255,0.6)" />
       </Pressable>
+
+      {/* VPN Setup Instructions */}
+      <View style={styles.vpnInstructionsCard}>
+        <View style={styles.vpnInstructionsHeader}>
+          <Ionicons name="help-circle" size={24} color={colors.primary} />
+          <Text style={styles.vpnInstructionsTitle}>How Site Blocking Works</Text>
+        </View>
+        
+        <View style={styles.vpnStep}>
+          <View style={styles.vpnStepNumber}><Text style={styles.vpnStepNumberText}>1</Text></View>
+          <View style={styles.vpnStepContent}>
+            <Text style={styles.vpnStepTitle}>In-App Protection</Text>
+            <Text style={styles.vpnStepDesc}>When enabled, LockedIn blocks gambling URLs opened from within the app.</Text>
+          </View>
+        </View>
+
+        <View style={styles.vpnStep}>
+          <View style={styles.vpnStepNumber}><Text style={styles.vpnStepNumberText}>2</Text></View>
+          <View style={styles.vpnStepContent}>
+            <Text style={styles.vpnStepTitle}>Device-Level Protection (Optional)</Text>
+            <Text style={styles.vpnStepDesc}>For full device blocking, configure your phone's DNS settings:</Text>
+          </View>
+        </View>
+
+        <View style={styles.vpnInstructionBox}>
+          <Text style={styles.vpnInstructionPlatform}>📱 iPhone / iOS</Text>
+          <Text style={styles.vpnInstructionText}>Settings → Wi-Fi → (i) → Configure DNS → Manual → Add Server: 1.1.1.3 (Cloudflare Family)</Text>
+        </View>
+
+        <View style={styles.vpnInstructionBox}>
+          <Text style={styles.vpnInstructionPlatform}>🤖 Android</Text>
+          <Text style={styles.vpnInstructionText}>Settings → Network → Private DNS → Custom → dns.adguard-dns.com</Text>
+        </View>
+
+        <View style={styles.vpnStep}>
+          <View style={styles.vpnStepNumber}><Text style={styles.vpnStepNumberText}>3</Text></View>
+          <View style={styles.vpnStepContent}>
+            <Text style={styles.vpnStepTitle}>Browser Extensions</Text>
+            <Text style={styles.vpnStepDesc}>Install blockers like "Gamban" or "BetBlocker" for comprehensive protection.</Text>
+          </View>
+        </View>
+
+        <View style={styles.vpnNote}>
+          <Ionicons name="shield-checkmark" size={16} color={colors.primary} />
+          <Text style={styles.vpnNoteText}>Combining all methods provides the strongest protection against gambling urges.</Text>
+        </View>
+      </View>
     </ScrollView>
   );
 
