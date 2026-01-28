@@ -12,9 +12,91 @@ import { useState, useEffect, useCallback, useRef } from 'react';
 import { useAuth } from '../../src/context/AuthContext';
 import { useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
+import { LinearGradient } from 'expo-linear-gradient';
 import { colors } from '../../src/theme';
 import api from '../../src/services/api';
 import { RecoveryStats } from '../../src/types';
+
+// Premium Streak Icon Component
+const PremiumStreakIcon = ({ size = 32, animated = true }: { size?: number; animated?: boolean }) => {
+  const pulseAnim = useRef(new Animated.Value(1)).current;
+  const glowAnim = useRef(new Animated.Value(0.5)).current;
+
+  useEffect(() => {
+    if (animated) {
+      // Subtle pulse animation
+      Animated.loop(
+        Animated.sequence([
+          Animated.parallel([
+            Animated.timing(pulseAnim, {
+              toValue: 1.05,
+              duration: 1500,
+              useNativeDriver: true,
+            }),
+            Animated.timing(glowAnim, {
+              toValue: 1,
+              duration: 1500,
+              useNativeDriver: true,
+            }),
+          ]),
+          Animated.parallel([
+            Animated.timing(pulseAnim, {
+              toValue: 1,
+              duration: 1500,
+              useNativeDriver: true,
+            }),
+            Animated.timing(glowAnim, {
+              toValue: 0.5,
+              duration: 1500,
+              useNativeDriver: true,
+            }),
+          ]),
+        ])
+      ).start();
+    }
+  }, [animated]);
+
+  return (
+    <Animated.View style={{ transform: [{ scale: pulseAnim }] }}>
+      <View style={{
+        width: size,
+        height: size,
+        justifyContent: 'center',
+        alignItems: 'center',
+        position: 'relative',
+      }}>
+        {/* Glow layer */}
+        <Animated.View style={{
+          position: 'absolute',
+          width: size + 8,
+          height: size + 8,
+          borderRadius: (size + 8) / 2,
+          backgroundColor: '#FF6B35',
+          opacity: glowAnim,
+          shadowColor: '#FF6B35',
+          shadowOffset: { width: 0, height: 0 },
+          shadowOpacity: 0.8,
+          shadowRadius: 12,
+        }} />
+        {/* Main icon with gradient effect */}
+        <LinearGradient
+          colors={['#FFD93D', '#FF6B35', '#FF4444']}
+          start={{ x: 0, y: 0 }}
+          end={{ x: 1, y: 1 }}
+          style={{
+            width: size,
+            height: size,
+            borderRadius: size / 2,
+            justifyContent: 'center',
+            alignItems: 'center',
+          }}
+        >
+          <Ionicons name="flame" size={size * 0.6} color="#FFFFFF" />
+        </LinearGradient>
+      </View>
+    </Animated.View>
+  );
+};
 
 // Avatar icon and color mapping (expanded)
 const AVATAR_ICONS: { [key: string]: string } = {
