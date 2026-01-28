@@ -381,19 +381,64 @@ export default function ChessTab() {
 
       <Text style={styles.sectionTitle}>GAME MODES</Text>
 
+      {/* Play a Friend Section with Friends List */}
       <Pressable 
         style={styles.gameMode}
-        onPress={() => Alert.alert('Play a Friend', 'Select a friend from your friends list to challenge them!')}
+        onPress={() => setShowFriendsList(!showFriendsList)}
       >
         <View style={styles.gameModeIcon}>
           <Ionicons name="people" size={28} color="#EC4899" />
         </View>
         <View style={styles.gameModeInfo}>
           <Text style={styles.gameModeTitle}>Play a Friend</Text>
-          <Text style={styles.gameModeDesc}>Challenge someone from your friends list</Text>
+          <Text style={styles.gameModeDesc}>
+            {friends.length > 0 ? `${friends.length} friends available` : 'Add friends to play'}
+          </Text>
         </View>
-        <Ionicons name="chevron-forward" size={24} color={colors.textMuted} />
+        <Ionicons name={showFriendsList ? "chevron-up" : "chevron-down"} size={24} color={colors.textMuted} />
       </Pressable>
+
+      {/* Expandable Friends List */}
+      {showFriendsList && (
+        <View style={styles.friendsListContainer}>
+          {friends.length === 0 ? (
+            <View style={styles.noFriendsCard}>
+              <Ionicons name="person-add" size={32} color={colors.textMuted} />
+              <Text style={styles.noFriendsText}>No friends yet</Text>
+              <Text style={styles.noFriendsSubtext}>Visit profiles to add friends!</Text>
+            </View>
+          ) : (
+            friends.map((friend) => (
+              <Pressable
+                key={`friend-${friend._id}`}
+                style={styles.friendItem}
+                onPress={() => challengeFriend(friend._id)}
+              >
+                <View style={[styles.friendAvatar, { borderColor: AVATAR_COLORS[friend.avatar_id] || colors.primary }]}>
+                  <Ionicons 
+                    name={(AVATAR_ICONS[friend.avatar_id] || 'person') as any} 
+                    size={18} 
+                    color={AVATAR_COLORS[friend.avatar_id] || colors.primary} 
+                  />
+                </View>
+                <View style={styles.friendInfo}>
+                  <Text style={styles.friendName}>{friend.username}</Text>
+                  <View style={styles.friendOnlineStatus}>
+                    <View style={[styles.onlineDot, { backgroundColor: Math.random() > 0.5 ? '#22C55E' : colors.textMuted }]} />
+                    <Text style={styles.friendStatusText}>
+                      {Math.random() > 0.5 ? 'Online' : 'Offline'}
+                    </Text>
+                  </View>
+                </View>
+                <View style={styles.challengeBtn}>
+                  <Ionicons name="game-controller" size={16} color="#FFF" />
+                  <Text style={styles.challengeBtnText}>Challenge</Text>
+                </View>
+              </Pressable>
+            ))
+          )}
+        </View>
+      )}
 
       <Pressable 
         style={[styles.gameMode, styles.rankedMode]}
