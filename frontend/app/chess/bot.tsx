@@ -7,7 +7,7 @@ import {
   Alert,
   Dimensions,
 } from 'react-native';
-import { useState, useEffect, useCallback, useMemo } from 'react';
+import { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import { useAuth } from '../../src/context/AuthContext';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
@@ -19,32 +19,22 @@ const { width: SCREEN_WIDTH } = Dimensions.get('window');
 const BOARD_SIZE = Math.min(SCREEN_WIDTH - 32, 380);
 const SQUARE_SIZE = BOARD_SIZE / 8;
 
-// =============================================================================
 // UNIFIED PREMIUM CHESS PIECE SYSTEM
-// =============================================================================
-// ALL pieces use the SAME modern, solid, premium design language
-// White: Warm ivory/pearl matte (#F5F0E6 with subtle shadow)
-// Black: Graphite/obsidian matte (#2D2D2D with subtle highlight)
-// NO transparency, NO mixed styles, NO legacy rendering
-// =============================================================================
-
-// Modern Staunton-inspired piece characters (filled, solid Unicode)
 const PIECE_CHARS: { [key: string]: string } = {
   K: '♚', Q: '♛', R: '♜', B: '♝', N: '♞', P: '♟',
   k: '♚', q: '♛', r: '♜', b: '♝', n: '♞', p: '♟',
 };
 
-// Board color themes
 const BOARD_THEMES = {
   classic: { light: '#F0D9B5', dark: '#B58863', name: 'Classic' },
   dark: { light: '#4A4A4A', dark: '#2D2D2D', name: 'Dark' },
   green: { light: '#EEEED2', dark: '#769656', name: 'Tournament' },
 };
 
-// Piece values for bot evaluation
-const PIECE_VALUES: { [key: string]: number } = {
-  'p': 1, 'n': 3, 'b': 3, 'r': 5, 'q': 9, 'k': 0
-};
+const PIECE_VALUES: { [key: string]: number } = { 'p': 1, 'n': 3, 'b': 3, 'r': 5, 'q': 9, 'k': 0 };
+
+// Timer constants - 10 minutes per player
+const INITIAL_TIME = 10 * 60; // 10 minutes in seconds
 
 type Difficulty = 'easy' | 'medium' | 'hard';
 type BoardTheme = 'classic' | 'dark' | 'green';
@@ -66,26 +56,80 @@ export default function BotGame() {
   const [playerColor] = useState<'w' | 'b'>('w');
   const [thinking, setThinking] = useState(false);
   const [moveHistory, setMoveHistory] = useState<string[]>([]);
+  
+  // Timer state - 10 minutes per player
+  const [whiteTime, setWhiteTime] = useState(INITIAL_TIME);
+  const [blackTime, setBlackTime] = useState(INITIAL_TIME);
+  const timerRef = useRef<NodeJS.Timeout | null>(null);
 
-  const getBoardColors = useCallback(() => {
-    return BOARD_THEMES[boardTheme] || BOARD_THEMES.classic;
-  }, [boardTheme]);
+  const getBoardColors = useCallback(() => BOARD_THEMES[boardTheme] || BOARD_THEMES.classic, [boardTheme]);
 
+  // Format time as MM:SS
+  const formatTime = (seconds: number) => {
+    const mins = Math.floor(seconds / 60);
+    const secs = seconds % 60;
+    return `${mins}:${secs.toString().padStart(2, '0')}`;
+  };
+
+  // Initialize game
   useEffect(() => {
     const newGame = new Chess();
     setGame(newGame);
   }, []);
 
+  // Timer effect - runs every second
+  useEffect(() => {
+    if (!game || gameOver) {
+      if (timerRef.current) clearInterval(timerRef.current);
+      return;
+    }
+
+    timerRef.current = setInterval(() => {
+      const currentTurn = game.turn();
+      
+      if (currentTurn === 'w') {
+        setWhiteTime(prev => {
+          if (prev <= 1) {
+            // White (player) ran out of time - Bot wins
+            setGameOver(true);
+            setResult('Bot wins on time!');
+            if (timerRef.current) clearInterval(timerRef.current);
+            return 0;
+          }
+          return prev - 1;
+        });
+      } else {
+        setBlackTime(prev => {
+          if (prev <= 1) {
+            // Black (bot) ran out of time - Player wins
+            setGameOver(true);
+            setResult('You win on time!');
+            if (timerRef.current) clearInterval(timerRef.current);
+            return 0;
+          }
+          return prev - 1;
+        });
+      }
+    }, 1000);
+
+    return () => {
+      if (timerRef.current) clearInterval(timerRef.current);
+    };
+  }, [game?.turn(), gameOver]);
+
+  // Bot makes move after player
   useEffect(() => {
     if (!game || gameOver || game.turn() === playerColor) return;
     const timeout = setTimeout(() => makeBotMove(), 500);
     return () => clearTimeout(timeout);
   }, [game?.fen(), gameOver]);
 
+  // Check game over conditions
   useEffect(() => {
     if (!game) return;
     if (game.isGameOver()) {
       setGameOver(true);
+      if (timerRef.current) clearInterval(timerRef.current);
       if (game.isCheckmate()) {
         const winner = game.turn() === 'w' ? 'Black' : 'White';
         setResult(winner === 'White' ? 'You won by checkmate!' : 'Bot won by checkmate');
@@ -117,9 +161,7 @@ export default function BotGame() {
     return score;
   }, []);
 
-  const minimax = useCallback((
-    chess: Chess, depth: number, alpha: number, beta: number, isMaximizing: boolean
-  ): number => {
+  const minimax = useCallback((chess: Chess, depth: number, alpha: number, beta: number, isMaximizing: boolean): number => {
     if (depth === 0 || chess.isGameOver()) return evaluateBoard(chess);
     const moves = chess.moves();
     if (isMaximizing) {
@@ -231,22 +273,17 @@ export default function BotGame() {
     setGameOver(false);
     setResult('');
     setMoveHistory([]);
+    setWhiteTime(INITIAL_TIME);
+    setBlackTime(INITIAL_TIME);
   }, []);
 
-  // UNIFIED PREMIUM PIECE RENDERER
   const renderPiece = (piece: { type: string; color: 'w' | 'b' } | null) => {
     if (!piece) return null;
     const char = PIECE_CHARS[piece.color === 'w' ? piece.type.toUpperCase() : piece.type.toLowerCase()];
     const isWhite = piece.color === 'w';
-    
     return (
       <View style={styles.pieceContainer}>
-        <Text style={[
-          styles.piece,
-          isWhite ? styles.whitePiece : styles.blackPiece,
-        ]}>
-          {char}
-        </Text>
+        <Text style={[styles.piece, isWhite ? styles.whitePiece : styles.blackPiece]}>{char}</Text>
       </View>
     );
   };
@@ -255,7 +292,6 @@ export default function BotGame() {
     if (!game) return null;
     const board = game.board();
     const boardColors = getBoardColors();
-    
     return (
       <View style={[styles.board, { borderColor: boardColors.dark }]}>
         {board.map((row, rowIndex) => (
@@ -269,12 +305,10 @@ export default function BotGame() {
               const isValidMove = validMoves.includes(squareName);
               const isLastMoveSquare = lastMove && (lastMove.from === squareName || lastMove.to === squareName);
               const isCheck = game.isCheck() && piece?.type === 'k' && piece?.color === game.turn();
-              
               let squareColor = isLight ? boardColors.light : boardColors.dark;
               if (isSelected) squareColor = '#F6F669';
               else if (isLastMoveSquare) squareColor = 'rgba(155, 199, 0, 0.5)';
               else if (isCheck) squareColor = '#FF6B6B';
-              
               return (
                 <Pressable
                   key={`square-${rowIndex}-${colIndex}`}
@@ -301,6 +335,10 @@ export default function BotGame() {
     );
   }
 
+  const isWhiteTurn = game.turn() === 'w';
+  const isLowTimeWhite = whiteTime < 60;
+  const isLowTimeBlack = blackTime < 60;
+
   return (
     <View style={styles.container}>
       <View style={styles.header}>
@@ -310,7 +348,7 @@ export default function BotGame() {
         <View style={styles.headerCenter}>
           <Text style={styles.headerTitle}>PRACTICE MODE</Text>
           <Text style={styles.headerSubtitle}>
-            {difficulty.charAt(0).toUpperCase() + difficulty.slice(1)} Bot • Offline
+            {difficulty.charAt(0).toUpperCase() + difficulty.slice(1)} Bot • 10 min
           </Text>
         </View>
         <View style={styles.headerRight}>
@@ -322,30 +360,45 @@ export default function BotGame() {
       </View>
 
       <ScrollView contentContainerStyle={styles.content}>
-        <View style={styles.playerInfo}>
-          <View style={styles.botAvatar}>
-            <Ionicons name="hardware-chip" size={20} color="#A78BFA" />
-          </View>
-          <Text style={styles.playerName}>
-            {difficulty === 'easy' ? 'Rookie Bot' : difficulty === 'medium' ? 'Challenger Bot' : 'Master Bot'}
-          </Text>
-          {thinking && (
-            <View style={styles.thinkingBadge}>
-              <Text style={styles.thinkingText}>Thinking...</Text>
+        {/* Bot Timer - BLACK */}
+        <View style={[styles.timerContainer, !isWhiteTurn && styles.timerActive, isLowTimeBlack && styles.timerLow]}>
+          <View style={styles.timerInfo}>
+            <View style={styles.botAvatar}>
+              <Ionicons name="hardware-chip" size={20} color="#A78BFA" />
             </View>
-          )}
+            <Text style={styles.timerPlayerName}>
+              {difficulty === 'easy' ? 'Rookie Bot' : difficulty === 'medium' ? 'Challenger Bot' : 'Master Bot'}
+            </Text>
+            {thinking && <Text style={styles.thinkingLabel}>Thinking...</Text>}
+          </View>
+          <View style={[styles.timerDisplay, !isWhiteTurn && styles.timerDisplayActive, isLowTimeBlack && styles.timerDisplayLow]}>
+            <Ionicons name="time" size={16} color={isLowTimeBlack ? '#FFF' : colors.textMuted} />
+            <Text style={[styles.timerText, !isWhiteTurn && styles.timerTextActive, isLowTimeBlack && styles.timerTextLow]}>
+              {formatTime(blackTime)}
+            </Text>
+          </View>
         </View>
 
+        {/* Chess Board */}
         <View style={styles.boardContainer}>{renderBoard}</View>
 
-        <View style={styles.playerInfo}>
-          <View style={[styles.botAvatar, styles.playerAvatar]}>
-            <Ionicons name="person" size={20} color="#000" />
+        {/* Player Timer - WHITE */}
+        <View style={[styles.timerContainer, isWhiteTurn && styles.timerActive, isLowTimeWhite && styles.timerLow]}>
+          <View style={styles.timerInfo}>
+            <View style={[styles.botAvatar, styles.playerAvatar]}>
+              <Ionicons name="person" size={20} color="#000" />
+            </View>
+            <Text style={styles.timerPlayerName}>{user?.username || 'You'} (White)</Text>
           </View>
-          <Text style={styles.playerName}>{user?.username || 'You'}</Text>
-          <Text style={styles.playerColor}>(White)</Text>
+          <View style={[styles.timerDisplay, isWhiteTurn && styles.timerDisplayActive, isLowTimeWhite && styles.timerDisplayLow]}>
+            <Ionicons name="time" size={16} color={isLowTimeWhite ? '#FFF' : colors.textMuted} />
+            <Text style={[styles.timerText, isWhiteTurn && styles.timerTextActive, isLowTimeWhite && styles.timerTextLow]}>
+              {formatTime(whiteTime)}
+            </Text>
+          </View>
         </View>
 
+        {/* Status */}
         <View style={styles.statusBar}>
           {gameOver ? (
             <Text style={styles.statusText}>{result}</Text>
@@ -357,6 +410,7 @@ export default function BotGame() {
           )}
         </View>
 
+        {/* Move History */}
         <View style={styles.movesContainer}>
           <Text style={styles.movesTitle}>Moves</Text>
           <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.movesList}>
@@ -370,6 +424,7 @@ export default function BotGame() {
           </ScrollView>
         </View>
 
+        {/* Actions */}
         <View style={styles.actions}>
           <Pressable style={styles.resetButton} onPress={resetGame}>
             <Ionicons name="refresh" size={18} color={colors.primary} />
@@ -379,13 +434,6 @@ export default function BotGame() {
             <Ionicons name="exit" size={18} color={colors.textMuted} />
             <Text style={styles.exitText}>Exit</Text>
           </Pressable>
-        </View>
-
-        <View style={styles.infoCard}>
-          <Ionicons name="information-circle" size={20} color={colors.textMuted} />
-          <Text style={styles.infoText}>
-            Practice mode is fully offline. Games don't affect your rating.
-          </Text>
         </View>
       </ScrollView>
     </View>
@@ -411,30 +459,43 @@ const styles = StyleSheet.create({
   },
   offlineText: { fontSize: 10, color: colors.textMuted },
   content: { padding: 16, alignItems: 'center' },
-  playerInfo: { flexDirection: 'row', alignItems: 'center', gap: 10, paddingVertical: 8 },
+  // Timer styles
+  timerContainer: {
+    flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',
+    backgroundColor: colors.cardBackground, borderRadius: 12, padding: 12,
+    width: '100%', marginVertical: 4, borderWidth: 2, borderColor: 'transparent',
+  },
+  timerActive: { borderColor: colors.primary, backgroundColor: `${colors.primary}10` },
+  timerLow: { borderColor: '#DC2626', backgroundColor: 'rgba(220, 38, 38, 0.1)' },
+  timerInfo: { flexDirection: 'row', alignItems: 'center', gap: 10, flex: 1 },
   botAvatar: {
     width: 36, height: 36, borderRadius: 18, backgroundColor: colors.surface,
     borderWidth: 2, borderColor: '#A78BFA', justifyContent: 'center', alignItems: 'center',
   },
   playerAvatar: { backgroundColor: colors.primary, borderColor: colors.primary },
-  playerName: { fontSize: 16, fontWeight: '600', color: colors.textPrimary },
-  playerColor: { fontSize: 14, color: colors.textMuted },
-  thinkingBadge: { backgroundColor: '#A78BFA', paddingHorizontal: 10, paddingVertical: 4, borderRadius: 12 },
-  thinkingText: { fontSize: 11, color: '#000', fontWeight: '600' },
+  timerPlayerName: { fontSize: 14, fontWeight: '600', color: colors.textPrimary },
+  thinkingLabel: { fontSize: 11, color: '#A78BFA', fontWeight: '600' },
+  timerDisplay: {
+    flexDirection: 'row', alignItems: 'center', gap: 6,
+    backgroundColor: colors.surface, paddingHorizontal: 12, paddingVertical: 8, borderRadius: 8,
+  },
+  timerDisplayActive: { backgroundColor: colors.primary },
+  timerDisplayLow: { backgroundColor: '#DC2626' },
+  timerText: { fontSize: 18, fontWeight: 'bold', color: colors.textPrimary, fontVariant: ['tabular-nums'] },
+  timerTextActive: { color: '#000' },
+  timerTextLow: { color: '#FFF' },
   boardContainer: { alignItems: 'center', marginVertical: 8 },
   board: { width: BOARD_SIZE, height: BOARD_SIZE, borderWidth: 3, borderRadius: 4, overflow: 'hidden' },
   row: { flexDirection: 'row' },
   square: { width: SQUARE_SIZE, height: SQUARE_SIZE, justifyContent: 'center', alignItems: 'center' },
   pieceContainer: { width: '100%', height: '100%', justifyContent: 'center', alignItems: 'center' },
   piece: { fontSize: SQUARE_SIZE * 0.8, textAlign: 'center' },
-  // UNIFIED WHITE PIECES - Warm ivory, solid, matte finish
   whitePiece: {
     color: '#F5F0E6',
     textShadowColor: 'rgba(0, 0, 0, 0.6)',
     textShadowOffset: { width: 1, height: 2 },
     textShadowRadius: 3,
   },
-  // UNIFIED BLACK PIECES - Graphite obsidian, solid, matte finish  
   blackPiece: {
     color: '#2D2D2D',
     textShadowColor: 'rgba(255, 255, 255, 0.15)',
@@ -451,7 +512,7 @@ const styles = StyleSheet.create({
   },
   statusBar: {
     backgroundColor: colors.cardBackground, paddingVertical: 12, paddingHorizontal: 20,
-    borderRadius: 8, marginVertical: 12, width: '100%',
+    borderRadius: 8, marginVertical: 8, width: '100%',
   },
   statusText: { fontSize: 16, color: colors.textSecondary, textAlign: 'center', fontWeight: '500' },
   yourTurn: { color: colors.primary, fontWeight: 'bold' },
@@ -480,9 +541,4 @@ const styles = StyleSheet.create({
     paddingVertical: 14, borderRadius: 8, justifyContent: 'center', alignItems: 'center', gap: 8,
   },
   exitText: { color: colors.textMuted, fontWeight: '600', fontSize: 15 },
-  infoCard: {
-    flexDirection: 'row', backgroundColor: colors.cardBackground,
-    borderRadius: 12, padding: 14, alignItems: 'center', gap: 12, width: '100%',
-  },
-  infoText: { flex: 1, fontSize: 12, color: colors.textMuted, lineHeight: 18 },
 });
