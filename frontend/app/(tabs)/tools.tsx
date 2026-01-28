@@ -41,9 +41,9 @@ const AVATAR_COLORS: { [key: string]: string } = {
 
 // Content source icons and colors
 const SOURCE_CONFIG: { [key: string]: { icon: string; color: string; label: string } } = {
-  YOUTUBE: { icon: 'logo-youtube', color: '#FF0000', label: 'YouTube' },
-  TIKTOK: { icon: 'musical-notes', color: '#000000', label: 'TikTok' },
-  TWITTER: { icon: 'logo-twitter', color: '#1DA1F2', label: 'Twitter' },
+  YOUTUBE: { icon: 'play-circle', color: '#FF0000', label: 'YouTube' },
+  TIKTOK: { icon: 'musical-notes', color: '#010101', label: 'TikTok' },
+  TWITTER: { icon: 'chatbubble-ellipses', color: '#1DA1F2', label: 'Twitter' },
   TED: { icon: 'mic', color: '#E62B1E', label: 'TED Talk' },
   ARTICLE: { icon: 'document-text', color: '#6366F1', label: 'Article' },
   PODCAST: { icon: 'headset', color: '#8B5CF6', label: 'Podcast' },
