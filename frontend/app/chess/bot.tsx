@@ -19,10 +19,23 @@ const { width: SCREEN_WIDTH } = Dimensions.get('window');
 const BOARD_SIZE = Math.min(SCREEN_WIDTH - 32, 380);
 const SQUARE_SIZE = BOARD_SIZE / 8;
 
-// Chess piece Unicode characters
-const PIECES: { [key: string]: string } = {
-  'K': '♔', 'Q': '♕', 'R': '♖', 'B': '♗', 'N': '♘', 'P': '♙',
-  'k': '♚', 'q': '♛', 'r': '♜', 'b': '♝', 'n': '♞', 'p': '♟',
+// Modern Chess Pieces - UNIFIED consistent styling for both sides
+const PIECE_SETS = {
+  standard: {
+    K: '♔', Q: '♕', R: '♖', B: '♗', N: '♘', P: '♙',
+    k: '♚', q: '♛', r: '♜', b: '♝', n: '♞', p: '♟',
+  },
+  modern: {
+    K: '♔', Q: '♕', R: '♖', B: '♗', N: '♘', P: '♙',
+    k: '♚', q: '♛', r: '♜', b: '♝', n: '♞', p: '♟',
+  },
+};
+
+// Board color themes
+const BOARD_THEMES = {
+  classic: { light: '#F0D9B5', dark: '#B58863', name: 'Classic' },
+  dark: { light: '#4A4A4A', dark: '#2D2D2D', name: 'Dark' },
+  green: { light: '#EEEED2', dark: '#769656', name: 'Tournament' },
 };
 
 // Piece values for bot evaluation
@@ -31,12 +44,18 @@ const PIECE_VALUES: { [key: string]: number } = {
 };
 
 type Difficulty = 'easy' | 'medium' | 'hard';
+type BoardTheme = 'classic' | 'dark' | 'green';
+type PieceStyle = 'standard' | 'modern';
 
 export default function BotGame() {
   const { user } = useAuth();
   const router = useRouter();
   const params = useLocalSearchParams();
+  
+  // Read settings from URL params
   const difficulty = (params.difficulty as Difficulty) || 'medium';
+  const boardTheme = (params.theme as BoardTheme) || 'classic';
+  const pieceStyle = (params.style as PieceStyle) || 'modern';
   
   const [game, setGame] = useState<Chess | null>(null);
   const [selectedSquare, setSelectedSquare] = useState<string | null>(null);
@@ -47,6 +66,17 @@ export default function BotGame() {
   const [playerColor] = useState<'w' | 'b'>('w'); // Player is always white
   const [thinking, setThinking] = useState(false);
   const [moveHistory, setMoveHistory] = useState<string[]>([]);
+
+  // Get board colors based on selected theme
+  const getBoardColors = useCallback(() => {
+    return BOARD_THEMES[boardTheme] || BOARD_THEMES.classic;
+  }, [boardTheme]);
+
+  // Get piece character based on selected style
+  const getPiece = useCallback((piece: string) => {
+    const pieceSet = PIECE_SETS[pieceStyle] || PIECE_SETS.modern;
+    return pieceSet[piece as keyof typeof pieceSet] || '';
+  }, [pieceStyle]);
 
   // Initialize game
   useEffect(() => {
@@ -278,16 +308,18 @@ export default function BotGame() {
     setMoveHistory([]);
   }, []);
 
-  // Render board
+  // Render board with dynamic theme
   const renderBoard = useMemo(() => {
     if (!game) return null;
     
     const board = game.board();
+    const boardColors = getBoardColors();
+    const isModern = pieceStyle === 'modern';
     
     return (
-      <View style={styles.board}>
+      <View style={[styles.board, { borderColor: boardColors.dark }]}>
         {board.map((row, rowIndex) => (
-          <View key={rowIndex} style={styles.row}>
+          <View key={`row-${rowIndex}`} style={styles.row}>
             {row.map((piece, colIndex) => {
               const files = 'abcdefgh';
               const ranks = '87654321';
@@ -298,24 +330,25 @@ export default function BotGame() {
               const isLastMoveSquare = lastMove && (lastMove.from === squareName || lastMove.to === squareName);
               const isCheck = game.isCheck() && piece?.type === 'k' && piece?.color === game.turn();
               
+              // Dynamic square background color
+              let squareColor = isLight ? boardColors.light : boardColors.dark;
+              if (isSelected) squareColor = '#F6F669';
+              else if (isLastMoveSquare) squareColor = 'rgba(155, 199, 0, 0.5)';
+              else if (isCheck) squareColor = '#FF6B6B';
+              
               return (
                 <Pressable
-                  key={colIndex}
-                  style={[
-                    styles.square,
-                    isLight ? styles.lightSquare : styles.darkSquare,
-                    isSelected && styles.selectedSquare,
-                    isLastMoveSquare && styles.lastMoveSquare,
-                    isCheck && styles.checkSquare,
-                  ]}
+                  key={`square-${rowIndex}-${colIndex}`}
+                  style={[styles.square, { backgroundColor: squareColor }]}
                   onPress={() => handleSquarePress(rowIndex, colIndex)}
                 >
                   {piece && (
                     <Text style={[
                       styles.piece,
-                      piece.color === 'w' ? styles.whitePiece : styles.blackPiece
+                      piece.color === 'w' ? styles.whitePiece : styles.blackPiece,
+                      isModern && styles.modernPiece,
                     ]}>
-                      {PIECES[piece.color === 'w' ? piece.type.toUpperCase() : piece.type]}
+                      {getPiece(piece.color === 'w' ? piece.type.toUpperCase() : piece.type)}
                     </Text>
                   )}
                   {isValidMove && !piece && (
@@ -331,7 +364,7 @@ export default function BotGame() {
         ))}
       </View>
     );
-  }, [game?.fen(), selectedSquare, validMoves, lastMove, handleSquarePress]);
+  }, [game?.fen(), selectedSquare, validMoves, lastMove, handleSquarePress, getBoardColors, getPiece, pieceStyle]);
 
   if (!game) {
     return (
@@ -409,7 +442,7 @@ export default function BotGame() {
           <Text style={styles.movesTitle}>Moves</Text>
           <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.movesList}>
             {moveHistory.map((move, index) => (
-              <View key={index} style={styles.moveItem}>
+              <View key={`move-${index}`} style={styles.moveItem}>
                 <Text style={styles.moveNumber}>{Math.floor(index / 2) + 1}.</Text>
                 <Text style={styles.moveText}>{move}</Text>
               </View>
@@ -552,7 +585,6 @@ const styles = StyleSheet.create({
     width: BOARD_SIZE,
     height: BOARD_SIZE,
     borderWidth: 3,
-    borderColor: colors.border,
     borderRadius: 4,
     overflow: 'hidden',
   },
@@ -565,21 +597,6 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
   },
-  lightSquare: {
-    backgroundColor: '#E8D5B5',
-  },
-  darkSquare: {
-    backgroundColor: '#B58863',
-  },
-  selectedSquare: {
-    backgroundColor: '#F6F669',
-  },
-  lastMoveSquare: {
-    backgroundColor: 'rgba(155, 199, 0, 0.5)',
-  },
-  checkSquare: {
-    backgroundColor: '#FF6B6B',
-  },
   piece: {
     fontSize: SQUARE_SIZE * 0.75,
   },
@@ -590,10 +607,13 @@ const styles = StyleSheet.create({
     textShadowRadius: 2,
   },
   blackPiece: {
-    color: '#000000',
+    color: '#1A1A1A',
     textShadowColor: 'rgba(255,255,255,0.3)',
-    textShadowOffset: { width: 1, height: 1 },
+    textShadowOffset: { width: 0.5, height: 0.5 },
     textShadowRadius: 1,
+  },
+  modernPiece: {
+    fontWeight: '900',
   },
   validMoveIndicator: {
     width: SQUARE_SIZE * 0.3,
