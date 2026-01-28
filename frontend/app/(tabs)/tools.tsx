@@ -14,10 +14,12 @@ import {
   Dimensions,
   KeyboardAvoidingView,
   Platform,
+  ActivityIndicator,
 } from 'react-native';
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
+import { LinearGradient } from 'expo-linear-gradient';
 import { colors } from '../../src/theme';
 import { useAuth } from '../../src/context/AuthContext';
 import api from '../../src/services/api';
@@ -26,44 +28,117 @@ const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = Dimensions.get('window');
 
 // Avatar mappings
 const AVATAR_ICONS: { [key: string]: string } = {
-  shield: 'shield-checkmark',
-  phoenix: 'flame',
-  mountain: 'triangle',
-  star: 'star',
-  diamond: 'diamond',
-  lightning: 'flash',
-  heart: 'heart',
-  rocket: 'rocket',
-  crown: 'trophy',
-  anchor: 'fitness',
+  shield: 'shield-checkmark', phoenix: 'flame', mountain: 'triangle', star: 'star',
+  diamond: 'diamond', lightning: 'flash', heart: 'heart', rocket: 'rocket',
+  crown: 'trophy', anchor: 'fitness',
 };
 
 const AVATAR_COLORS: { [key: string]: string } = {
-  shield: '#00F5A0',
-  phoenix: '#FF6B6B',
-  mountain: '#4ECDC4',
-  star: '#FFE66D',
-  diamond: '#A78BFA',
-  lightning: '#F59E0B',
-  heart: '#EC4899',
-  rocket: '#3B82F6',
-  crown: '#FBBF24',
-  anchor: '#10B981',
+  shield: '#00F5A0', phoenix: '#FF6B6B', mountain: '#4ECDC4', star: '#FFE66D',
+  diamond: '#A78BFA', lightning: '#F59E0B', heart: '#EC4899', rocket: '#3B82F6',
+  crown: '#FBBF24', anchor: '#10B981',
 };
+
+// Content source icons and colors
+const SOURCE_CONFIG: { [key: string]: { icon: string; color: string; label: string } } = {
+  YOUTUBE: { icon: 'logo-youtube', color: '#FF0000', label: 'YouTube' },
+  TIKTOK: { icon: 'musical-notes', color: '#000000', label: 'TikTok' },
+  TWITTER: { icon: 'logo-twitter', color: '#1DA1F2', label: 'Twitter' },
+  TED: { icon: 'mic', color: '#E62B1E', label: 'TED Talk' },
+  ARTICLE: { icon: 'document-text', color: '#6366F1', label: 'Article' },
+  PODCAST: { icon: 'headset', color: '#8B5CF6', label: 'Podcast' },
+};
+
+// Mock content for Learn Feed (would be server-driven in production)
+const MOCK_LEARN_CONTENT = [
+  {
+    _id: '1',
+    source_type: 'YOUTUBE',
+    title: 'The Science of Addiction: How Your Brain Gets Hooked',
+    creator_name: 'TED-Ed',
+    thumbnail_url: 'https://images.unsplash.com/photo-1559757175-5700dde675bc?w=800',
+    video_url: 'https://www.youtube.com/watch?v=example1',
+    duration: '12:34',
+    views: '2.1M',
+    created_at: new Date().toISOString(),
+  },
+  {
+    _id: '2',
+    source_type: 'TED',
+    title: 'Everything You Think You Know About Addiction is Wrong',
+    creator_name: 'Johann Hari',
+    thumbnail_url: 'https://images.unsplash.com/photo-1505751172876-fa1923c5c528?w=800',
+    video_url: 'https://www.ted.com/talks/example',
+    duration: '14:42',
+    views: '15M',
+    created_at: new Date().toISOString(),
+  },
+  {
+    _id: '3',
+    source_type: 'TWITTER',
+    title: '"Recovery is not about being perfect. It\'s about getting up one more time than you fall." — Shared by @RecoveryCoach',
+    creator_name: '@RecoveryCoach',
+    content_type: 'text',
+    created_at: new Date().toISOString(),
+  },
+  {
+    _id: '4',
+    source_type: 'TIKTOK',
+    title: '60-Second Grounding Technique When Urges Hit',
+    creator_name: '@MindfulRecovery',
+    thumbnail_url: 'https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=800',
+    video_url: 'https://www.tiktok.com/@example',
+    duration: '0:58',
+    views: '890K',
+    created_at: new Date().toISOString(),
+  },
+  {
+    _id: '5',
+    source_type: 'YOUTUBE',
+    title: 'How I Quit Gambling After 15 Years - My Story',
+    creator_name: 'Real Recovery Stories',
+    thumbnail_url: 'https://images.unsplash.com/photo-1522202176988-66273c2fd55f?w=800',
+    video_url: 'https://www.youtube.com/watch?v=example2',
+    duration: '18:22',
+    views: '456K',
+    created_at: new Date().toISOString(),
+  },
+  {
+    _id: '6',
+    source_type: 'ARTICLE',
+    title: '10 Healthy Habits That Replace Gambling Urges',
+    creator_name: 'Recovery Blog',
+    thumbnail_url: 'https://images.unsplash.com/photo-1571019613454-1cb2f99b2d8b?w=800',
+    content_type: 'article',
+    read_time: '5 min read',
+    created_at: new Date().toISOString(),
+  },
+  {
+    _id: '7',
+    source_type: 'PODCAST',
+    title: 'Episode 47: Building a Support System in Recovery',
+    creator_name: 'Recovery Podcast',
+    thumbnail_url: 'https://images.unsplash.com/photo-1478737270239-2f02b77fc618?w=800',
+    duration: '45:00',
+    created_at: new Date().toISOString(),
+  },
+  {
+    _id: '8',
+    source_type: 'TWITTER',
+    title: '"Day 365. One year clean. If you\'re on day 1, keep going. I was once where you are." — @GamblerNoMore',
+    creator_name: '@GamblerNoMore',
+    content_type: 'text',
+    created_at: new Date().toISOString(),
+  },
+];
 
 interface VPNStatus {
   recovery_mode_enabled: boolean;
   lock_duration: string | null;
-  lock_started_at: string | null;
-  lock_expires_at: string | null;
-  unlock_requested: boolean;
-  unlock_requested_at: string | null;
-  unlock_request_reason: string | null;
-  unlock_approved: boolean;
-  unlock_approved_at: string | null;
-  unlock_effective_at: string | null;
   cooldown_remaining_seconds: number | null;
   can_disable: boolean;
+  unlock_requested: boolean;
+  unlock_approved: boolean;
 }
 
 const LOCK_DURATIONS = [
@@ -93,11 +168,12 @@ export default function Tools() {
   
   // Community state
   const [activities, setActivities] = useState<any[]>([]);
-  const [mediaContent, setMediaContent] = useState<any[]>([]);
+  const [learnContent, setLearnContent] = useState<any[]>(MOCK_LEARN_CONTENT);
   const [chatMessages, setChatMessages] = useState<any[]>([]);
   const [chatInput, setChatInput] = useState('');
   const [suggestedUsers, setSuggestedUsers] = useState<any[]>([]);
-  const [currentVideoIndex, setCurrentVideoIndex] = useState(0);
+  const [learnFilter, setLearnFilter] = useState<string>('all');
+  const [loadingMore, setLoadingMore] = useState(false);
   
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
@@ -118,7 +194,13 @@ export default function Tools() {
       setVpnStatus(statusRes.data);
       setBlockedDomains(domainsRes.data.domains || []);
       setActivities(activityRes.data.activities || []);
-      setMediaContent(mediaRes.data.media || []);
+      
+      // Merge server media with mock content
+      const serverMedia = mediaRes.data.media || [];
+      if (serverMedia.length > 0) {
+        setLearnContent([...serverMedia, ...MOCK_LEARN_CONTENT]);
+      }
+      
       setChatMessages(chatRes.data.messages || []);
       setSuggestedUsers(suggestedRes.data.users || []);
     } catch (error) {
@@ -189,33 +271,28 @@ export default function Tools() {
       setShowUnlockModal(false);
       setUnlockReason('');
       await loadData();
-      Alert.alert('Request Submitted', 'Your unlock request has been submitted.');
+      Alert.alert('Request Submitted', '24-hour cooldown has started.');
     } catch (error: any) {
       Alert.alert('Error', error.response?.data?.detail || 'Failed to submit unlock request');
     }
   };
 
   const handleDisableVPN = async () => {
-    Alert.alert(
-      'Disable Recovery Mode?',
-      'Are you sure you want to disable protection?',
-      [
-        { text: 'Cancel', style: 'cancel' },
-        {
-          text: 'Disable',
-          style: 'destructive',
-          onPress: async () => {
-            try {
-              await api.post('/api/vpn/disable');
-              await loadData();
-              Alert.alert('Recovery Mode Disabled', 'Protection has been turned off.');
-            } catch (error: any) {
-              Alert.alert('Error', error.response?.data?.detail || 'Failed to disable');
-            }
-          },
+    Alert.alert('Disable Recovery Mode?', 'Are you sure?', [
+      { text: 'Cancel', style: 'cancel' },
+      {
+        text: 'Disable',
+        style: 'destructive',
+        onPress: async () => {
+          try {
+            await api.post('/api/vpn/disable');
+            await loadData();
+          } catch (error: any) {
+            Alert.alert('Error', error.response?.data?.detail || 'Failed to disable');
+          }
         },
-      ]
-    );
+      },
+    ]);
   };
 
   // Chat handler
@@ -257,60 +334,80 @@ export default function Tools() {
   const isInCooldown = vpnStatus?.unlock_approved && !vpnStatus?.can_disable;
   const isPendingApproval = vpnStatus?.unlock_requested && !vpnStatus?.unlock_approved;
 
-  // Lock Section (Recovery Mode)
+  // Filter learn content
+  const filteredLearnContent = learnFilter === 'all' 
+    ? learnContent 
+    : learnContent.filter(item => item.source_type === learnFilter);
+
+  // Load more content (infinite scroll simulation)
+  const loadMoreContent = () => {
+    if (loadingMore) return;
+    setLoadingMore(true);
+    // Simulate loading more content
+    setTimeout(() => {
+      setLoadingMore(false);
+    }, 1000);
+  };
+
+  // Lock Section
   const renderLockSection = () => (
     <ScrollView
       contentContainerStyle={styles.sectionContent}
       refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}
     >
       <View style={[styles.statusCard, isEnabled && styles.statusCardActive]}>
-        <View style={styles.statusIcon}>
-          <Ionicons 
-            name={isEnabled ? "shield-checkmark" : "shield-outline"} 
-            size={64} 
-            color={isEnabled ? colors.primary : colors.textMuted} 
-          />
-        </View>
-        <Text style={[styles.statusTitle, isEnabled && styles.statusTitleActive]}>
-          {isEnabled ? 'PROTECTION ACTIVE' : 'PROTECTION OFF'}
-        </Text>
-        {isEnabled && vpnStatus?.lock_duration && (
-          <Text style={styles.lockDuration}>
-            Lock: {LOCK_DURATIONS.find(d => d.value === vpnStatus.lock_duration)?.label || vpnStatus.lock_duration}
+        <LinearGradient
+          colors={isEnabled ? ['#00F5A020', '#00F5A005'] : ['transparent', 'transparent']}
+          style={styles.statusGradient}
+        >
+          <View style={styles.statusIcon}>
+            <Ionicons 
+              name={isEnabled ? "shield-checkmark" : "shield-outline"} 
+              size={56} 
+              color={isEnabled ? colors.primary : colors.textMuted} 
+            />
+          </View>
+          <Text style={[styles.statusTitle, isEnabled && styles.statusTitleActive]}>
+            {isEnabled ? 'PROTECTION ACTIVE' : 'PROTECTION OFF'}
           </Text>
-        )}
-        {isInCooldown && cooldownTime && (
-          <View style={styles.cooldownContainer}>
-            <Ionicons name="time" size={24} color={colors.warning} />
-            <Text style={styles.cooldownLabel}>Unlock approved. Changes in:</Text>
-            <Text style={styles.cooldownTimer}>{cooldownTime}</Text>
-          </View>
-        )}
-        {isPendingApproval && (
-          <View style={styles.pendingContainer}>
-            <Ionicons name="hourglass" size={24} color={colors.warning} />
-            <Text style={styles.pendingText}>Unlock request pending approval</Text>
-          </View>
-        )}
-        <Text style={styles.blockedCount}>{blockedDomains.length} gambling sites blocked</Text>
+          {isEnabled && vpnStatus?.lock_duration && (
+            <Text style={styles.lockDuration}>
+              {LOCK_DURATIONS.find(d => d.value === vpnStatus.lock_duration)?.label || vpnStatus.lock_duration}
+            </Text>
+          )}
+          {isInCooldown && cooldownTime && (
+            <View style={styles.cooldownContainer}>
+              <Ionicons name="time" size={20} color={colors.warning} />
+              <Text style={styles.cooldownLabel}>Unlock in:</Text>
+              <Text style={styles.cooldownTimer}>{cooldownTime}</Text>
+            </View>
+          )}
+          <Text style={styles.blockedCount}>{blockedDomains.length} sites blocked</Text>
+        </LinearGradient>
       </View>
 
       {!isEnabled ? (
         <Pressable style={styles.activateButton} onPress={() => setShowEnableModal(true)}>
-          <Ionicons name="lock-closed" size={24} color="#000" />
-          <Text style={styles.activateButtonText}>ACTIVATE RECOVERY MODE</Text>
+          <LinearGradient
+            colors={[colors.primary, '#00D98B']}
+            start={{ x: 0, y: 0 }}
+            end={{ x: 1, y: 0 }}
+            style={styles.activateGradient}
+          >
+            <Ionicons name="lock-closed" size={22} color="#000" />
+            <Text style={styles.activateButtonText}>ACTIVATE PROTECTION</Text>
+          </LinearGradient>
         </Pressable>
       ) : (
         <View style={styles.actionButtons}>
           {!vpnStatus?.unlock_requested && !vpnStatus?.unlock_approved && (
             <Pressable style={styles.requestUnlockButton} onPress={() => setShowUnlockModal(true)}>
-              <Ionicons name="key" size={20} color={colors.textPrimary} />
+              <Ionicons name="key" size={18} color={colors.textPrimary} />
               <Text style={styles.requestUnlockText}>Request Unlock</Text>
             </Pressable>
           )}
           {vpnStatus?.can_disable && (
             <Pressable style={styles.disableButton} onPress={handleDisableVPN}>
-              <Ionicons name="shield-half" size={20} color={colors.danger} />
               <Text style={styles.disableButtonText}>Disable Protection</Text>
             </Pressable>
           )}
@@ -321,9 +418,11 @@ export default function Tools() {
         style={styles.emergencyCard}
         onPress={() => Linking.openURL('tel:1-800-522-4700')}
       >
-        <Ionicons name="call" size={28} color="#FFF" />
+        <View style={styles.emergencyIcon}>
+          <Ionicons name="call" size={24} color="#FFF" />
+        </View>
         <View style={styles.emergencyContent}>
-          <Text style={styles.emergencyTitle}>Crisis Support</Text>
+          <Text style={styles.emergencyTitle}>Crisis Hotline</Text>
           <Text style={styles.emergencyText}>1-800-522-4700</Text>
         </View>
         <Ionicons name="chevron-forward" size={20} color="rgba(255,255,255,0.6)" />
@@ -331,31 +430,29 @@ export default function Tools() {
     </ScrollView>
   );
 
-  // Feed Section (Community Activity)
+  // Feed Section
   const renderFeedSection = () => (
     <FlatList
       data={activities}
       keyExtractor={(item) => item._id}
-      contentContainerStyle={styles.listContent}
+      contentContainerStyle={styles.feedList}
       refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}
       renderItem={({ item }) => (
         <Pressable 
-          style={styles.activityItem}
+          style={styles.feedCard}
           onPress={() => router.push(`/profile/${item.user_id}`)}
         >
-          <View style={[styles.avatar, { borderColor: AVATAR_COLORS[item.avatar_id] || colors.primary }]}>
+          <View style={[styles.feedAvatar, { borderColor: AVATAR_COLORS[item.avatar_id] || colors.primary }]}>
             <Ionicons 
               name={(AVATAR_ICONS[item.avatar_id] || 'person') as any} 
               size={18} 
               color={AVATAR_COLORS[item.avatar_id] || colors.primary} 
             />
           </View>
-          <View style={styles.activityContent}>
-            <Text style={styles.activityText}>
-              <Text style={styles.activityUsername}>{item.username}</Text>
-              {' '}{item.activity_description || item.activity_type}
-            </Text>
-            <Text style={styles.activityTime}>{getTimeAgo(item.created_at)}</Text>
+          <View style={styles.feedContent}>
+            <Text style={styles.feedUsername}>{item.username}</Text>
+            <Text style={styles.feedAction}>{item.activity_description || item.activity_type}</Text>
+            <Text style={styles.feedTime}>{getTimeAgo(item.created_at)}</Text>
           </View>
         </Pressable>
       )}
@@ -363,66 +460,149 @@ export default function Tools() {
         <View style={styles.emptyState}>
           <Ionicons name="pulse-outline" size={48} color={colors.textMuted} />
           <Text style={styles.emptyText}>No activity yet</Text>
+          <Text style={styles.emptySubtext}>Check back later for community updates</Text>
         </View>
       }
     />
   );
 
-  // Learn Section (TikTok-style Videos)
+  // Learn Section (REBUILT)
   const renderLearnSection = () => (
-    <FlatList
-      data={mediaContent}
-      keyExtractor={(item) => item._id}
-      pagingEnabled
-      showsVerticalScrollIndicator={false}
-      snapToInterval={SCREEN_HEIGHT - 200}
-      decelerationRate="fast"
-      onMomentumScrollEnd={(e) => {
-        const index = Math.floor(e.nativeEvent.contentOffset.y / (SCREEN_HEIGHT - 200));
-        setCurrentVideoIndex(index);
-      }}
-      renderItem={({ item, index }) => (
-        <View style={styles.videoCard}>
-          <Image
-            source={{ uri: item.thumbnail_url || 'https://images.unsplash.com/photo-1518609878373-06d740f60d8b?w=800' }}
-            style={styles.videoThumbnail}
-          />
-          <View style={styles.videoOverlay}>
+    <View style={styles.learnContainer}>
+      {/* Filter Tabs */}
+      <ScrollView 
+        horizontal 
+        showsHorizontalScrollIndicator={false} 
+        style={styles.filterBar}
+        contentContainerStyle={styles.filterContent}
+      >
+        {[
+          { id: 'all', label: 'All', icon: 'apps' },
+          { id: 'YOUTUBE', label: 'YouTube', icon: 'logo-youtube' },
+          { id: 'TIKTOK', label: 'TikTok', icon: 'musical-notes' },
+          { id: 'TED', label: 'TED', icon: 'mic' },
+          { id: 'TWITTER', label: 'Twitter', icon: 'logo-twitter' },
+          { id: 'ARTICLE', label: 'Articles', icon: 'document-text' },
+        ].map((filter) => (
+          <Pressable
+            key={filter.id}
+            style={[styles.filterChip, learnFilter === filter.id && styles.filterChipActive]}
+            onPress={() => setLearnFilter(filter.id)}
+          >
+            <Ionicons 
+              name={filter.icon as any} 
+              size={14} 
+              color={learnFilter === filter.id ? '#000' : colors.textMuted} 
+            />
+            <Text style={[styles.filterLabel, learnFilter === filter.id && styles.filterLabelActive]}>
+              {filter.label}
+            </Text>
+          </Pressable>
+        ))}
+      </ScrollView>
+
+      {/* Content Feed */}
+      <FlatList
+        data={filteredLearnContent}
+        keyExtractor={(item) => item._id}
+        contentContainerStyle={styles.learnList}
+        refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}
+        onEndReached={loadMoreContent}
+        onEndReachedThreshold={0.5}
+        renderItem={({ item }) => {
+          const source = SOURCE_CONFIG[item.source_type] || SOURCE_CONFIG.ARTICLE;
+          const isTextContent = item.content_type === 'text';
+          
+          if (isTextContent) {
+            // Twitter-style text card
+            return (
+              <View style={styles.textCard}>
+                <View style={styles.textCardHeader}>
+                  <View style={[styles.sourceIconSmall, { backgroundColor: source.color }]}>
+                    <Ionicons name={source.icon as any} size={12} color="#FFF" />
+                  </View>
+                  <Text style={styles.textCardCreator}>{item.creator_name}</Text>
+                </View>
+                <Text style={styles.textCardContent}>{item.title}</Text>
+                <Text style={styles.textCardTime}>{getTimeAgo(item.created_at)}</Text>
+              </View>
+            );
+          }
+          
+          // Video/Media card
+          return (
             <Pressable 
-              style={styles.playButton}
+              style={styles.learnCard}
               onPress={() => item.video_url && Linking.openURL(item.video_url)}
             >
-              <Ionicons name="play" size={40} color="#FFF" />
+              <View style={styles.thumbnailContainer}>
+                <Image
+                  source={{ uri: item.thumbnail_url || 'https://images.unsplash.com/photo-1518609878373-06d740f60d8b?w=800' }}
+                  style={styles.thumbnail}
+                />
+                <View style={styles.thumbnailOverlay}>
+                  <View style={styles.playIcon}>
+                    <Ionicons name="play" size={24} color="#FFF" />
+                  </View>
+                </View>
+                {item.duration && (
+                  <View style={styles.durationBadge}>
+                    <Text style={styles.durationText}>{item.duration}</Text>
+                  </View>
+                )}
+              </View>
+              <View style={styles.learnCardInfo}>
+                <View style={styles.learnCardHeader}>
+                  <View style={[styles.sourceIcon, { backgroundColor: source.color }]}>
+                    <Ionicons name={source.icon as any} size={14} color="#FFF" />
+                  </View>
+                  <Text style={styles.sourceLabel}>{source.label}</Text>
+                  {item.views && <Text style={styles.viewCount}>{item.views} views</Text>}
+                </View>
+                <Text style={styles.learnTitle} numberOfLines={2}>{item.title}</Text>
+                <Text style={styles.creatorName}>{item.creator_name}</Text>
+              </View>
             </Pressable>
+          );
+        }}
+        ListFooterComponent={
+          loadingMore ? (
+            <View style={styles.loadingMore}>
+              <ActivityIndicator size="small" color={colors.primary} />
+              <Text style={styles.loadingMoreText}>Loading more...</Text>
+            </View>
+          ) : null
+        }
+        ListEmptyComponent={
+          <View style={styles.emptyState}>
+            <Ionicons name="videocam-outline" size={48} color={colors.textMuted} />
+            <Text style={styles.emptyText}>No content found</Text>
           </View>
-          <View style={styles.videoInfo}>
-            <Text style={styles.videoTitle} numberOfLines={2}>{item.title}</Text>
-            <Text style={styles.videoSource}>{item.source || 'Video'}</Text>
-          </View>
-        </View>
-      )}
-      ListEmptyComponent={
-        <View style={styles.emptyState}>
-          <Ionicons name="videocam-outline" size={48} color={colors.textMuted} />
-          <Text style={styles.emptyText}>No videos available</Text>
-        </View>
-      }
-    />
+        }
+      />
+    </View>
   );
 
-  // Chat Section (24/7 Public Chat)
+  // Chat Section
   const renderChatSection = () => (
     <KeyboardAvoidingView 
       style={styles.chatContainer}
       behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
       keyboardVerticalOffset={120}
     >
+      <View style={styles.chatHeader}>
+        <View style={styles.liveBadge}>
+          <View style={styles.liveDot} />
+          <Text style={styles.liveText}>LIVE</Text>
+        </View>
+        <Text style={styles.chatTitle}>Community Chat</Text>
+      </View>
+      
       <FlatList
         ref={chatListRef}
         data={chatMessages}
         keyExtractor={(item) => item._id}
         contentContainerStyle={styles.chatList}
-        inverted={false}
         renderItem={({ item }) => (
           <Pressable 
             style={[styles.chatMessage, item.user_id === user?._id && styles.myMessage]}
@@ -431,14 +611,13 @@ export default function Tools() {
             <View style={[styles.chatAvatar, { borderColor: AVATAR_COLORS[item.avatar_id] || colors.primary }]}>
               <Ionicons 
                 name={(AVATAR_ICONS[item.avatar_id] || 'person') as any} 
-                size={14} 
+                size={12} 
                 color={AVATAR_COLORS[item.avatar_id] || colors.primary} 
               />
             </View>
-            <View style={styles.chatBubble}>
+            <View style={[styles.chatBubble, item.user_id === user?._id && styles.myBubble]}>
               <Text style={styles.chatUsername}>{item.username}</Text>
               <Text style={styles.chatText}>{item.content}</Text>
-              <Text style={styles.chatTime}>{getTimeAgo(item.created_at)}</Text>
             </View>
           </Pressable>
         )}
@@ -450,26 +629,27 @@ export default function Tools() {
           </View>
         }
       />
+      
       <View style={styles.chatInputContainer}>
         <TextInput
           style={styles.chatInput}
-          placeholder="Say something..."
+          placeholder="Type a message..."
           placeholderTextColor={colors.textMuted}
           value={chatInput}
           onChangeText={setChatInput}
           onSubmitEditing={sendChatMessage}
         />
         <Pressable style={styles.sendButton} onPress={sendChatMessage}>
-          <Ionicons name="send" size={20} color="#000" />
+          <Ionicons name="send" size={18} color="#000" />
         </Pressable>
       </View>
     </KeyboardAvoidingView>
   );
 
-  // Connect Section (Friends)
+  // Connect Section
   const renderConnectSection = () => (
     <ScrollView
-      contentContainerStyle={styles.sectionContent}
+      contentContainerStyle={styles.connectContent}
       refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}
     >
       <Text style={styles.connectTitle}>Suggested Connections</Text>
@@ -485,19 +665,19 @@ export default function Tools() {
             <View style={[styles.userAvatar, { borderColor: AVATAR_COLORS[usr.avatar_id] || colors.primary }]}>
               <Ionicons 
                 name={(AVATAR_ICONS[usr.avatar_id] || 'person') as any} 
-                size={24} 
+                size={22} 
                 color={AVATAR_COLORS[usr.avatar_id] || colors.primary} 
               />
             </View>
             <Text style={styles.userName} numberOfLines={1}>{usr.username}</Text>
             {usr.days_clean !== undefined && (
-              <Text style={styles.userStreak}>{usr.days_clean}d streak</Text>
+              <Text style={styles.userStreak}>{usr.days_clean}d clean</Text>
             )}
             <Pressable 
               style={styles.addButton}
-              onPress={() => sendFriendRequest(usr._id)}
+              onPress={(e) => { e.stopPropagation(); sendFriendRequest(usr._id); }}
             >
-              <Ionicons name="person-add" size={16} color="#000" />
+              <Ionicons name="person-add" size={14} color="#000" />
             </Pressable>
           </Pressable>
         ))}
@@ -507,6 +687,7 @@ export default function Tools() {
         <View style={styles.emptyState}>
           <Ionicons name="people-outline" size={48} color={colors.textMuted} />
           <Text style={styles.emptyText}>No suggestions right now</Text>
+          <Text style={styles.emptySubtext}>Check back later for new connections</Text>
         </View>
       )}
     </ScrollView>
@@ -519,7 +700,7 @@ export default function Tools() {
           <Text style={styles.headerTitle}>TOOLS</Text>
         </View>
         <View style={styles.loadingContainer}>
-          <Text style={styles.loadingText}>Loading...</Text>
+          <ActivityIndicator size="large" color={colors.primary} />
         </View>
       </View>
     );
@@ -546,11 +727,13 @@ export default function Tools() {
             style={[styles.tab, activeSection === tab.id && styles.tabActive]}
             onPress={() => setActiveSection(tab.id as ToolSection)}
           >
-            <Ionicons 
-              name={tab.icon as any} 
-              size={18} 
-              color={activeSection === tab.id ? colors.primary : colors.textMuted} 
-            />
+            <View style={styles.tabIconWrapper}>
+              <Ionicons 
+                name={tab.icon as any} 
+                size={18} 
+                color={activeSection === tab.id ? colors.primary : colors.textMuted} 
+              />
+            </View>
             <Text style={[styles.tabLabel, activeSection === tab.id && styles.tabLabelActive]}>
               {tab.label}
             </Text>
@@ -569,7 +752,7 @@ export default function Tools() {
       <Modal visible={showEnableModal} transparent animationType="slide">
         <View style={styles.modalOverlay}>
           <View style={styles.modalContent}>
-            <Text style={styles.modalTitle}>Enable Recovery Mode</Text>
+            <Text style={styles.modalTitle}>Enable Protection</Text>
             <Text style={styles.modalSubtitle}>Choose your lock duration</Text>
             <ScrollView style={styles.durationList}>
               {LOCK_DURATIONS.map((duration) => (
@@ -578,7 +761,7 @@ export default function Tools() {
                   style={[styles.durationOption, selectedDuration === duration.value && styles.durationOptionSelected]}
                   onPress={() => setSelectedDuration(duration.value)}
                 >
-                  <View style={styles.durationRadio}>
+                  <View style={[styles.durationRadio, selectedDuration === duration.value && styles.durationRadioSelected]}>
                     {selectedDuration === duration.value && <View style={styles.durationRadioInner} />}
                   </View>
                   <View style={styles.durationInfo}>
@@ -608,7 +791,7 @@ export default function Tools() {
             <Text style={styles.modalSubtitle}>Please explain why you need to disable protection.</Text>
             <TextInput
               style={styles.reasonInput}
-              placeholder="Enter your reason (min 10 characters)..."
+              placeholder="Enter your reason..."
               placeholderTextColor={colors.textMuted}
               multiline
               numberOfLines={4}
@@ -616,7 +799,7 @@ export default function Tools() {
               onChangeText={setUnlockReason}
             />
             <Text style={styles.warningText}>
-              ⚠️ There will be a 24-hour cooldown before you can disable protection.
+              ⚠️ 24-hour cooldown will start after submission
             </Text>
             <View style={styles.modalButtons}>
               <Pressable style={styles.modalCancelButton} onPress={() => { setShowUnlockModal(false); setUnlockReason(''); }}>
@@ -642,51 +825,54 @@ const styles = StyleSheet.create({
     backgroundColor: colors.cardBackground,
     paddingTop: 50,
     paddingHorizontal: 20,
-    paddingBottom: 16,
+    paddingBottom: 14,
     borderBottomWidth: 1,
     borderBottomColor: colors.border,
   },
   headerTitle: {
-    fontSize: 24,
+    fontSize: 22,
     fontWeight: 'bold',
     color: colors.textPrimary,
     letterSpacing: 2,
   },
   headerSubtitle: {
-    fontSize: 14,
+    fontSize: 13,
     color: colors.textSecondary,
-    marginTop: 4,
+    marginTop: 2,
   },
   loadingContainer: {
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
   },
-  loadingText: {
-    fontSize: 16,
-    color: colors.textSecondary,
-  },
   tabBar: {
     flexDirection: 'row',
     backgroundColor: colors.cardBackground,
     borderBottomWidth: 1,
     borderBottomColor: colors.border,
+    paddingHorizontal: 4,
   },
   tab: {
     flex: 1,
     alignItems: 'center',
     justifyContent: 'center',
     paddingVertical: 10,
-    gap: 2,
+    gap: 3,
   },
   tabActive: {
     borderBottomWidth: 2,
     borderBottomColor: colors.primary,
   },
+  tabIconWrapper: {
+    width: 24,
+    height: 24,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
   tabLabel: {
     fontSize: 10,
     color: colors.textMuted,
-    fontWeight: '500',
+    fontWeight: '600',
   },
   tabLabelActive: {
     color: colors.primary,
@@ -694,27 +880,27 @@ const styles = StyleSheet.create({
   sectionContent: {
     padding: 16,
   },
-  listContent: {
-    padding: 16,
-  },
   // Lock Section
   statusCard: {
     backgroundColor: colors.cardBackground,
-    borderRadius: 20,
-    padding: 24,
-    alignItems: 'center',
+    borderRadius: 16,
+    overflow: 'hidden',
     marginBottom: 16,
-    borderWidth: 2,
+    borderWidth: 1,
     borderColor: colors.border,
   },
   statusCardActive: {
     borderColor: colors.primary,
   },
+  statusGradient: {
+    padding: 24,
+    alignItems: 'center',
+  },
   statusIcon: {
     marginBottom: 12,
   },
   statusTitle: {
-    fontSize: 18,
+    fontSize: 16,
     fontWeight: 'bold',
     color: colors.textMuted,
     letterSpacing: 1,
@@ -725,58 +911,45 @@ const styles = StyleSheet.create({
   lockDuration: {
     fontSize: 13,
     color: colors.textSecondary,
-    marginTop: 6,
+    marginTop: 4,
   },
   cooldownContainer: {
-    backgroundColor: `${colors.warning}20`,
-    borderRadius: 12,
-    padding: 12,
-    marginTop: 12,
+    flexDirection: 'row',
     alignItems: 'center',
-    width: '100%',
+    backgroundColor: `${colors.warning}15`,
+    borderRadius: 8,
+    padding: 10,
+    marginTop: 12,
+    gap: 8,
   },
   cooldownLabel: {
     fontSize: 12,
     color: colors.warning,
-    marginTop: 4,
   },
   cooldownTimer: {
-    fontSize: 28,
+    fontSize: 16,
     fontWeight: 'bold',
     color: colors.warning,
-    marginTop: 4,
-  },
-  pendingContainer: {
-    backgroundColor: `${colors.warning}20`,
-    borderRadius: 12,
-    padding: 12,
-    marginTop: 12,
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
-  },
-  pendingText: {
-    fontSize: 13,
-    color: colors.warning,
-    flex: 1,
   },
   blockedCount: {
-    fontSize: 13,
-    color: colors.textSecondary,
+    fontSize: 12,
+    color: colors.textMuted,
     marginTop: 12,
   },
   activateButton: {
-    backgroundColor: colors.primary,
+    borderRadius: 12,
+    overflow: 'hidden',
+    marginBottom: 16,
+  },
+  activateGradient: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
     padding: 16,
-    borderRadius: 12,
     gap: 10,
-    marginBottom: 16,
   },
   activateButtonText: {
-    fontSize: 16,
+    fontSize: 15,
     fontWeight: 'bold',
     color: '#000',
     letterSpacing: 1,
@@ -792,63 +965,71 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     padding: 14,
     borderRadius: 10,
-    gap: 10,
+    gap: 8,
     borderWidth: 1,
     borderColor: colors.border,
   },
   requestUnlockText: {
-    fontSize: 15,
+    fontSize: 14,
     fontWeight: '600',
     color: colors.textPrimary,
   },
   disableButton: {
     backgroundColor: colors.surface,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
     padding: 14,
     borderRadius: 10,
-    gap: 10,
+    alignItems: 'center',
     borderWidth: 1,
     borderColor: colors.danger,
   },
   disableButtonText: {
-    fontSize: 15,
+    fontSize: 14,
     fontWeight: '600',
     color: colors.danger,
   },
   emergencyCard: {
     backgroundColor: colors.danger,
     borderRadius: 12,
-    padding: 16,
+    padding: 14,
     flexDirection: 'row',
     alignItems: 'center',
     gap: 12,
+  },
+  emergencyIcon: {
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    backgroundColor: 'rgba(255,255,255,0.2)',
+    justifyContent: 'center',
+    alignItems: 'center',
   },
   emergencyContent: {
     flex: 1,
   },
   emergencyTitle: {
-    fontSize: 14,
-    fontWeight: 'bold',
-    color: '#FFF',
+    fontSize: 13,
+    fontWeight: '600',
+    color: 'rgba(255,255,255,0.8)',
   },
   emergencyText: {
-    fontSize: 18,
+    fontSize: 17,
     fontWeight: 'bold',
     color: '#FFF',
   },
   // Feed Section
-  activityItem: {
+  feedList: {
+    padding: 16,
+  },
+  feedCard: {
     flexDirection: 'row',
     backgroundColor: colors.cardBackground,
     borderRadius: 12,
     padding: 14,
     marginBottom: 10,
-    alignItems: 'center',
+    alignItems: 'flex-start',
     gap: 12,
   },
-  avatar: {
+  feedAvatar: {
     width: 40,
     height: 40,
     borderRadius: 20,
@@ -857,61 +1038,188 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     borderWidth: 2,
   },
-  activityContent: {
+  feedContent: {
     flex: 1,
   },
-  activityText: {
+  feedUsername: {
     fontSize: 14,
-    color: colors.textSecondary,
-  },
-  activityUsername: {
     fontWeight: '600',
     color: colors.textPrimary,
   },
-  activityTime: {
-    fontSize: 12,
+  feedAction: {
+    fontSize: 13,
+    color: colors.textSecondary,
+    marginTop: 2,
+  },
+  feedTime: {
+    fontSize: 11,
     color: colors.textMuted,
     marginTop: 4,
   },
   // Learn Section
-  videoCard: {
-    height: SCREEN_HEIGHT - 200,
-    marginBottom: 8,
-    borderRadius: 16,
-    overflow: 'hidden',
-    backgroundColor: colors.cardBackground,
-    marginHorizontal: 16,
+  learnContainer: {
+    flex: 1,
   },
-  videoThumbnail: {
+  filterBar: {
+    backgroundColor: colors.cardBackground,
+    borderBottomWidth: 1,
+    borderBottomColor: colors.border,
+    maxHeight: 50,
+  },
+  filterContent: {
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    gap: 8,
+    flexDirection: 'row',
+  },
+  filterChip: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: colors.surface,
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 16,
+    gap: 6,
+  },
+  filterChipActive: {
+    backgroundColor: colors.primary,
+  },
+  filterLabel: {
+    fontSize: 12,
+    fontWeight: '600',
+    color: colors.textMuted,
+  },
+  filterLabelActive: {
+    color: '#000',
+  },
+  learnList: {
+    padding: 16,
+  },
+  learnCard: {
+    backgroundColor: colors.cardBackground,
+    borderRadius: 12,
+    overflow: 'hidden',
+    marginBottom: 16,
+  },
+  thumbnailContainer: {
+    position: 'relative',
     width: '100%',
-    height: '70%',
+    height: 180,
+  },
+  thumbnail: {
+    width: '100%',
+    height: '100%',
     backgroundColor: colors.surface,
   },
-  videoOverlay: {
+  thumbnailOverlay: {
     ...StyleSheet.absoluteFillObject,
-    height: '70%',
     backgroundColor: 'rgba(0,0,0,0.3)',
     justifyContent: 'center',
     alignItems: 'center',
   },
-  playButton: {
-    width: 72,
-    height: 72,
-    borderRadius: 36,
+  playIcon: {
+    width: 56,
+    height: 56,
+    borderRadius: 28,
     backgroundColor: 'rgba(0,0,0,0.6)',
     justifyContent: 'center',
     alignItems: 'center',
   },
-  videoInfo: {
-    padding: 16,
+  durationBadge: {
+    position: 'absolute',
+    bottom: 8,
+    right: 8,
+    backgroundColor: 'rgba(0,0,0,0.8)',
+    paddingHorizontal: 6,
+    paddingVertical: 2,
+    borderRadius: 4,
   },
-  videoTitle: {
-    fontSize: 16,
+  durationText: {
+    fontSize: 11,
+    fontWeight: '600',
+    color: '#FFF',
+  },
+  learnCardInfo: {
+    padding: 14,
+  },
+  learnCardHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 8,
+    gap: 8,
+  },
+  sourceIcon: {
+    width: 24,
+    height: 24,
+    borderRadius: 12,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  sourceIconSmall: {
+    width: 20,
+    height: 20,
+    borderRadius: 10,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  sourceLabel: {
+    fontSize: 12,
+    fontWeight: '600',
+    color: colors.textSecondary,
+  },
+  viewCount: {
+    fontSize: 11,
+    color: colors.textMuted,
+    marginLeft: 'auto',
+  },
+  learnTitle: {
+    fontSize: 15,
     fontWeight: '600',
     color: colors.textPrimary,
-    marginBottom: 4,
+    lineHeight: 20,
   },
-  videoSource: {
+  creatorName: {
+    fontSize: 13,
+    color: colors.textMuted,
+    marginTop: 6,
+  },
+  textCard: {
+    backgroundColor: colors.cardBackground,
+    borderRadius: 12,
+    padding: 16,
+    marginBottom: 12,
+    borderLeftWidth: 3,
+    borderLeftColor: '#1DA1F2',
+  },
+  textCardHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    marginBottom: 10,
+  },
+  textCardCreator: {
+    fontSize: 13,
+    fontWeight: '600',
+    color: colors.textSecondary,
+  },
+  textCardContent: {
+    fontSize: 15,
+    color: colors.textPrimary,
+    lineHeight: 22,
+  },
+  textCardTime: {
+    fontSize: 11,
+    color: colors.textMuted,
+    marginTop: 10,
+  },
+  loadingMore: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    padding: 16,
+    gap: 8,
+  },
+  loadingMoreText: {
     fontSize: 13,
     color: colors.textMuted,
   },
@@ -919,26 +1227,60 @@ const styles = StyleSheet.create({
   chatContainer: {
     flex: 1,
   },
+  chatHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: colors.cardBackground,
+    padding: 12,
+    borderBottomWidth: 1,
+    borderBottomColor: colors.border,
+    gap: 10,
+  },
+  liveBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: colors.danger,
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 4,
+    gap: 4,
+  },
+  liveDot: {
+    width: 6,
+    height: 6,
+    borderRadius: 3,
+    backgroundColor: '#FFF',
+  },
+  liveText: {
+    fontSize: 10,
+    fontWeight: 'bold',
+    color: '#FFF',
+  },
+  chatTitle: {
+    fontSize: 15,
+    fontWeight: '600',
+    color: colors.textPrimary,
+  },
   chatList: {
-    padding: 16,
+    padding: 12,
     paddingBottom: 80,
   },
   chatMessage: {
     flexDirection: 'row',
-    marginBottom: 12,
+    marginBottom: 10,
     gap: 8,
   },
   myMessage: {
     flexDirection: 'row-reverse',
   },
   chatAvatar: {
-    width: 32,
-    height: 32,
-    borderRadius: 16,
+    width: 28,
+    height: 28,
+    borderRadius: 14,
     backgroundColor: colors.surface,
     justifyContent: 'center',
     alignItems: 'center',
-    borderWidth: 2,
+    borderWidth: 1.5,
   },
   chatBubble: {
     backgroundColor: colors.cardBackground,
@@ -946,8 +1288,11 @@ const styles = StyleSheet.create({
     padding: 10,
     maxWidth: '75%',
   },
+  myBubble: {
+    backgroundColor: colors.primary,
+  },
   chatUsername: {
-    fontSize: 11,
+    fontSize: 10,
     fontWeight: '600',
     color: colors.primary,
     marginBottom: 2,
@@ -955,11 +1300,6 @@ const styles = StyleSheet.create({
   chatText: {
     fontSize: 14,
     color: colors.textPrimary,
-  },
-  chatTime: {
-    fontSize: 10,
-    color: colors.textMuted,
-    marginTop: 4,
   },
   chatInputContainer: {
     flexDirection: 'row',
@@ -979,41 +1319,43 @@ const styles = StyleSheet.create({
     color: colors.textPrimary,
   },
   sendButton: {
-    width: 44,
-    height: 44,
-    borderRadius: 22,
+    width: 40,
+    height: 40,
+    borderRadius: 20,
     backgroundColor: colors.primary,
     justifyContent: 'center',
     alignItems: 'center',
   },
   // Connect Section
+  connectContent: {
+    padding: 16,
+  },
   connectTitle: {
-    fontSize: 20,
+    fontSize: 18,
     fontWeight: 'bold',
     color: colors.textPrimary,
-    marginBottom: 4,
   },
   connectSubtitle: {
-    fontSize: 14,
+    fontSize: 13,
     color: colors.textMuted,
-    marginBottom: 20,
+    marginBottom: 16,
   },
   usersGrid: {
     flexDirection: 'row',
     flexWrap: 'wrap',
-    gap: 12,
+    gap: 10,
   },
   userCard: {
-    width: (SCREEN_WIDTH - 56) / 3,
+    width: (SCREEN_WIDTH - 52) / 3,
     backgroundColor: colors.cardBackground,
     borderRadius: 12,
     padding: 12,
     alignItems: 'center',
   },
   userAvatar: {
-    width: 48,
-    height: 48,
-    borderRadius: 24,
+    width: 44,
+    height: 44,
+    borderRadius: 22,
     backgroundColor: colors.surface,
     justifyContent: 'center',
     alignItems: 'center',
@@ -1021,38 +1363,39 @@ const styles = StyleSheet.create({
     marginBottom: 8,
   },
   userName: {
-    fontSize: 13,
+    fontSize: 12,
     fontWeight: '600',
     color: colors.textPrimary,
     textAlign: 'center',
   },
   userStreak: {
-    fontSize: 11,
+    fontSize: 10,
     color: colors.textMuted,
     marginTop: 2,
   },
   addButton: {
     marginTop: 8,
     backgroundColor: colors.primary,
-    paddingHorizontal: 12,
-    paddingVertical: 6,
-    borderRadius: 12,
+    paddingHorizontal: 10,
+    paddingVertical: 5,
+    borderRadius: 10,
   },
   // Empty States
   emptyState: {
     alignItems: 'center',
     justifyContent: 'center',
-    paddingVertical: 60,
-    gap: 12,
+    paddingVertical: 50,
+    gap: 8,
   },
   emptyText: {
-    fontSize: 16,
+    fontSize: 15,
     fontWeight: '600',
     color: colors.textPrimary,
   },
   emptySubtext: {
-    fontSize: 13,
+    fontSize: 12,
     color: colors.textMuted,
+    textAlign: 'center',
   },
   // Modal Styles
   modalOverlay: {
@@ -1062,82 +1405,85 @@ const styles = StyleSheet.create({
   },
   modalContent: {
     backgroundColor: colors.cardBackground,
-    borderTopLeftRadius: 24,
-    borderTopRightRadius: 24,
-    padding: 24,
-    maxHeight: '80%',
+    borderTopLeftRadius: 20,
+    borderTopRightRadius: 20,
+    padding: 20,
+    maxHeight: '75%',
   },
   modalTitle: {
-    fontSize: 22,
+    fontSize: 20,
     fontWeight: 'bold',
     color: colors.textPrimary,
-    marginBottom: 6,
+    marginBottom: 4,
   },
   modalSubtitle: {
-    fontSize: 14,
+    fontSize: 13,
     color: colors.textSecondary,
-    marginBottom: 20,
+    marginBottom: 16,
   },
   durationList: {
-    marginBottom: 20,
-    maxHeight: 280,
+    marginBottom: 16,
+    maxHeight: 240,
   },
   durationOption: {
     flexDirection: 'row',
     alignItems: 'center',
-    padding: 14,
+    padding: 12,
     backgroundColor: colors.surface,
     borderRadius: 10,
-    borderWidth: 2,
+    borderWidth: 1.5,
     borderColor: 'transparent',
     gap: 12,
-    marginBottom: 10,
+    marginBottom: 8,
   },
   durationOptionSelected: {
     borderColor: colors.primary,
     backgroundColor: `${colors.primary}10`,
   },
   durationRadio: {
-    width: 22,
-    height: 22,
-    borderRadius: 11,
+    width: 20,
+    height: 20,
+    borderRadius: 10,
     borderWidth: 2,
     borderColor: colors.textMuted,
     alignItems: 'center',
     justifyContent: 'center',
   },
+  durationRadioSelected: {
+    borderColor: colors.primary,
+  },
   durationRadioInner: {
-    width: 12,
-    height: 12,
-    borderRadius: 6,
+    width: 10,
+    height: 10,
+    borderRadius: 5,
     backgroundColor: colors.primary,
   },
   durationInfo: {
     flex: 1,
   },
   durationLabel: {
-    fontSize: 15,
+    fontSize: 14,
     fontWeight: '600',
     color: colors.textPrimary,
   },
   durationDesc: {
-    fontSize: 12,
+    fontSize: 11,
     color: colors.textSecondary,
   },
   reasonInput: {
     backgroundColor: colors.surface,
     borderRadius: 10,
-    padding: 14,
-    fontSize: 15,
+    padding: 12,
+    fontSize: 14,
     color: colors.textPrimary,
-    minHeight: 100,
+    minHeight: 80,
     textAlignVertical: 'top',
-    marginBottom: 12,
+    marginBottom: 10,
   },
   warningText: {
-    fontSize: 12,
+    fontSize: 11,
     color: colors.warning,
-    marginBottom: 20,
+    marginBottom: 16,
   },
   modalButtons: {
     flexDirection: 'row',
@@ -1151,7 +1497,7 @@ const styles = StyleSheet.create({
     backgroundColor: colors.surface,
   },
   modalCancelText: {
-    fontSize: 15,
+    fontSize: 14,
     fontWeight: '600',
     color: colors.textSecondary,
   },
@@ -1163,7 +1509,7 @@ const styles = StyleSheet.create({
     backgroundColor: colors.primary,
   },
   modalConfirmText: {
-    fontSize: 15,
+    fontSize: 14,
     fontWeight: 'bold',
     color: '#000',
   },
