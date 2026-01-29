@@ -710,8 +710,7 @@ export default function ChessTab() {
     return (
       <View style={styles.container}>
         <View style={styles.header}>
-          <Text style={styles.headerTitle}>♟️ CHESS</Text>
-          <Text style={styles.headerSubtitle}>A healthy distraction</Text>
+          <Text style={styles.headerTitle}>♟️ Chess</Text>
         </View>
         <View style={styles.loadingContainer}>
           <ActivityIndicator size="large" color={colors.primary} />
@@ -723,8 +722,7 @@ export default function ChessTab() {
   return (
     <View style={styles.container}>
       <View style={styles.header}>
-        <Text style={styles.headerTitle}>♟️ CHESS</Text>
-        <Text style={styles.headerSubtitle}>A healthy distraction</Text>
+        <Text style={styles.headerTitle}>♟️ Chess</Text>
       </View>
 
       <View style={styles.tabBar}>
