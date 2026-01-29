@@ -185,10 +185,16 @@ export default function Tools() {
   
   // DM state
   const [friends, setFriends] = useState<any[]>([]);
+  const [pendingRequests, setPendingRequests] = useState<any[]>([]);
   const [selectedDmFriend, setSelectedDmFriend] = useState<any | null>(null);
   const [dmMessages, setDmMessages] = useState<any[]>([]);
   const [dmInput, setDmInput] = useState('');
   
+  // Search state
+  const [showSearchModal, setShowSearchModal] = useState(false);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [searchResults, setSearchResults] = useState<any[]>([]);
+  const [searchLoading, setSearchLoading] = useState(false);  
   // Live Content state
   const [liveContent, setLiveContent] = useState<ContentItem[]>([]);
   const [contentPage, setContentPage] = useState(1);
