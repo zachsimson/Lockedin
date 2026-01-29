@@ -578,73 +578,173 @@ export default function Tools() {
     />
   );
 
-  // Chat Section
-  const renderChatSection = () => (
-    <KeyboardAvoidingView 
-      style={styles.chatContainer}
-      behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-      keyboardVerticalOffset={120}
-    >
-      <View style={styles.chatHeader}>
-        <View style={styles.liveBadge}>
-          <View style={styles.liveDot} />
-          <Text style={styles.liveText}>LIVE</Text>
-        </View>
-        <Text style={styles.chatTitle}>Community Chat</Text>
-        <Text style={styles.chatSubtitle}>24/7 Support</Text>
-      </View>
-      
-      <FlatList
-        ref={chatListRef}
-        data={chatMessages}
-        keyExtractor={(item, index) => `chat-msg-${item._id || index}`}
-        contentContainerStyle={styles.chatList}
-        renderItem={({ item }) => (
-          <Pressable 
-            style={[styles.chatMessage, item.user_id === user?._id && styles.myMessage]}
-            onPress={() => router.push(`/profile/${item.user_id}`)}
-          >
-            <View style={[styles.chatAvatar, { borderColor: AVATAR_COLORS[item.avatar_id] || colors.primary }]}>
-              <Ionicons 
-                name={(AVATAR_ICONS[item.avatar_id] || 'person') as any} 
-                size={12} 
-                color={AVATAR_COLORS[item.avatar_id] || colors.primary} 
-              />
-            </View>
-            <View style={[styles.chatBubble, item.user_id === user?._id && styles.myBubble]}>
-              <Text style={[styles.chatUsername, item.user_id === user?._id && styles.myUsername]}>
-                {item.username}
-              </Text>
-              <Text style={[styles.chatText, item.user_id === user?._id && styles.myText]}>
-                {item.content}
-              </Text>
-            </View>
-          </Pressable>
-        )}
-        ListEmptyComponent={
-          <View style={styles.emptyState}>
-            <Ionicons name="chatbubbles-outline" size={48} color={colors.textMuted} />
-            <Text style={styles.emptyText}>No messages yet</Text>
-            <Text style={styles.emptySubtext}>Start the conversation!</Text>
+  // Chat Section - Group Chat Rooms
+  const [selectedRoom, setSelectedRoom] = useState<string | null>(null);
+  const [roomMessages, setRoomMessages] = useState<any[]>([]);
+  const [roomUsers, setRoomUsers] = useState<string[]>([]);
+  
+  const ROOM_INFO = [
+    { id: 'general', name: 'General Support', icon: 'people', color: '#00F5A0' },
+    { id: 'focus', name: 'Stay Focused', icon: 'eye', color: '#3B82F6' },
+    { id: 'distraction', name: 'Distraction Corner', icon: 'game-controller', color: '#EC4899' },
+    { id: 'chess', name: 'Chess Players', icon: 'trophy', color: '#F59E0B' },
+    { id: 'late-night', name: 'Late Night Support', icon: 'moon', color: '#A78BFA' },
+  ];
+
+  const joinChatRoom = async (roomId: string) => {
+    setSelectedRoom(roomId);
+    socketService.joinRoom(roomId);
+    
+    // Load room messages
+    try {
+      const response = await api.get(`/api/chat/room/${roomId}?limit=50`);
+      setRoomMessages(response.data.messages || []);
+    } catch (error) {
+      console.log('Failed to load room messages');
+    }
+  };
+
+  const leaveChatRoom = () => {
+    socketService.leaveRoom();
+    setSelectedRoom(null);
+    setRoomMessages([]);
+    setRoomUsers([]);
+  };
+
+  const sendRoomMessage = () => {
+    if (!chatInput.trim() || !selectedRoom) return;
+    socketService.sendRoomMessage(chatInput.trim());
+    setChatInput('');
+  };
+
+  // Socket listeners for room
+  useEffect(() => {
+    if (!selectedRoom) return;
+    
+    const unsubMessage = socketService.onRoomMessage((data: any) => {
+      if (data.room_id === selectedRoom) {
+        setRoomMessages(prev => [...prev, data]);
+      }
+    });
+    
+    const unsubUsers = socketService.onRoomUsers((data: any) => {
+      if (data.room_id === selectedRoom) {
+        setRoomUsers(data.users || []);
+      }
+    });
+    
+    return () => {
+      unsubMessage();
+      unsubUsers();
+    };
+  }, [selectedRoom]);
+
+  const renderChatSection = () => {
+    // Show room selection if no room selected
+    if (!selectedRoom) {
+      return (
+        <ScrollView contentContainerStyle={styles.chatRoomList}>
+          <Text style={styles.chatRoomTitle}>Group Chat Rooms</Text>
+          <Text style={styles.chatRoomSubtitle}>Anonymous support communities</Text>
+          
+          {ROOM_INFO.map((room) => (
+            <Pressable
+              key={`room-${room.id}`}
+              style={styles.chatRoomCard}
+              onPress={() => joinChatRoom(room.id)}
+            >
+              <View style={[styles.chatRoomIcon, { backgroundColor: `${room.color}20` }]}>
+                <Ionicons name={room.icon as any} size={24} color={room.color} />
+              </View>
+              <View style={styles.chatRoomInfo}>
+                <Text style={styles.chatRoomName}>{room.name}</Text>
+                <Text style={styles.chatRoomDesc}>Tap to join</Text>
+              </View>
+              <Ionicons name="chevron-forward" size={20} color={colors.textMuted} />
+            </Pressable>
+          ))}
+          
+          <View style={styles.chatRoomNote}>
+            <Ionicons name="shield-checkmark" size={16} color={colors.primary} />
+            <Text style={styles.chatRoomNoteText}>All chats are anonymous. Be kind and supportive.</Text>
           </View>
-        }
-      />
-      
-      <View style={styles.chatInputContainer}>
-        <TextInput
-          style={styles.chatInput}
-          placeholder="Type a message..."
-          placeholderTextColor={colors.textMuted}
-          value={chatInput}
-          onChangeText={setChatInput}
-          onSubmitEditing={sendChatMessage}
+        </ScrollView>
+      );
+    }
+
+    // Show active chat room
+    const currentRoom = ROOM_INFO.find(r => r.id === selectedRoom);
+    
+    return (
+      <KeyboardAvoidingView 
+        style={styles.chatContainer}
+        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+        keyboardVerticalOffset={120}
+      >
+        {/* Room Header */}
+        <View style={styles.chatHeader}>
+          <Pressable style={styles.backToRooms} onPress={leaveChatRoom}>
+            <Ionicons name="arrow-back" size={20} color={colors.textPrimary} />
+          </Pressable>
+          <View style={styles.chatHeaderCenter}>
+            <View style={styles.liveBadge}>
+              <View style={styles.liveDot} />
+              <Text style={styles.liveText}>LIVE</Text>
+            </View>
+            <Text style={styles.chatTitle}>{currentRoom?.name || 'Chat'}</Text>
+          </View>
+          {roomUsers.length > 0 && (
+            <Text style={styles.userCount}>{roomUsers.length} online</Text>
+          )}
+        </View>
+        
+        {/* Messages */}
+        <FlatList
+          ref={chatListRef}
+          data={roomMessages}
+          keyExtractor={(item, index) => `room-msg-${item._id || item.message_id || index}`}
+          contentContainerStyle={styles.chatList}
+          renderItem={({ item }) => (
+            <View style={[styles.chatMessage, item.user_id === user?._id && styles.myMessage]}>
+              <View style={[styles.chatAvatar, { borderColor: currentRoom?.color || colors.primary }]}>
+                <Ionicons name="person" size={12} color={currentRoom?.color || colors.primary} />
+              </View>
+              <View style={[styles.chatBubble, item.user_id === user?._id && styles.myBubble]}>
+                <Text style={[styles.chatUsername, item.user_id === user?._id && styles.myUsername]}>
+                  {item.username || 'Anonymous'}
+                </Text>
+                <Text style={[styles.chatText, item.user_id === user?._id && styles.myText]}>
+                  {item.message || item.content}
+                </Text>
+              </View>
+            </View>
+          )}
+          ListEmptyComponent={
+            <View style={styles.emptyState}>
+              <Ionicons name="chatbubbles-outline" size={48} color={colors.textMuted} />
+              <Text style={styles.emptyText}>No messages yet</Text>
+              <Text style={styles.emptySubtext}>Start the conversation!</Text>
+            </View>
+          }
         />
-        <Pressable style={styles.sendButton} onPress={sendChatMessage}>
-          <Ionicons name="send" size={18} color="#000" />
-        </Pressable>
-      </View>
-    </KeyboardAvoidingView>
-  );
+        
+        {/* Input */}
+        <View style={styles.chatInputContainer}>
+          <TextInput
+            style={styles.chatInput}
+            placeholder="Type a message..."
+            placeholderTextColor={colors.textMuted}
+            value={chatInput}
+            onChangeText={setChatInput}
+            onSubmitEditing={sendRoomMessage}
+          />
+          <Pressable style={styles.sendButton} onPress={sendRoomMessage}>
+            <Ionicons name="send" size={18} color="#000" />
+          </Pressable>
+        </View>
+      </KeyboardAvoidingView>
+    );
+  };
 
   // Connect Section
   const renderConnectSection = () => (
