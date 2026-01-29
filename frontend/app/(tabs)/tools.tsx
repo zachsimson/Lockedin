@@ -254,7 +254,10 @@ export default function Tools() {
       if (results[2].status === 'fulfilled') setActivities(results[2].value.data.activities || []);
       if (results[3].status === 'fulfilled') setChatMessages(results[3].value.data.messages || []);
       if (results[4].status === 'fulfilled') setSuggestedUsers(results[4].value.data.users || []);
-      if (results[5].status === 'fulfilled') setFriends(results[5].value.data.friends || []);
+      if (results[5].status === 'fulfilled') {
+        setFriends(results[5].value.data.friends || []);
+        setPendingRequests(results[5].value.data.pending_incoming || []);
+      }
       
       // Also load live content
       await loadLiveContent(1, true);
