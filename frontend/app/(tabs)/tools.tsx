@@ -166,6 +166,7 @@ export default function Tools() {
   const { isBlocking, enableBlocking, disableBlocking, checkIfBlocked, blockedDomains: globalBlockedDomains } = useBlocker();
   
   const [activeSection, setActiveSection] = useState<ToolSection>('lock');
+  const [learnSubSection, setLearnSubSection] = useState<LearnSubSection>('youtube');
   
   // VPN/Lock state
   const [vpnStatus, setVpnStatus] = useState<VPNStatus | null>(null);
@@ -182,6 +183,12 @@ export default function Tools() {
   const [chatInput, setChatInput] = useState('');
   const [suggestedUsers, setSuggestedUsers] = useState<any[]>([]);
   
+  // DM state
+  const [friends, setFriends] = useState<any[]>([]);
+  const [selectedDmFriend, setSelectedDmFriend] = useState<any | null>(null);
+  const [dmMessages, setDmMessages] = useState<any[]>([]);
+  const [dmInput, setDmInput] = useState('');
+  
   // Live Content state
   const [liveContent, setLiveContent] = useState<ContentItem[]>([]);
   const [contentPage, setContentPage] = useState(1);
@@ -194,6 +201,7 @@ export default function Tools() {
   const [refreshing, setRefreshing] = useState(false);
   
   const chatListRef = useRef<FlatList>(null);
+  const dmListRef = useRef<FlatList>(null);
 
   // Load live content
   const loadLiveContent = async (page: number = 1, refresh: boolean = false) => {
