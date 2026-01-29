@@ -1001,12 +1001,15 @@ const styles = StyleSheet.create({
   },
   whitePieceMini: {
     color: '#FFFFFF',
-    textShadowColor: '#000',
+    textShadowColor: '#000000',
     textShadowOffset: { width: 0.5, height: 0.5 },
     textShadowRadius: 1,
   },
   blackPieceMini: {
-    color: '#1A1A1A',
+    color: '#000000',
+    textShadowColor: 'rgba(255, 255, 255, 0.3)',
+    textShadowOffset: { width: 0, height: 0 },
+    textShadowRadius: 0.5,
   },
   modernPieceMini: {
     fontWeight: '900',
