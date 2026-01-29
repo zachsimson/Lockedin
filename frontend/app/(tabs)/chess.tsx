@@ -250,7 +250,7 @@ export default function ChessTab() {
   const challengeFriend = async (friendId: string) => {
     setShowFriendsList(false);
     try {
-      const response = await api.post('/api/chess/create', { mode: 'friend', friend_id: friendId });
+      const response = await api.post('/api/chess/create', { mode: 'friend', opponent_id: friendId });
       if (response.data.game) {
         router.push(`/chess/game?gameId=${response.data.game._id}&theme=${boardTheme}&style=${pieceStyle}`);
       } else {
