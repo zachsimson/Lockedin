@@ -1720,4 +1720,58 @@ const styles = StyleSheet.create({
     flex: 1, padding: 14, borderRadius: 10, alignItems: 'center', backgroundColor: colors.primary,
   },
   modalConfirmText: { fontSize: 14, fontWeight: 'bold', color: '#000' },
+  // Search Users styles
+  searchUsersButton: {
+    flexDirection: 'row', alignItems: 'center', justifyContent: 'center',
+    backgroundColor: colors.cardBackground, borderRadius: 12, padding: 14,
+    borderWidth: 1, borderColor: colors.primary, gap: 8, marginBottom: 16,
+  },
+  searchUsersText: { fontSize: 15, fontWeight: '600', color: colors.primary },
+  // Pending Requests styles
+  pendingSection: { marginBottom: 20 },
+  pendingSectionTitle: { fontSize: 15, fontWeight: 'bold', color: colors.textPrimary, marginBottom: 10 },
+  pendingRequestCard: {
+    flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',
+    backgroundColor: colors.cardBackground, borderRadius: 10, padding: 12,
+    marginBottom: 8, borderWidth: 1, borderColor: colors.border,
+  },
+  pendingInfo: { flexDirection: 'row', alignItems: 'center', gap: 10 },
+  pendingUsername: { fontSize: 14, fontWeight: '600', color: colors.textPrimary },
+  pendingActions: { flexDirection: 'row', gap: 8 },
+  acceptButton: {
+    width: 36, height: 36, borderRadius: 18, backgroundColor: colors.primary,
+    justifyContent: 'center', alignItems: 'center',
+  },
+  declineButton: {
+    width: 36, height: 36, borderRadius: 18, backgroundColor: colors.surface,
+    justifyContent: 'center', alignItems: 'center', borderWidth: 1, borderColor: colors.border,
+  },
+  friendsListTitle: { fontSize: 15, fontWeight: 'bold', color: colors.textPrimary, marginBottom: 10 },
+  // Search Modal styles
+  searchModalContent: {
+    backgroundColor: colors.cardBackground, borderTopLeftRadius: 20,
+    borderTopRightRadius: 20, padding: 20, maxHeight: '85%', minHeight: 400,
+  },
+  searchModalHeader: {
+    flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16,
+  },
+  closeModalButton: { padding: 4 },
+  searchInputContainer: {
+    flexDirection: 'row', alignItems: 'center', backgroundColor: colors.surface,
+    borderRadius: 10, paddingHorizontal: 12, paddingVertical: 8, gap: 8, marginBottom: 16,
+  },
+  searchInput: { flex: 1, fontSize: 15, color: colors.textPrimary },
+  searchResultsList: { flex: 1 },
+  searchResultItem: {
+    flexDirection: 'row', alignItems: 'center', padding: 12,
+    borderBottomWidth: 1, borderBottomColor: colors.border,
+  },
+  searchResultInfo: { flex: 1, marginLeft: 12 },
+  searchResultName: { fontSize: 15, fontWeight: '600', color: colors.textPrimary },
+  addFriendButton: {
+    backgroundColor: colors.primary, paddingHorizontal: 12, paddingVertical: 8,
+    borderRadius: 8, justifyContent: 'center', alignItems: 'center',
+  },
+  noResultsContainer: { alignItems: 'center', paddingVertical: 40, gap: 8 },
+  noResultsText: { fontSize: 14, color: colors.textMuted, textAlign: 'center' },
 });
