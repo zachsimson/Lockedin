@@ -553,22 +553,56 @@ export default function ChessGame() {
       </View>
 
       <ScrollView contentContainerStyle={styles.content}>
-        <View style={styles.playerInfo}>
-          <View style={styles.playerAvatar}>
-            <Ionicons name="person" size={20} color={colors.primary} />
+        {/* Opponent Info with Timer */}
+        <View style={styles.playerRow}>
+          <View style={styles.playerInfo}>
+            <View style={styles.playerAvatar}>
+              <Ionicons name="person" size={20} color={colors.primary} />
+            </View>
+            <View>
+              <Text style={styles.playerName}>{opponent?.username || 'Opponent'}</Text>
+              <Text style={styles.playerColor}>({gameState.your_color === 'white' ? 'Black' : 'White'})</Text>
+            </View>
           </View>
-          <Text style={styles.playerName}>{opponent?.username || 'Opponent'}</Text>
-          <Text style={styles.playerColor}>({gameState.your_color === 'white' ? 'Black' : 'White'})</Text>
+          <View style={[
+            styles.timerBox, 
+            gameState.turn !== gameState.your_color && gameState.game.status === 'active' && styles.timerBoxActive
+          ]}>
+            <Ionicons name="time-outline" size={16} color={gameState.turn !== gameState.your_color ? '#FFF' : colors.textMuted} />
+            <Text style={[
+              styles.timerText,
+              gameState.turn !== gameState.your_color && gameState.game.status === 'active' && styles.timerTextActive
+            ]}>
+              {formatTime(gameState.your_color === 'white' ? blackTime : whiteTime)}
+            </Text>
+          </View>
         </View>
 
         {renderBoard()}
 
-        <View style={styles.playerInfo}>
-          <View style={[styles.playerAvatar, styles.playerAvatarYou]}>
-            <Ionicons name="person" size={20} color="#000" />
+        {/* Your Info with Timer */}
+        <View style={styles.playerRow}>
+          <View style={styles.playerInfo}>
+            <View style={[styles.playerAvatar, styles.playerAvatarYou]}>
+              <Ionicons name="person" size={20} color="#000" />
+            </View>
+            <View>
+              <Text style={styles.playerName}>{user?.username || 'You'}</Text>
+              <Text style={styles.playerColor}>({gameState.your_color})</Text>
+            </View>
           </View>
-          <Text style={styles.playerName}>{user?.username || 'You'}</Text>
-          <Text style={styles.playerColor}>({gameState.your_color})</Text>
+          <View style={[
+            styles.timerBox, 
+            gameState.turn === gameState.your_color && gameState.game.status === 'active' && styles.timerBoxActive
+          ]}>
+            <Ionicons name="time-outline" size={16} color={gameState.turn === gameState.your_color ? '#FFF' : colors.textMuted} />
+            <Text style={[
+              styles.timerText,
+              gameState.turn === gameState.your_color && gameState.game.status === 'active' && styles.timerTextActive
+            ]}>
+              {formatTime(gameState.your_color === 'white' ? whiteTime : blackTime)}
+            </Text>
+          </View>
         </View>
 
         <View style={styles.statusBar}>
