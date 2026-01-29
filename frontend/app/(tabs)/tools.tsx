@@ -522,103 +522,206 @@ export default function Tools() {
   );
 
   // Learn Section - Redesigned, Premium, Curated
+  // Open video in in-app player
+  const openVideoPlayer = (item: ContentItem) => {
+    if (item.url || item.embedUrl) {
+      setSelectedVideo(item);
+      setShowVideoPlayer(true);
+    }
+  };
+
+  // Learn Section - Now with LIVE content and in-app video player
   const renderLearnSection = () => (
-    <FlatList
-      data={LEARN_CONTENT}
-      keyExtractor={(item) => `learn-${item.id}`}
-      contentContainerStyle={styles.learnList}
-      refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}
-      renderItem={({ item }) => {
-        const config = SOURCE_CONFIG[item.type] || SOURCE_CONFIG.UPDATE;
-        
-        // Platform Update Card
-        if (item.type === 'UPDATE') {
-          return (
-            <View style={styles.updateCard} key={`learn-${item.id}`}>
-              <View style={styles.updateHeader}>
-                <View style={[styles.sourceIconSmall, { backgroundColor: config.color }]}>
-                  <Ionicons name={config.icon as any} size={12} color="#FFF" />
-                </View>
-                <Text style={styles.updateLabel}>PLATFORM UPDATE</Text>
-              </View>
-              <Text style={styles.updateTitle}>{item.title}</Text>
-              <Text style={styles.updateDesc}>{item.description}</Text>
-            </View>
-          );
+    <>
+      <FlatList
+        data={liveContent}
+        keyExtractor={(item) => `learn-${item.id}`}
+        contentContainerStyle={styles.learnList}
+        refreshControl={
+          <RefreshControl 
+            refreshing={refreshing} 
+            onRefresh={() => {
+              setRefreshing(true);
+              loadLiveContent(1, true).finally(() => setRefreshing(false));
+            }} 
+          />
         }
-        
-        // Inspirational Message Card
-        if (item.type === 'MESSAGE') {
+        onEndReached={loadMoreContent}
+        onEndReachedThreshold={0.5}
+        renderItem={({ item }) => {
+          const config = SOURCE_CONFIG[item.type] || SOURCE_CONFIG.UPDATE;
+          
+          // Platform Update Card
+          if (item.type === 'UPDATE') {
+            return (
+              <View style={styles.updateCard} key={`learn-${item.id}`}>
+                <View style={styles.updateHeader}>
+                  <View style={[styles.sourceIconSmall, { backgroundColor: config.color }]}>
+                    <Ionicons name={config.icon as any} size={12} color="#FFF" />
+                  </View>
+                  <Text style={styles.updateLabel}>PLATFORM UPDATE</Text>
+                </View>
+                <Text style={styles.updateTitle}>{item.title}</Text>
+                <Text style={styles.updateDesc}>{item.description}</Text>
+              </View>
+            );
+          }
+          
+          // Inspirational Message Card
+          if (item.type === 'MESSAGE') {
+            return (
+              <View style={styles.messageCard} key={`learn-${item.id}`}>
+                <Ionicons name="heart" size={24} color="#EC4899" style={styles.messageIcon} />
+                <Text style={styles.messageText}>{item.title}</Text>
+                <Text style={styles.messageAuthor}>— {item.author}</Text>
+              </View>
+            );
+          }
+          
+          // Twitter/X Card
+          if (item.type === 'TWITTER') {
+            return (
+              <View style={styles.twitterCard} key={`learn-${item.id}`}>
+                <View style={styles.twitterHeader}>
+                  <View style={[styles.sourceIconSmall, { backgroundColor: config.color }]}>
+                    <Ionicons name={config.icon as any} size={12} color="#FFF" />
+                  </View>
+                  <Text style={styles.twitterAuthor}>{item.author}</Text>
+                </View>
+                <Text style={styles.twitterText}>{item.title}</Text>
+                <Text style={styles.twitterTime}>{getTimeAgo(item.timestamp || new Date().toISOString())}</Text>
+              </View>
+            );
+          }
+          
+          // Video Card (YouTube, TED, TikTok) - Now opens in-app player
           return (
-            <View style={styles.messageCard} key={`learn-${item.id}`}>
-              <Ionicons name="heart" size={24} color="#EC4899" style={styles.messageIcon} />
-              <Text style={styles.messageText}>{item.title}</Text>
-              <Text style={styles.messageAuthor}>— {item.author}</Text>
-            </View>
+            <Pressable 
+              style={styles.videoCard}
+              key={`learn-${item.id}`}
+              onPress={() => openVideoPlayer(item)}
+            >
+              <View style={styles.thumbnailContainer}>
+                <Image
+                  source={{ uri: item.thumbnail }}
+                  style={styles.thumbnail}
+                  resizeMode="cover"
+                />
+                <View style={styles.thumbnailOverlay}>
+                  <View style={styles.playIcon}>
+                    <Ionicons name="play" size={28} color="#FFF" />
+                  </View>
+                </View>
+                {item.duration && (
+                  <View style={styles.durationBadge}>
+                    <Text style={styles.durationText}>{item.duration}</Text>
+                  </View>
+                )}
+                <View style={[styles.sourceBadge, { backgroundColor: config.color }]}>
+                  <Ionicons name={config.icon as any} size={10} color="#FFF" />
+                  <Text style={styles.sourceBadgeText}>{config.label}</Text>
+                </View>
+              </View>
+              <View style={styles.videoInfo}>
+                <Text style={styles.videoTitle} numberOfLines={2}>{item.title}</Text>
+                <View style={styles.videoMeta}>
+                  <Text style={styles.creatorName}>{item.creator}</Text>
+                  {item.views && <Text style={styles.viewCount}>{item.views} views</Text>}
+                </View>
+              </View>
+            </Pressable>
           );
+        }}
+        ListFooterComponent={
+          loadingContent ? (
+            <View style={styles.loadingMore}>
+              <ActivityIndicator size="small" color={colors.primary} />
+              <Text style={styles.loadingMoreText}>Loading more content...</Text>
+            </View>
+          ) : null
         }
-        
-        // Twitter/X Card
-        if (item.type === 'TWITTER') {
-          return (
-            <View style={styles.twitterCard} key={`learn-${item.id}`}>
-              <View style={styles.twitterHeader}>
-                <View style={[styles.sourceIconSmall, { backgroundColor: config.color }]}>
-                  <Ionicons name={config.icon as any} size={12} color="#FFF" />
-                </View>
-                <Text style={styles.twitterAuthor}>{item.author}</Text>
-              </View>
-              <Text style={styles.twitterText}>{item.title}</Text>
-              <Text style={styles.twitterTime}>{getTimeAgo(item.timestamp || new Date().toISOString())}</Text>
+        ListEmptyComponent={
+          loadingContent ? (
+            <View style={styles.emptyState}>
+              <ActivityIndicator size="large" color={colors.primary} />
+              <Text style={styles.emptyText}>Loading live content...</Text>
             </View>
-          );
+          ) : (
+            <View style={styles.emptyState}>
+              <Ionicons name="videocam-outline" size={48} color={colors.textMuted} />
+              <Text style={styles.emptyText}>No content available</Text>
+            </View>
+          )
         }
-        
-        // Video Card (YouTube, TED, TikTok)
-        return (
-          <Pressable 
-            style={styles.videoCard}
-            key={`learn-${item.id}`}
-            onPress={() => item.url && Linking.openURL(item.url)}
-          >
-            <View style={styles.thumbnailContainer}>
-              <Image
-                source={{ uri: item.thumbnail }}
-                style={styles.thumbnail}
-                resizeMode="cover"
-              />
-              <View style={styles.thumbnailOverlay}>
-                <View style={styles.playIcon}>
-                  <Ionicons name="play" size={28} color="#FFF" />
-                </View>
-              </View>
-              {item.duration && (
-                <View style={styles.durationBadge}>
-                  <Text style={styles.durationText}>{item.duration}</Text>
-                </View>
-              )}
-              <View style={[styles.sourceBadge, { backgroundColor: config.color }]}>
-                <Ionicons name={config.icon as any} size={10} color="#FFF" />
-                <Text style={styles.sourceBadgeText}>{config.label}</Text>
-              </View>
+      />
+      
+      {/* In-App Video Player Modal */}
+      {showVideoPlayer && selectedVideo && (
+        <Modal
+          visible={showVideoPlayer}
+          animationType="slide"
+          presentationStyle="fullScreen"
+          onRequestClose={() => setShowVideoPlayer(false)}
+        >
+          <View style={styles.videoPlayerContainer}>
+            {/* Header */}
+            <View style={styles.videoPlayerHeader}>
+              <Pressable 
+                style={styles.videoPlayerClose} 
+                onPress={() => setShowVideoPlayer(false)}
+              >
+                <Ionicons name="close" size={24} color={colors.textPrimary} />
+              </Pressable>
+              <Text style={styles.videoPlayerTitle} numberOfLines={1}>
+                {selectedVideo.title}
+              </Text>
+              <Pressable 
+                style={styles.videoPlayerExternal}
+                onPress={() => {
+                  setShowVideoPlayer(false);
+                  if (selectedVideo.url) {
+                    Linking.openURL(selectedVideo.url);
+                  }
+                }}
+              >
+                <Ionicons name="open-outline" size={20} color={colors.textPrimary} />
+              </Pressable>
             </View>
-            <View style={styles.videoInfo}>
-              <Text style={styles.videoTitle} numberOfLines={2}>{item.title}</Text>
-              <View style={styles.videoMeta}>
-                <Text style={styles.creatorName}>{item.creator}</Text>
-                {item.views && <Text style={styles.viewCount}>{item.views} views</Text>}
-              </View>
-            </View>
-          </Pressable>
-        );
-      }}
-      ListEmptyComponent={
-        <View style={styles.emptyState}>
-          <Ionicons name="videocam-outline" size={48} color={colors.textMuted} />
-          <Text style={styles.emptyText}>No content available</Text>
-        </View>
-      }
-    />
+            
+            {/* WebView Video Player */}
+            <WebView
+              source={{
+                html: `
+                  <!DOCTYPE html>
+                  <html>
+                  <head>
+                    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+                    <style>
+                      * { margin: 0; padding: 0; box-sizing: border-box; }
+                      body { background: #0D0D0F; display: flex; justify-content: center; align-items: center; min-height: 100vh; }
+                      iframe { width: 100%; height: 100vh; border: none; }
+                    </style>
+                  </head>
+                  <body>
+                    <iframe 
+                      src="${selectedVideo.embedUrl || `https://www.youtube.com/embed/${selectedVideo.url?.match(/(?:youtube\.com\/watch\?v=|youtu\.be\/)([^&\s]+)/)?.[1]}?autoplay=1&rel=0&modestbranding=1`}" 
+                      allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                      allowfullscreen
+                    ></iframe>
+                  </body>
+                  </html>
+                `
+              }}
+              style={styles.videoPlayerWebview}
+              allowsFullscreenVideo
+              mediaPlaybackRequiresUserAction={false}
+              javaScriptEnabled
+              domStorageEnabled
+            />
+          </View>
+        </Modal>
+      )}
+    </>
   );
 
   // Chat Section - Group Chat Rooms
