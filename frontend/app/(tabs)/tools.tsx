@@ -181,10 +181,47 @@ export default function Tools() {
   const [chatInput, setChatInput] = useState('');
   const [suggestedUsers, setSuggestedUsers] = useState<any[]>([]);
   
+  // Live Content state
+  const [liveContent, setLiveContent] = useState<ContentItem[]>([]);
+  const [contentPage, setContentPage] = useState(1);
+  const [hasMoreContent, setHasMoreContent] = useState(true);
+  const [loadingContent, setLoadingContent] = useState(false);
+  const [selectedVideo, setSelectedVideo] = useState<ContentItem | null>(null);
+  const [showVideoPlayer, setShowVideoPlayer] = useState(false);
+  
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   
   const chatListRef = useRef<FlatList>(null);
+
+  // Load live content
+  const loadLiveContent = async (page: number = 1, refresh: boolean = false) => {
+    if (loadingContent && !refresh) return;
+    
+    setLoadingContent(true);
+    try {
+      const result = await contentService.getContent(page, 10);
+      
+      if (refresh) {
+        setLiveContent(result.items);
+      } else {
+        setLiveContent(prev => [...prev, ...result.items]);
+      }
+      setHasMoreContent(result.hasMore);
+      setContentPage(page);
+    } catch (error) {
+      console.error('Failed to load content:', error);
+    } finally {
+      setLoadingContent(false);
+    }
+  };
+
+  // Load more content (infinite scroll)
+  const loadMoreContent = () => {
+    if (!loadingContent && hasMoreContent) {
+      loadLiveContent(contentPage + 1);
+    }
+  };
 
   const loadData = async () => {
     try {
@@ -201,6 +238,9 @@ export default function Tools() {
       if (results[2].status === 'fulfilled') setActivities(results[2].value.data.activities || []);
       if (results[3].status === 'fulfilled') setChatMessages(results[3].value.data.messages || []);
       if (results[4].status === 'fulfilled') setSuggestedUsers(results[4].value.data.users || []);
+      
+      // Also load live content
+      await loadLiveContent(1, true);
     } catch (error) {
       console.error('Failed to load data:', error);
     } finally {
