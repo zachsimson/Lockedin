@@ -23,23 +23,23 @@ const BOARD_SIZE = Math.min(SCREEN_WIDTH - 32, 400);
 const SQUARE_SIZE = BOARD_SIZE / 8;
 
 // =============================================================================
-// Chess piece images from Lichess (cburnett set - chess.com style)
+// Chess piece images - Using PNG for better cross-platform compatibility
 // =============================================================================
 const PIECE_IMAGES: { [key: string]: string } = {
   // White pieces
-  K: 'https://lichess1.org/assets/_Dx9JwH/piece/cburnett/wK.svg',
-  Q: 'https://lichess1.org/assets/_Dx9JwH/piece/cburnett/wQ.svg',
-  R: 'https://lichess1.org/assets/_Dx9JwH/piece/cburnett/wR.svg',
-  B: 'https://lichess1.org/assets/_Dx9JwH/piece/cburnett/wB.svg',
-  N: 'https://lichess1.org/assets/_Dx9JwH/piece/cburnett/wN.svg',
-  P: 'https://lichess1.org/assets/_Dx9JwH/piece/cburnett/wP.svg',
+  K: 'https://images.chesscomfiles.com/chess-themes/pieces/neo/150/wk.png',
+  Q: 'https://images.chesscomfiles.com/chess-themes/pieces/neo/150/wq.png',
+  R: 'https://images.chesscomfiles.com/chess-themes/pieces/neo/150/wr.png',
+  B: 'https://images.chesscomfiles.com/chess-themes/pieces/neo/150/wb.png',
+  N: 'https://images.chesscomfiles.com/chess-themes/pieces/neo/150/wn.png',
+  P: 'https://images.chesscomfiles.com/chess-themes/pieces/neo/150/wp.png',
   // Black pieces
-  k: 'https://lichess1.org/assets/_Dx9JwH/piece/cburnett/bK.svg',
-  q: 'https://lichess1.org/assets/_Dx9JwH/piece/cburnett/bQ.svg',
-  r: 'https://lichess1.org/assets/_Dx9JwH/piece/cburnett/bR.svg',
-  b: 'https://lichess1.org/assets/_Dx9JwH/piece/cburnett/bB.svg',
-  n: 'https://lichess1.org/assets/_Dx9JwH/piece/cburnett/bN.svg',
-  p: 'https://lichess1.org/assets/_Dx9JwH/piece/cburnett/bP.svg',
+  k: 'https://images.chesscomfiles.com/chess-themes/pieces/neo/150/bk.png',
+  q: 'https://images.chesscomfiles.com/chess-themes/pieces/neo/150/bq.png',
+  r: 'https://images.chesscomfiles.com/chess-themes/pieces/neo/150/br.png',
+  b: 'https://images.chesscomfiles.com/chess-themes/pieces/neo/150/bb.png',
+  n: 'https://images.chesscomfiles.com/chess-themes/pieces/neo/150/bn.png',
+  p: 'https://images.chesscomfiles.com/chess-themes/pieces/neo/150/bp.png',
 };
 
 const BOARD_THEMES = {
