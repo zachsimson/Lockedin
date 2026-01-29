@@ -690,12 +690,17 @@ export default function Tools() {
             
             {/* Video Player - Web uses iframe, native uses WebView */}
             {Platform.OS === 'web' ? (
-              <View style={styles.videoPlayerWebview}>
-                <iframe
-                  src={selectedVideo.embedUrl || `https://www.youtube.com/embed/${selectedVideo.url?.match(/(?:youtube\.com\/watch\?v=|youtu\.be\/)([^&\s]+)/)?.[1]}?autoplay=1&rel=0&modestbranding=1`}
-                  style={{ width: '100%', height: '100%', border: 'none' }}
-                  allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-                  allowFullScreen
+              <View style={[styles.videoPlayerWebview, { overflow: 'hidden' }]}>
+                <div 
+                  style={{ width: '100%', height: '100%', backgroundColor: '#000' }}
+                  dangerouslySetInnerHTML={{
+                    __html: `<iframe 
+                      src="${selectedVideo.embedUrl || `https://www.youtube.com/embed/${selectedVideo.url?.match(/(?:youtube\.com\/watch\?v=|youtu\.be\/)([^&\s]+)/)?.[1]}?autoplay=1&rel=0&modestbranding=1`}"
+                      style="width: 100%; height: 100%; border: none;"
+                      allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                      allowfullscreen
+                    ></iframe>`
+                  }}
                 />
               </View>
             ) : (
