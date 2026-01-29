@@ -292,11 +292,15 @@ export default function BotGame() {
 
   const renderPiece = (piece: { type: string; color: 'w' | 'b' } | null) => {
     if (!piece) return null;
-    const char = PIECE_CHARS[piece.color === 'w' ? piece.type.toUpperCase() : piece.type.toLowerCase()];
-    const isWhite = piece.color === 'w';
+    const pieceKey = piece.color === 'w' ? piece.type.toUpperCase() : piece.type.toLowerCase();
+    const imageUrl = PIECE_IMAGES[pieceKey];
     return (
       <View style={styles.pieceContainer}>
-        <Text style={[styles.piece, isWhite ? styles.whitePiece : styles.blackPiece]}>{char}</Text>
+        <Image 
+          source={{ uri: imageUrl }} 
+          style={styles.pieceImage}
+          resizeMode="contain"
+        />
       </View>
     );
   };
