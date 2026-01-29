@@ -420,21 +420,7 @@ const styles = StyleSheet.create({
   row: { flexDirection: 'row' },
   square: { width: SQUARE_SIZE, height: SQUARE_SIZE, justifyContent: 'center', alignItems: 'center' },
   pieceContainer: { width: '100%', height: '100%', justifyContent: 'center', alignItems: 'center' },
-  piece: { fontSize: SQUARE_SIZE * 0.8, textAlign: 'center' },
-  // WHITE PIECES - Solid white with strong black 3D shadow effect
-  whitePiece: {
-    color: '#FFFFFF',
-    textShadowColor: '#000000',
-    textShadowOffset: { width: 2, height: 2 },
-    textShadowRadius: 3,
-  },
-  // BLACK PIECES - Solid black with subtle highlight for 3D depth
-  blackPiece: {
-    color: '#1A1A1A',
-    textShadowColor: 'rgba(255, 255, 255, 0.3)',
-    textShadowOffset: { width: -1, height: -1 },
-    textShadowRadius: 2,
-  },
+  pieceImage: { width: SQUARE_SIZE * 0.85, height: SQUARE_SIZE * 0.85 },
   validMoveIndicator: {
     width: SQUARE_SIZE * 0.3, height: SQUARE_SIZE * 0.3,
     borderRadius: SQUARE_SIZE * 0.15, backgroundColor: 'rgba(0, 0, 0, 0.2)',
