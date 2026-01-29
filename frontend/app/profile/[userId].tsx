@@ -44,6 +44,7 @@ export default function ProfileScreen() {
   const [currentStreak, setCurrentStreak] = useState(0);
   const [friendStatus, setFriendStatus] = useState<FriendStatus>('none');
   const [actionLoading, setActionLoading] = useState(false);
+  const [chessStats, setChessStats] = useState<{ wins: number; losses: number; draws: number; rating: number } | null>(null);
 
   const isOwnProfile = user?._id === userId;
 
@@ -51,9 +52,10 @@ export default function ProfileScreen() {
 
   const loadProfile = async () => {
     try {
-      const [profileRes, friendRes] = await Promise.all([
+      const [profileRes, friendRes, chessRes] = await Promise.all([
         api.get(`/api/profile/${userId}`),
         !isOwnProfile ? api.get(`/api/friends/status/${userId}`) : Promise.resolve({ data: { status: 'none' } }),
+        api.get(`/api/chess/stats/${userId}`).catch(() => ({ data: { stats: null } })),
       ]);
       setProfile(profileRes.data.profile);
       setAchievements(profileRes.data.achievements || []);
@@ -62,6 +64,7 @@ export default function ProfileScreen() {
       setFriendStatus(friendRes.data.status === 'pending_outgoing' ? 'pending_sent' : 
                      friendRes.data.status === 'pending_incoming' ? 'pending_received' : 
                      friendRes.data.status as FriendStatus);
+      setChessStats(chessRes.data.stats);
     } catch (error) {
       console.error('Failed to load profile:', error);
     } finally { setLoading(false); }
