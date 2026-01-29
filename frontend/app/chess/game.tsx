@@ -245,19 +245,116 @@ export default function ChessGame() {
   };
 
   // UNIFIED PREMIUM PIECE RENDERER
-  const renderPiece = (pieceChar: string) => {
+  const renderPiece = (pieceChar: string, isDragging: boolean = false) => {
     if (!pieceChar) return null;
     const imageUrl = PIECE_IMAGES[pieceChar];
     if (!imageUrl) return null;
     return (
-      <View style={styles.pieceContainer}>
+      <View style={[styles.pieceContainer, isDragging && styles.pieceContainerDragging]}>
         <Image 
           source={{ uri: imageUrl }} 
-          style={styles.pieceImage}
+          style={[styles.pieceImage, isDragging && styles.pieceImageDragging]}
           resizeMode="contain"
         />
       </View>
     );
+  };
+
+  // Handle drag start
+  const handleDragStart = (piece: string, squareName: string, row: number, col: number, isFlipped: boolean) => {
+    if (!gameState?.is_your_turn) return;
+    
+    const isWhitePiece = piece === piece.toUpperCase();
+    const isBlackPiece = piece === piece.toLowerCase();
+    const isOwnPiece = (gameState.your_color === 'white' && isWhitePiece) || 
+                       (gameState.your_color === 'black' && isBlackPiece);
+    
+    if (!isOwnPiece) return;
+    
+    setDraggingPiece({ piece, fromSquare: squareName, fromRow: row, fromCol: col });
+    setSelectedSquare(squareName);
+    setValidMoves(gameState.legal_moves.filter(m => m.startsWith(squareName)));
+    
+    // Calculate initial position
+    const displayCol = isFlipped ? 7 - col : col;
+    const displayRow = isFlipped ? 7 - row : row;
+    dragPosition.setValue({ 
+      x: displayCol * SQUARE_SIZE, 
+      y: displayRow * SQUARE_SIZE 
+    });
+  };
+
+  // Handle drag move
+  const handleDragMove = (gestureState: any) => {
+    if (!draggingPiece) return;
+    dragPosition.setValue({
+      x: gestureState.moveX - boardLayout.x - SQUARE_SIZE / 2,
+      y: gestureState.moveY - boardLayout.y - SQUARE_SIZE / 2,
+    });
+  };
+
+  // Handle drag end
+  const handleDragEnd = async (gestureState: any, isFlipped: boolean) => {
+    if (!draggingPiece || !gameState) {
+      setDraggingPiece(null);
+      return;
+    }
+    
+    // Calculate target square from drop position
+    const relativeX = gestureState.moveX - boardLayout.x;
+    const relativeY = gestureState.moveY - boardLayout.y;
+    
+    let targetCol = Math.floor(relativeX / SQUARE_SIZE);
+    let targetRow = Math.floor(relativeY / SQUARE_SIZE);
+    
+    // Clamp to board bounds
+    targetCol = Math.max(0, Math.min(7, targetCol));
+    targetRow = Math.max(0, Math.min(7, targetRow));
+    
+    // Adjust for flipped board
+    if (isFlipped) {
+      targetCol = 7 - targetCol;
+      targetRow = 7 - targetRow;
+    }
+    
+    const targetSquare = getSquareName(targetRow, targetCol);
+    const moveUci = draggingPiece.fromSquare + targetSquare;
+    
+    // Check if valid move
+    if (validMoves.some(m => m.startsWith(moveUci))) {
+      // Check for pawn promotion
+      let promotion = null;
+      const isPawn = draggingPiece.piece.toLowerCase() === 'p';
+      const isLastRank = (gameState.your_color === 'white' && targetSquare[1] === '8') || 
+                        (gameState.your_color === 'black' && targetSquare[1] === '1');
+      if (isPawn && isLastRank) promotion = 'q';
+      
+      await makeMove(draggingPiece.fromSquare, targetSquare, promotion);
+    }
+    
+    setDraggingPiece(null);
+    setSelectedSquare(null);
+    setValidMoves([]);
+  };
+
+  // Create pan responder for drag
+  const createPanResponder = (piece: string, squareName: string, row: number, col: number, isFlipped: boolean) => {
+    return PanResponder.create({
+      onStartShouldSetPanResponder: () => true,
+      onMoveShouldSetPanResponder: () => true,
+      onPanResponderGrant: () => {
+        handleDragStart(piece, squareName, row, col, isFlipped);
+      },
+      onPanResponderMove: (_, gestureState) => {
+        handleDragMove(gestureState);
+      },
+      onPanResponderRelease: (_, gestureState) => {
+        handleDragEnd(gestureState, isFlipped);
+      },
+      onPanResponderTerminate: () => {
+        setDraggingPiece(null);
+      },
+    });
   };
 
   const renderBoard = () => {
@@ -268,7 +365,16 @@ export default function ChessGame() {
     
     return (
       <View style={styles.boardContainer}>
-        <View style={[styles.board, { borderColor: boardColors.dark }]}>
+        <View 
+          ref={boardRef}
+          style={[styles.board, { borderColor: boardColors.dark }]}
+          onLayout={(event) => {
+            const { x, y, width, height } = event.nativeEvent.layout;
+            boardRef.current?.measureInWindow((px, py) => {
+              setBoardLayout({ x: px, y: py, width, height });
+            });
+          }}
+        >
           {Array.from({ length: 8 }).map((_, rowIndex) => {
             const displayRow = isFlipped ? 7 - rowIndex : rowIndex;
             return (
@@ -283,27 +389,60 @@ export default function ChessGame() {
                   const isLastMoveSquare = lastMove && (lastMove.from === squareName || lastMove.to === squareName);
                   const isCheck = gameState.is_check && piece.toLowerCase() === 'k' && 
                     ((gameState.turn === 'white' && piece === 'K') || (gameState.turn === 'black' && piece === 'k'));
+                  const isDraggingThisPiece = draggingPiece?.fromSquare === squareName;
                   
                   let squareColor = isLight ? boardColors.light : boardColors.dark;
                   if (isSelected) squareColor = '#F6F669';
                   else if (isLastMoveSquare) squareColor = 'rgba(155, 199, 0, 0.4)';
                   else if (isCheck) squareColor = '#FF6B6B';
                   
+                  // Check if this is player's piece for drag
+                  const isWhitePiece = piece && piece === piece.toUpperCase();
+                  const isBlackPiece = piece && piece === piece.toLowerCase();
+                  const isOwnPiece = piece && gameState.is_your_turn && (
+                    (gameState.your_color === 'white' && isWhitePiece) || 
+                    (gameState.your_color === 'black' && isBlackPiece)
+                  );
+                  
+                  const panResponder = isOwnPiece 
+                    ? createPanResponder(piece, squareName, displayRow, displayCol, isFlipped)
+                    : null;
+                  
                   return (
-                    <Pressable
+                    <View
                       key={`square-${rowIndex}-${colIndex}`}
                       style={[styles.square, { backgroundColor: squareColor }]}
-                      onPress={() => handleSquarePress(displayRow, displayCol)}
+                      {...(panResponder?.panHandlers)}
                     >
-                      {piece && renderPiece(piece)}
-                      {isValidMove && !piece && <View style={styles.validMoveIndicator} />}
-                      {isValidMove && piece && <View style={styles.captureIndicator} />}
-                    </Pressable>
+                      <Pressable
+                        style={styles.squarePressable}
+                        onPress={() => handleSquarePress(displayRow, displayCol)}
+                      >
+                        {piece && !isDraggingThisPiece && renderPiece(piece)}
+                        {isValidMove && !piece && <View style={styles.validMoveIndicator} />}
+                        {isValidMove && piece && !isDraggingThisPiece && <View style={styles.captureIndicator} />}
+                      </Pressable>
+                    </View>
                   );
                 })}
               </View>
             );
           })}
+          
+          {/* Dragging piece overlay */}
+          {draggingPiece && (
+            <Animated.View 
+              style={[
+                styles.draggingPiece,
+                {
+                  transform: dragPosition.getTranslateTransform(),
+                }
+              ]}
+              pointerEvents="none"
+            >
+              {renderPiece(draggingPiece.piece, true)}
+            </Animated.View>
+          )}
         </View>
         <View style={styles.fileLabels}>
           {(isFlipped ? 'hgfedcba' : 'abcdefgh').split('').map((file, i) => (
