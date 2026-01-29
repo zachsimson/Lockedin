@@ -362,7 +362,7 @@ const styles = StyleSheet.create({
   pendingButtonText: { color: colors.textMuted, fontWeight: '600', fontSize: 15 },
   streakCard: {
     backgroundColor: colors.cardBackground, borderRadius: 20, padding: 24,
-    flexDirection: 'row', alignItems: 'center', marginBottom: 24, borderWidth: 1, borderColor: colors.border,
+    flexDirection: 'row', alignItems: 'center', marginBottom: 16, borderWidth: 1, borderColor: colors.border,
   },
   streakMain: { flex: 1, alignItems: 'center' },
   streakNumber: { fontSize: 48, fontWeight: 'bold', color: colors.primary },
@@ -372,6 +372,28 @@ const styles = StyleSheet.create({
   streakStatItem: { alignItems: 'center', marginBottom: 12 },
   streakStatNumber: { fontSize: 20, fontWeight: 'bold', color: colors.textPrimary },
   streakStatLabel: { fontSize: 12, color: colors.textMuted },
+  // Chess Stats Card
+  chessStatsCard: {
+    backgroundColor: colors.cardBackground, borderRadius: 20, padding: 20,
+    marginBottom: 24, borderWidth: 1, borderColor: colors.border,
+  },
+  chessStatsHeader: {
+    flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: 16,
+  },
+  chessStatsTitle: { fontSize: 16, fontWeight: '600', color: colors.textPrimary },
+  chessRatingRow: {
+    flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',
+    backgroundColor: colors.surface, borderRadius: 12, padding: 16, marginBottom: 12,
+  },
+  chessRatingLabel: { fontSize: 14, color: colors.textSecondary },
+  chessRatingValue: { fontSize: 24, fontWeight: 'bold', color: colors.primary },
+  chessRecordRow: {
+    flexDirection: 'row', alignItems: 'center', justifyContent: 'space-around',
+  },
+  chessStatItem: { alignItems: 'center', flex: 1 },
+  chessStatValue: { fontSize: 20, fontWeight: 'bold', color: colors.textPrimary },
+  chessStatLabel: { fontSize: 12, color: colors.textMuted, marginTop: 4 },
+  chessStatDivider: { width: 1, height: 40, backgroundColor: colors.border },
   achievementsSection: { marginBottom: 20 },
   sectionTitle: { fontSize: 18, fontWeight: '600', color: colors.textPrimary, marginBottom: 16 },
   achievementsGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: 12 },
