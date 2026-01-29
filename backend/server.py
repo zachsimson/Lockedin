@@ -1744,6 +1744,28 @@ async def remove_friend(
     
     return {"message": "Friend removed"}
 
+@app.get("/api/users/search")
+async def search_users(
+    q: str,
+    current_user: dict = Depends(get_current_user)
+):
+    """Search for users by username"""
+    if not q or len(q) < 2:
+        return {"users": []}
+    
+    # Search by username (case-insensitive partial match)
+    users = await users_collection.find({
+        "username": {"$regex": q, "$options": "i"},
+        "_id": {"$ne": ObjectId(current_user["_id"])}  # Exclude self
+    }, {
+        "password": 0,
+        "email": 0,
+        "gambling_history": 0,
+        "gambling_weekly_amount": 0
+    }).limit(20).to_list(20)
+    
+    return {"users": serialize_doc(users)}
+
 @app.get("/api/friends/status/{user_id}")
 async def get_friend_status(
     user_id: str,
