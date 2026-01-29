@@ -156,8 +156,9 @@ const LOCK_DURATIONS = [
   { value: 'permanent', label: 'Permanent', description: 'Maximum commitment' },
 ];
 
-// Reordered tabs: Lock, Learn, Chat, Connect, Feed (Feed at END) - Socials REMOVED
-type ToolSection = 'lock' | 'learn' | 'chat' | 'connect' | 'feed';
+// Reordered tabs: Lock, Learn, Chat, DMs (replaced Feed)
+type ToolSection = 'lock' | 'learn' | 'chat' | 'dms';
+type LearnSubSection = 'youtube' | 'tiktok' | 'twitter';
 
 export default function Tools() {
   const { user } = useAuth();
