@@ -1362,6 +1362,25 @@ const styles = StyleSheet.create({
   feedText: { fontSize: 14, color: colors.textSecondary },
   feedUsername: { fontWeight: '600', color: colors.textPrimary },
   feedTime: { fontSize: 11, color: colors.textMuted, marginTop: 4 },
+  // Video Player Styles
+  videoPlayerContainer: { flex: 1, backgroundColor: colors.background },
+  videoPlayerHeader: {
+    flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',
+    paddingTop: Platform.OS === 'ios' ? 50 : 20, paddingHorizontal: 16, paddingBottom: 12,
+    backgroundColor: colors.cardBackground, borderBottomWidth: 1, borderBottomColor: colors.border,
+  },
+  videoPlayerClose: {
+    width: 40, height: 40, borderRadius: 20, backgroundColor: colors.surface,
+    justifyContent: 'center', alignItems: 'center',
+  },
+  videoPlayerTitle: { flex: 1, fontSize: 15, fontWeight: '600', color: colors.textPrimary, marginHorizontal: 12 },
+  videoPlayerExternal: {
+    width: 40, height: 40, borderRadius: 20, backgroundColor: colors.surface,
+    justifyContent: 'center', alignItems: 'center',
+  },
+  videoPlayerWebview: { flex: 1, backgroundColor: '#000' },
+  loadingMore: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', padding: 20, gap: 10 },
+  loadingMoreText: { fontSize: 13, color: colors.textMuted },
   // Group Chat Room Selection
   chatRoomList: { padding: 16 },
   chatRoomTitle: { fontSize: 22, fontWeight: 'bold', color: colors.textPrimary, marginBottom: 4 },
