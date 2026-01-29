@@ -1,7 +1,6 @@
 import { View, Text, Pressable, StyleSheet, Dimensions } from 'react-native';
 import { useAuth } from '../src/context/AuthContext';
-import { useRouter } from 'expo-router';
-import { useEffect } from 'react';
+import { Redirect } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { colors } from '../src/theme';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -10,16 +9,12 @@ const { width, height } = Dimensions.get('window');
 
 export default function Index() {
   const { user, loading } = useAuth();
-  const router = useRouter();
   const insets = useSafeAreaInsets();
 
-  useEffect(() => {
-    if (!loading) {
-      if (user) {
-        router.replace('/(tabs)/home');
-      }
-    }
-  }, [user, loading]);
+  // Use Redirect component instead of useRouter for initial navigation
+  if (!loading && user) {
+    return <Redirect href="/(tabs)/home" />;
+  }
 
   if (loading) {
     return (
