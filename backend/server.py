@@ -1394,6 +1394,53 @@ async def add_media(
 
 # ============= LIVE CHAT ENDPOINTS =============
 
+# Available group chat rooms
+GROUP_CHAT_ROOMS = {
+    'general': {'name': 'General Support', 'description': 'General recovery discussion'},
+    'focus': {'name': 'Stay Focused', 'description': 'Help staying on track'},
+    'distraction': {'name': 'Distraction Corner', 'description': 'Healthy distractions'},
+    'chess': {'name': 'Chess Players', 'description': 'Chess games & strategy'},
+    'late-night': {'name': 'Late Night Support', 'description': 'For those hard nights'},
+}
+
+@app.get("/api/chat/rooms")
+async def get_chat_rooms(current_user: dict = Depends(get_current_user)):
+    """Get available group chat rooms"""
+    rooms = []
+    for room_id, info in GROUP_CHAT_ROOMS.items():
+        # Count messages in room (rough activity indicator)
+        msg_count = await messages_collection.count_documents({"room": room_id})
+        rooms.append({
+            "id": room_id,
+            "name": info["name"],
+            "description": info["description"],
+            "message_count": msg_count
+        })
+    return {"rooms": rooms}
+
+@app.get("/api/chat/room/{room_id}")
+async def get_room_messages(
+    room_id: str,
+    limit: int = 50,
+    before: Optional[str] = None,
+    current_user: dict = Depends(get_current_user)
+):
+    """Get messages for a specific chat room"""
+    if room_id not in GROUP_CHAT_ROOMS:
+        raise HTTPException(status_code=404, detail="Room not found")
+    
+    query = {"room": room_id}
+    if before:
+        query["timestamp"] = {"$lt": datetime.fromisoformat(before)}
+    
+    messages = await messages_collection.find(query).sort("timestamp", -1).limit(limit).to_list(limit)
+    messages.reverse()
+    
+    return {
+        "room": GROUP_CHAT_ROOMS[room_id],
+        "messages": serialize_doc(messages)
+    }
+
 @app.get("/api/community/chat")
 async def get_community_chat(
     limit: int = 50,
