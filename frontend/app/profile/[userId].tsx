@@ -262,6 +262,34 @@ export default function ProfileScreen() {
           </View>
         </View>
 
+        {/* Chess Stats Section */}
+        <View style={styles.chessStatsCard}>
+          <View style={styles.chessStatsHeader}>
+            <Ionicons name="trophy" size={20} color={colors.primary} />
+            <Text style={styles.chessStatsTitle}>Chess Stats</Text>
+          </View>
+          <View style={styles.chessRatingRow}>
+            <Text style={styles.chessRatingLabel}>Rating</Text>
+            <Text style={styles.chessRatingValue}>{chessStats?.rating || 1000}</Text>
+          </View>
+          <View style={styles.chessRecordRow}>
+            <View style={styles.chessStatItem}>
+              <Text style={styles.chessStatValue}>{chessStats?.wins || 0}</Text>
+              <Text style={styles.chessStatLabel}>Wins</Text>
+            </View>
+            <View style={styles.chessStatDivider} />
+            <View style={styles.chessStatItem}>
+              <Text style={styles.chessStatValue}>{chessStats?.losses || 0}</Text>
+              <Text style={styles.chessStatLabel}>Losses</Text>
+            </View>
+            <View style={styles.chessStatDivider} />
+            <View style={styles.chessStatItem}>
+              <Text style={styles.chessStatValue}>{chessStats?.draws || 0}</Text>
+              <Text style={styles.chessStatLabel}>Draws</Text>
+            </View>
+          </View>
+        </View>
+
         <View style={styles.achievementsSection}>
           <Text style={styles.sectionTitle}>Achievements</Text>
           <View style={styles.achievementsGrid}>
