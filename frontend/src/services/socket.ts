@@ -19,7 +19,7 @@ class SocketService {
   private connectionAttempted: boolean = false;
   private silentMode: boolean = true; // Never show errors to users
 
-  async connect() {
+  async connect(userId?: string) {
     // Don't reconnect if already connected or connection failed
     if (this.socket?.connected) return;
     if (this.connectionAttempted && !this.socket?.connected) {
