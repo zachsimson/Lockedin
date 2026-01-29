@@ -409,17 +409,17 @@ const styles = StyleSheet.create({
   square: { width: SQUARE_SIZE, height: SQUARE_SIZE, justifyContent: 'center', alignItems: 'center' },
   pieceContainer: { width: '100%', height: '100%', justifyContent: 'center', alignItems: 'center' },
   piece: { fontSize: SQUARE_SIZE * 0.8, textAlign: 'center' },
-  // WHITE PIECES - Warm ivory/pearl, fully solid with dark outline for visibility
+  // WHITE PIECES - Pure white with black outline for maximum visibility
   whitePiece: {
-    color: '#FFFEF5',
-    textShadowColor: '#000',
-    textShadowOffset: { width: 0, height: 0 },
+    color: '#FFFFFF',
+    textShadowColor: '#000000',
+    textShadowOffset: { width: 1, height: 1 },
     textShadowRadius: 2,
   },
-  // BLACK PIECES - Graphite/obsidian, fully solid with light outline for visibility
+  // BLACK PIECES - Pure black with slight white outline for visibility on dark squares
   blackPiece: {
-    color: '#1A1A1A',
-    textShadowColor: 'rgba(255, 255, 255, 0.4)',
+    color: '#000000',
+    textShadowColor: 'rgba(255, 255, 255, 0.5)',
     textShadowOffset: { width: 0, height: 0 },
     textShadowRadius: 1,
   },
