@@ -1038,14 +1038,13 @@ export default function Tools() {
         <Text style={styles.headerSubtitle}>Recovery resources & community</Text>
       </View>
 
-      {/* Tabs: Lock, Learn, Chat, Connect, Feed - Socials REMOVED */}
+      {/* Tabs: Lock, Learn, Chat, DMs */}
       <View style={styles.tabBar}>
         {[
           { id: 'lock', icon: 'shield', label: 'Lock' },
           { id: 'learn', icon: 'play-circle', label: 'Learn' },
           { id: 'chat', icon: 'chatbubbles', label: 'Chat' },
-          { id: 'connect', icon: 'people', label: 'Connect' },
-          { id: 'feed', icon: 'pulse', label: 'Feed' },
+          { id: 'dms', icon: 'mail', label: 'DMs' },
         ].map((tab) => (
           <Pressable
             key={`tools-tab-${tab.id}`}
@@ -1069,8 +1068,7 @@ export default function Tools() {
       {activeSection === 'lock' && renderLockSection()}
       {activeSection === 'learn' && renderLearnSection()}
       {activeSection === 'chat' && renderChatSection()}
-      {activeSection === 'connect' && renderConnectSection()}
-      {activeSection === 'feed' && renderFeedSection()}
+      {activeSection === 'dms' && renderDMsSection()}
 
       {/* Enable Modal */}
       <Modal visible={showEnableModal} transparent animationType="slide">
