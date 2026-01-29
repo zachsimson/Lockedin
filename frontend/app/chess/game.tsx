@@ -77,6 +77,11 @@ export default function ChessGame() {
   const [chatInput, setChatInput] = useState('');
   const [showChat, setShowChat] = useState(false);
   
+  // Timer state (10 minutes = 600 seconds per player)
+  const [whiteTime, setWhiteTime] = useState(600);
+  const [blackTime, setBlackTime] = useState(600);
+  const timerRef = useRef<NodeJS.Timeout | null>(null);
+  
   // Drag state for drag-to-move
   const [draggingPiece, setDraggingPiece] = useState<{
     piece: string;
@@ -87,6 +92,47 @@ export default function ChessGame() {
   const dragPosition = useRef(new Animated.ValueXY()).current;
   const boardRef = useRef<View>(null);
   const [boardLayout, setBoardLayout] = useState({ x: 0, y: 0, width: 0, height: 0 });
+
+  // Format time as mm:ss
+  const formatTime = (seconds: number): string => {
+    const mins = Math.floor(seconds / 60);
+    const secs = seconds % 60;
+    return `${mins}:${secs.toString().padStart(2, '0')}`;
+  };
+
+  // Timer effect
+  useEffect(() => {
+    if (!gameState || gameState.game.status !== 'active') {
+      if (timerRef.current) clearInterval(timerRef.current);
+      return;
+    }
+
+    timerRef.current = setInterval(() => {
+      if (gameState.turn === 'white') {
+        setWhiteTime(prev => {
+          if (prev <= 1) {
+            // Time out - white loses
+            clearInterval(timerRef.current!);
+            return 0;
+          }
+          return prev - 1;
+        });
+      } else {
+        setBlackTime(prev => {
+          if (prev <= 1) {
+            // Time out - black loses
+            clearInterval(timerRef.current!);
+            return 0;
+          }
+          return prev - 1;
+        });
+      }
+    }, 1000);
+
+    return () => {
+      if (timerRef.current) clearInterval(timerRef.current);
+    };
+  }, [gameState?.turn, gameState?.game.status]);
 
   const getBoardColors = useCallback(() => {
     return BOARD_THEMES[boardTheme] || BOARD_THEMES.classic;
