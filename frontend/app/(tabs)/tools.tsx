@@ -1069,6 +1069,51 @@ export default function Tools() {
         <Text style={styles.chatRoomTitle}>Direct Messages</Text>
         <Text style={styles.chatRoomSubtitle}>Chat privately with friends</Text>
         
+        {/* Search Users Button */}
+        <Pressable 
+          style={styles.searchUsersButton}
+          onPress={() => setShowSearchModal(true)}
+        >
+          <Ionicons name="search" size={20} color={colors.primary} />
+          <Text style={styles.searchUsersText}>Search Users</Text>
+        </Pressable>
+        
+        {/* Pending Friend Requests */}
+        {pendingRequests.length > 0 && (
+          <View style={styles.pendingSection}>
+            <Text style={styles.pendingSectionTitle}>Friend Requests ({pendingRequests.length})</Text>
+            {pendingRequests.map((request) => (
+              <View key={`request-${request._id}`} style={styles.pendingRequestCard}>
+                <View style={styles.pendingInfo}>
+                  <View style={[styles.chatRoomIcon, { backgroundColor: `${colors.primary}20` }]}>
+                    <Ionicons name="person" size={20} color={colors.primary} />
+                  </View>
+                  <Text style={styles.pendingUsername}>@{request.requester_id?.slice(-6) || 'user'}</Text>
+                </View>
+                <View style={styles.pendingActions}>
+                  <Pressable 
+                    style={styles.acceptButton}
+                    onPress={() => acceptFriendRequest(request.requester_id)}
+                  >
+                    <Ionicons name="checkmark" size={18} color="#000" />
+                  </Pressable>
+                  <Pressable 
+                    style={styles.declineButton}
+                    onPress={() => declineFriendRequest(request.requester_id)}
+                  >
+                    <Ionicons name="close" size={18} color={colors.textMuted} />
+                  </Pressable>
+                </View>
+              </View>
+            ))}
+          </View>
+        )}
+        
+        {/* Friends List */}
+        {friends.length > 0 && (
+          <Text style={styles.friendsListTitle}>Friends ({friends.length})</Text>
+        )}
+        
         {friends.length > 0 ? (
           friends.map((friend) => (
             <Pressable 
@@ -1103,7 +1148,7 @@ export default function Tools() {
           <View style={styles.emptyState}>
             <Ionicons name="people-outline" size={48} color={colors.textMuted} />
             <Text style={styles.emptyText}>No friends yet</Text>
-            <Text style={styles.emptySubtext}>Add friends from the community to DM them</Text>
+            <Text style={styles.emptySubtext}>Search for users to add friends</Text>
           </View>
         )}
         
