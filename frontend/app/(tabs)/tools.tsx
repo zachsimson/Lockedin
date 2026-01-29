@@ -240,6 +240,7 @@ export default function Tools() {
         api.get('/api/community/activity?limit=30'),
         api.get('/api/community/chat?limit=50'),
         api.get('/api/community/suggested?limit=12'),
+        api.get('/api/friends'),
       ]);
 
       if (results[0].status === 'fulfilled') setVpnStatus(results[0].value.data);
@@ -247,6 +248,7 @@ export default function Tools() {
       if (results[2].status === 'fulfilled') setActivities(results[2].value.data.activities || []);
       if (results[3].status === 'fulfilled') setChatMessages(results[3].value.data.messages || []);
       if (results[4].status === 'fulfilled') setSuggestedUsers(results[4].value.data.users || []);
+      if (results[5].status === 'fulfilled') setFriends(results[5].value.data.friends || []);
       
       // Also load live content
       await loadLiveContent(1, true);
