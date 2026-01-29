@@ -118,6 +118,54 @@ export default function ChessTab() {
     loadData();
   }, []);
 
+  // Setup socket listeners for chess invites and match found
+  useEffect(() => {
+    if (!user?._id) return;
+
+    // Connect socket
+    socketService.connect(user._id);
+
+    // Listen for match found (from quick/ranked queue)
+    const handleMatchFound = (data: any) => {
+      console.log('Match found:', data);
+      setQueuing(false);
+      setQueueMode(null);
+      Alert.alert(
+        'Match Found!',
+        'Your game is ready. Join now?',
+        [
+          { text: 'Later', style: 'cancel', onPress: loadData },
+          { text: 'Join', onPress: () => {
+            router.push(`/chess/game?gameId=${data.game_id}&theme=${boardTheme}&style=${pieceStyle}`);
+          }},
+        ]
+      );
+    };
+
+    // Listen for chess invites from friends
+    const handleChessInvite = (data: any) => {
+      console.log('Chess invite:', data);
+      Alert.alert(
+        'Chess Challenge!',
+        `${data.from_username || 'A friend'} has challenged you to a game!`,
+        [
+          { text: 'Decline', style: 'cancel' },
+          { text: 'Accept', onPress: () => {
+            router.push(`/chess/game?gameId=${data.game_id}&theme=${boardTheme}&style=${pieceStyle}`);
+          }},
+        ]
+      );
+    };
+
+    socketService.on(`chess_match_found_${user._id}`, handleMatchFound);
+    socketService.on(`chess_invite_${user._id}`, handleChessInvite);
+
+    return () => {
+      socketService.off(`chess_match_found_${user._id}`, handleMatchFound);
+      socketService.off(`chess_invite_${user._id}`, handleChessInvite);
+    };
+  }, [user?._id, boardTheme, pieceStyle]);
+
   // Load settings from AsyncStorage
   const loadSettings = async () => {
     try {
