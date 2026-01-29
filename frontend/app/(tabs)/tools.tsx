@@ -1217,6 +1217,32 @@ const styles = StyleSheet.create({
   feedText: { fontSize: 14, color: colors.textSecondary },
   feedUsername: { fontWeight: '600', color: colors.textPrimary },
   feedTime: { fontSize: 11, color: colors.textMuted, marginTop: 4 },
+  // Group Chat Room Selection
+  chatRoomList: { padding: 16 },
+  chatRoomTitle: { fontSize: 22, fontWeight: 'bold', color: colors.textPrimary, marginBottom: 4 },
+  chatRoomSubtitle: { fontSize: 14, color: colors.textMuted, marginBottom: 20 },
+  chatRoomCard: {
+    flexDirection: 'row', alignItems: 'center', backgroundColor: colors.cardBackground,
+    borderRadius: 14, padding: 16, marginBottom: 12, gap: 14,
+    borderWidth: 1, borderColor: colors.border,
+  },
+  chatRoomIcon: {
+    width: 50, height: 50, borderRadius: 25, justifyContent: 'center', alignItems: 'center',
+  },
+  chatRoomInfo: { flex: 1 },
+  chatRoomName: { fontSize: 16, fontWeight: '600', color: colors.textPrimary },
+  chatRoomDesc: { fontSize: 13, color: colors.textMuted, marginTop: 2 },
+  chatRoomNote: {
+    flexDirection: 'row', alignItems: 'center', gap: 8, backgroundColor: `${colors.primary}10`,
+    borderRadius: 10, padding: 14, marginTop: 12,
+  },
+  chatRoomNoteText: { flex: 1, fontSize: 13, color: colors.textSecondary },
+  backToRooms: {
+    width: 36, height: 36, borderRadius: 18, backgroundColor: colors.surface,
+    justifyContent: 'center', alignItems: 'center',
+  },
+  chatHeaderCenter: { flex: 1, marginLeft: 8 },
+  userCount: { fontSize: 12, color: colors.textMuted },
   // Empty States
   emptyState: { alignItems: 'center', justifyContent: 'center', paddingVertical: 50, gap: 8 },
   emptyText: { fontSize: 15, fontWeight: '600', color: colors.textPrimary },
