@@ -688,36 +688,47 @@ export default function Tools() {
               </Pressable>
             </View>
             
-            {/* WebView Video Player */}
-            <WebView
-              source={{
-                html: `
-                  <!DOCTYPE html>
-                  <html>
-                  <head>
-                    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
-                    <style>
-                      * { margin: 0; padding: 0; box-sizing: border-box; }
-                      body { background: #0D0D0F; display: flex; justify-content: center; align-items: center; min-height: 100vh; }
-                      iframe { width: 100%; height: 100vh; border: none; }
-                    </style>
-                  </head>
-                  <body>
-                    <iframe 
-                      src="${selectedVideo.embedUrl || `https://www.youtube.com/embed/${selectedVideo.url?.match(/(?:youtube\.com\/watch\?v=|youtu\.be\/)([^&\s]+)/)?.[1]}?autoplay=1&rel=0&modestbranding=1`}" 
-                      allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-                      allowfullscreen
-                    ></iframe>
-                  </body>
-                  </html>
-                `
-              }}
-              style={styles.videoPlayerWebview}
-              allowsFullscreenVideo
-              mediaPlaybackRequiresUserAction={false}
-              javaScriptEnabled
-              domStorageEnabled
-            />
+            {/* Video Player - Web uses iframe, native uses WebView */}
+            {Platform.OS === 'web' ? (
+              <View style={styles.videoPlayerWebview}>
+                <iframe
+                  src={selectedVideo.embedUrl || `https://www.youtube.com/embed/${selectedVideo.url?.match(/(?:youtube\.com\/watch\?v=|youtu\.be\/)([^&\s]+)/)?.[1]}?autoplay=1&rel=0&modestbranding=1`}
+                  style={{ width: '100%', height: '100%', border: 'none' }}
+                  allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                  allowFullScreen
+                />
+              </View>
+            ) : (
+              <WebView
+                source={{
+                  html: `
+                    <!DOCTYPE html>
+                    <html>
+                    <head>
+                      <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+                      <style>
+                        * { margin: 0; padding: 0; box-sizing: border-box; }
+                        body { background: #0D0D0F; display: flex; justify-content: center; align-items: center; min-height: 100vh; }
+                        iframe { width: 100%; height: 100vh; border: none; }
+                      </style>
+                    </head>
+                    <body>
+                      <iframe 
+                        src="${selectedVideo.embedUrl || `https://www.youtube.com/embed/${selectedVideo.url?.match(/(?:youtube\.com\/watch\?v=|youtu\.be\/)([^&\s]+)/)?.[1]}?autoplay=1&rel=0&modestbranding=1`}" 
+                        allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                        allowfullscreen
+                      ></iframe>
+                    </body>
+                    </html>
+                  `
+                }}
+                style={styles.videoPlayerWebview}
+                allowsFullscreenVideo
+                mediaPlaybackRequiresUserAction={false}
+                javaScriptEnabled
+                domStorageEnabled
+              />
+            )}
           </View>
         </Modal>
       )}
