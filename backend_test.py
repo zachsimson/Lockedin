@@ -11,7 +11,7 @@ from datetime import datetime
 from typing import Dict, Optional
 
 # Configuration
-BASE_URL = "https://gamble-recovery-3.preview.emergentagent.com/api"
+BASE_URL = "https://sobriety-tracker-10.preview.emergentagent.com/api"
 HEADERS = {"Content-Type": "application/json"}
 
 class ChessAPITester:
