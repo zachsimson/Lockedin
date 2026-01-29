@@ -1,6 +1,6 @@
 import { View, Text, Pressable, StyleSheet, Dimensions } from 'react-native';
 import { useAuth } from '../src/context/AuthContext';
-import { Redirect } from 'expo-router';
+import { Redirect, Link } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { colors } from '../src/theme';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -69,20 +69,18 @@ export default function Index() {
 
       {/* Buttons */}
       <View style={styles.buttonContainer}>
-        <Pressable
-          style={({ pressed }) => [styles.primaryButton, pressed && styles.buttonPressed]}
-          onPress={() => router.push('/auth/register')}
-        >
-          <Text style={styles.primaryButtonText}>GET STARTED FREE</Text>
-          <Ionicons name="arrow-forward" size={20} color="#000" />
-        </Pressable>
+        <Link href="/auth/register" asChild>
+          <Pressable style={({ pressed }) => [styles.primaryButton, pressed && styles.buttonPressed]}>
+            <Text style={styles.primaryButtonText}>GET STARTED FREE</Text>
+            <Ionicons name="arrow-forward" size={20} color="#000" />
+          </Pressable>
+        </Link>
 
-        <Pressable
-          style={({ pressed }) => [styles.secondaryButton, pressed && styles.buttonPressed]}
-          onPress={() => router.push('/auth/login')}
-        >
-          <Text style={styles.secondaryButtonText}>I Have an Account</Text>
-        </Pressable>
+        <Link href="/auth/login" asChild>
+          <Pressable style={({ pressed }) => [styles.secondaryButton, pressed && styles.buttonPressed]}>
+            <Text style={styles.secondaryButtonText}>I Have an Account</Text>
+          </Pressable>
+        </Link>
       </View>
     </View>
   );
