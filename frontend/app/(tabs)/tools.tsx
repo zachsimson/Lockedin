@@ -532,26 +532,65 @@ export default function Tools() {
     </ScrollView>
   );
 
-  // Learn Section - Redesigned, Premium, Curated
-  // Open video in in-app player (mobile) or external link (web)
+  // Learn Section - With Sub-tabs for YouTube, TikTok, Twitter/X
   const openVideoPlayer = (item: ContentItem) => {
     if (item.url || item.embedUrl) {
-      // On web, just open in a new tab for better experience
       if (Platform.OS === 'web') {
-        if (item.url) {
-          window.open(item.url, '_blank');
-        }
+        if (item.url) window.open(item.url, '_blank');
       } else {
-        // On mobile, show in-app player
         setSelectedVideo(item);
         setShowVideoPlayer(true);
       }
     }
   };
 
-  // Learn Section - Now with LIVE content and in-app video player
+  // Load content for specific platform
+  const loadPlatformContent = useCallback((platform: LearnSubSection, page: number = 1, refresh: boolean = false) => {
+    const result = contentService.getContentByPlatform(platform, page, 10);
+    if (refresh) {
+      setLiveContent(result.items);
+    } else {
+      setLiveContent(prev => [...prev, ...result.items]);
+    }
+    setHasMoreContent(result.hasMore);
+    setContentPage(page);
+  }, []);
+
+  // Effect to reload content when sub-section changes
+  useEffect(() => {
+    loadPlatformContent(learnSubSection, 1, true);
+  }, [learnSubSection, loadPlatformContent]);
+
   const renderLearnSection = () => (
-    <>
+    <View style={{ flex: 1 }}>
+      {/* Sub-tabs for YouTube, TikTok, Twitter */}
+      <View style={styles.learnSubTabs}>
+        {[
+          { id: 'youtube', icon: 'logo-youtube', label: 'YouTube', color: '#FF0000' },
+          { id: 'tiktok', icon: 'musical-notes', label: 'TikTok', color: '#000000' },
+          { id: 'twitter', icon: 'chatbubble-ellipses', label: 'Twitter/X', color: '#1DA1F2' },
+        ].map((tab) => (
+          <Pressable
+            key={`learn-sub-${tab.id}`}
+            style={[styles.learnSubTab, learnSubSection === tab.id && styles.learnSubTabActive]}
+            onPress={() => setLearnSubSection(tab.id as LearnSubSection)}
+          >
+            <Ionicons 
+              name={tab.icon as any} 
+              size={16} 
+              color={learnSubSection === tab.id ? tab.color : colors.textMuted} 
+            />
+            <Text style={[
+              styles.learnSubTabText, 
+              learnSubSection === tab.id && { color: tab.color, fontWeight: '600' }
+            ]}>
+              {tab.label}
+            </Text>
+          </Pressable>
+        ))}
+      </View>
+
+      {/* Content List */}
       <FlatList
         data={liveContent}
         keyExtractor={(item) => `learn-${item.id}`}
@@ -561,33 +600,151 @@ export default function Tools() {
             refreshing={refreshing} 
             onRefresh={() => {
               setRefreshing(true);
-              loadLiveContent(1, true).finally(() => setRefreshing(false));
+              loadPlatformContent(learnSubSection, 1, true);
+              setRefreshing(false);
             }} 
           />
         }
-        onEndReached={loadMoreContent}
+        onEndReached={() => {
+          if (hasMoreContent) {
+            loadPlatformContent(learnSubSection, contentPage + 1, false);
+          }
+        }}
         onEndReachedThreshold={0.5}
         renderItem={({ item }) => {
-          const config = SOURCE_CONFIG[item.type] || SOURCE_CONFIG.UPDATE;
+          const config = SOURCE_CONFIG[item.type] || { icon: 'play', color: colors.primary, label: 'Video' };
           
-          // Platform Update Card
-          if (item.type === 'UPDATE') {
+          // Twitter/X Tweet Card
+          if (item.type === 'TWITTER') {
             return (
-              <View style={styles.updateCard} key={`learn-${item.id}`}>
-                <View style={styles.updateHeader}>
-                  <View style={[styles.sourceIconSmall, { backgroundColor: config.color }]}>
-                    <Ionicons name={config.icon as any} size={12} color="#FFF" />
+              <View style={styles.twitterCard} key={`learn-${item.id}`}>
+                <View style={styles.twitterHeader}>
+                  <View style={[styles.sourceIconSmall, { backgroundColor: '#1DA1F2' }]}>
+                    <Ionicons name="chatbubble-ellipses" size={12} color="#FFF" />
                   </View>
-                  <Text style={styles.updateLabel}>PLATFORM UPDATE</Text>
+                  <Text style={styles.twitterAuthor}>{item.author}</Text>
                 </View>
-                <Text style={styles.updateTitle}>{item.title}</Text>
-                <Text style={styles.updateDesc}>{item.description}</Text>
+                <Text style={styles.twitterText}>{item.title}</Text>
+                <Text style={styles.twitterTime}>{getTimeAgo(item.timestamp || new Date().toISOString())}</Text>
               </View>
             );
           }
           
-          // Inspirational Message Card
-          if (item.type === 'MESSAGE') {
+          // Video Card (YouTube, TikTok)
+          return (
+            <Pressable 
+              style={styles.videoCard}
+              key={`learn-${item.id}`}
+              onPress={() => openVideoPlayer(item)}
+            >
+              <View style={styles.thumbnailContainer}>
+                <Image
+                  source={{ uri: item.thumbnail }}
+                  style={styles.thumbnail}
+                  resizeMode="cover"
+                />
+                <View style={styles.thumbnailOverlay}>
+                  <View style={styles.playIcon}>
+                    <Ionicons name="play" size={28} color="#FFF" />
+                  </View>
+                </View>
+                {item.duration && (
+                  <View style={styles.durationBadge}>
+                    <Text style={styles.durationText}>{item.duration}</Text>
+                  </View>
+                )}
+                <View style={[styles.sourceBadge, { backgroundColor: config.color }]}>
+                  <Ionicons name={config.icon as any} size={10} color="#FFF" />
+                  <Text style={styles.sourceBadgeText}>{config.label}</Text>
+                </View>
+              </View>
+              <View style={styles.videoInfo}>
+                <Text style={styles.videoTitle} numberOfLines={2}>{item.title}</Text>
+                <View style={styles.videoMeta}>
+                  <Text style={styles.creatorName}>{item.creator}</Text>
+                  {item.views && <Text style={styles.viewCount}>{item.views} views</Text>}
+                </View>
+              </View>
+            </Pressable>
+          );
+        }}
+        ListFooterComponent={
+          loadingContent ? (
+            <View style={styles.loadingMore}>
+              <ActivityIndicator size="small" color={colors.primary} />
+              <Text style={styles.loadingMoreText}>Loading more content...</Text>
+            </View>
+          ) : null
+        }
+        ListEmptyComponent={
+          <View style={styles.emptyState}>
+            <ActivityIndicator size="large" color={colors.primary} />
+            <Text style={styles.emptyText}>Loading content...</Text>
+          </View>
+        }
+      />
+      
+      {/* In-App Video Player Modal */}
+      {showVideoPlayer && selectedVideo && (
+        <Modal
+          visible={showVideoPlayer}
+          animationType="slide"
+          presentationStyle="fullScreen"
+          onRequestClose={() => setShowVideoPlayer(false)}
+        >
+          <View style={styles.videoPlayerContainer}>
+            <View style={styles.videoPlayerHeader}>
+              <Pressable 
+                style={styles.videoPlayerClose} 
+                onPress={() => setShowVideoPlayer(false)}
+              >
+                <Ionicons name="close" size={24} color={colors.textPrimary} />
+              </Pressable>
+              <Text style={styles.videoPlayerTitle} numberOfLines={1}>
+                {selectedVideo.title}
+              </Text>
+              <Pressable 
+                style={styles.videoPlayerExternal}
+                onPress={() => {
+                  setShowVideoPlayer(false);
+                  if (selectedVideo.url) Linking.openURL(selectedVideo.url);
+                }}
+              >
+                <Ionicons name="open-outline" size={20} color={colors.textPrimary} />
+              </Pressable>
+            </View>
+            
+            {Platform.OS === 'web' ? (
+              <View style={[styles.videoPlayerWebview, { overflow: 'hidden' }]}>
+                <div 
+                  style={{ width: '100%', height: '100%', backgroundColor: '#000' }}
+                  dangerouslySetInnerHTML={{
+                    __html: `<iframe 
+                      src="${selectedVideo.embedUrl || `https://www.youtube.com/embed/${selectedVideo.url?.match(/(?:youtube\.com\/watch\?v=|youtu\.be\/)([^&\s]+)/)?.[1]}?autoplay=1&rel=0&modestbranding=1`}"
+                      style="width: 100%; height: 100%; border: none;"
+                      allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                      allowfullscreen
+                    ></iframe>`
+                  }}
+                />
+              </View>
+            ) : (
+              <WebView
+                source={{
+                  html: `<!DOCTYPE html><html><head><meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0"><style>* { margin: 0; padding: 0; box-sizing: border-box; } body { background: #0D0D0F; display: flex; justify-content: center; align-items: center; min-height: 100vh; } iframe { width: 100%; height: 100vh; border: none; }</style></head><body><iframe src="${selectedVideo.embedUrl || `https://www.youtube.com/embed/${selectedVideo.url?.match(/(?:youtube\.com\/watch\?v=|youtu\.be\/)([^&\s]+)/)?.[1]}?autoplay=1&rel=0&modestbranding=1`}" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe></body></html>`
+                }}
+                style={styles.videoPlayerWebview}
+                allowsFullscreenVideo
+                mediaPlaybackRequiresUserAction={false}
+                javaScriptEnabled
+                domStorageEnabled
+              />
+            )}
+          </View>
+        </Modal>
+      )}
+    </View>
+  );
             return (
               <View style={styles.messageCard} key={`learn-${item.id}`}>
                 <Ionicons name="heart" size={24} color="#EC4899" style={styles.messageIcon} />
