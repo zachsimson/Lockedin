@@ -190,13 +190,15 @@ export default function ChessGame() {
   // UNIFIED PREMIUM PIECE RENDERER
   const renderPiece = (pieceChar: string) => {
     if (!pieceChar) return null;
-    const isWhite = pieceChar === pieceChar.toUpperCase();
-    const char = PIECE_CHARS[pieceChar] || pieceChar;
+    const imageUrl = PIECE_IMAGES[pieceChar];
+    if (!imageUrl) return null;
     return (
       <View style={styles.pieceContainer}>
-        <Text style={[styles.piece, isWhite ? styles.whitePiece : styles.blackPiece]}>
-          {char}
-        </Text>
+        <Image 
+          source={{ uri: imageUrl }} 
+          style={styles.pieceImage}
+          resizeMode="contain"
+        />
       </View>
     );
   };
