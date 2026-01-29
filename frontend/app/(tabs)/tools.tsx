@@ -1419,6 +1419,22 @@ const styles = StyleSheet.create({
     width: 40, height: 40, borderRadius: 20, backgroundColor: colors.primary,
     justifyContent: 'center', alignItems: 'center',
   },
+  // DM Section
+  dmList: { padding: 16 },
+  dmHeader: {
+    flexDirection: 'row', alignItems: 'center', backgroundColor: colors.cardBackground,
+    padding: 12, borderBottomWidth: 1, borderBottomColor: colors.border, gap: 10,
+  },
+  dmFriendAvatar: {
+    width: 36, height: 36, borderRadius: 18, backgroundColor: colors.surface,
+    justifyContent: 'center', alignItems: 'center', borderWidth: 2,
+  },
+  chatMessageInput: {
+    flex: 1, backgroundColor: colors.surface, borderRadius: 20,
+    paddingHorizontal: 16, paddingVertical: 10, fontSize: 14, color: colors.textPrimary,
+  },
+  chatMessageText: { fontSize: 14, color: colors.textPrimary },
+  chatMessageTime: { fontSize: 10, color: colors.textMuted, marginTop: 4 },
   // Connect Section
   connectContent: { padding: 16 },
   connectTitle: { fontSize: 18, fontWeight: 'bold', color: colors.textPrimary },
