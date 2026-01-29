@@ -1088,7 +1088,7 @@ export default function Tools() {
                   <View style={[styles.chatRoomIcon, { backgroundColor: `${colors.primary}20` }]}>
                     <Ionicons name="person" size={20} color={colors.primary} />
                   </View>
-                  <Text style={styles.pendingUsername}>@{request.requester_id?.slice(-6) || 'user'}</Text>
+                  <Text style={styles.pendingUsername}>@{request.requester?.username || 'user'}</Text>
                 </View>
                 <View style={styles.pendingActions}>
                   <Pressable 
