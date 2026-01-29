@@ -23,12 +23,12 @@ const SQUARE_SIZE = BOARD_SIZE / 8;
 
 // =============================================================================
 // UNIFIED PREMIUM CHESS PIECE SYSTEM
-// WHITE pieces use outline characters, BLACK pieces use filled characters
+// Both sides use FILLED pieces with 3D styling - WHITE vs BLACK
 // =============================================================================
 const PIECE_CHARS: { [key: string]: string } = {
-  // White pieces (uppercase) - outline style
-  K: '♔', Q: '♕', R: '♖', B: '♗', N: '♘', P: '♙',
-  // Black pieces (lowercase) - filled style
+  // White pieces (uppercase) - filled style, styled white
+  K: '♚', Q: '♛', R: '♜', B: '♝', N: '♞', P: '♟',
+  // Black pieces (lowercase) - filled style, styled black  
   k: '♚', q: '♛', r: '♜', b: '♝', n: '♞', p: '♟',
 };
 
