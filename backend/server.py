@@ -2663,6 +2663,11 @@ async def send_chess_chat(
 
 # Active connections: {user_id: [sid]}
 active_connections = {}
+# Room users: {room_id: {user_id: username}}
+room_users = {}
+
+# Available chat rooms
+CHAT_ROOMS = ['general', 'focus', 'distraction', 'chess', 'late-night']
 
 @sio.event
 async def connect(sid, environ):
@@ -2696,6 +2701,123 @@ async def authenticate(sid, data):
     except Exception as e:
         logger.error(f"Authentication failed: {e}")
         await sio.emit("error", {"message": "Authentication failed"}, to=sid)
+
+# ===== GROUP CHAT ROOM HANDLERS =====
+
+@sio.on("join_room")
+async def join_room(sid, data):
+    session = await sio.get_session(sid)
+    user_id = session.get("user_id")
+    room_id = data.get("room_id")
+    
+    if not user_id:
+        return
+    
+    if room_id not in CHAT_ROOMS:
+        await sio.emit("error", {"message": "Invalid room"}, to=sid)
+        return
+    
+    # Get user info
+    user = await users_collection.find_one({"_id": ObjectId(user_id)})
+    username = user.get("username", "Anonymous")
+    
+    # Join the socket room
+    sio.enter_room(sid, f"room_{room_id}")
+    
+    # Track user in room
+    if room_id not in room_users:
+        room_users[room_id] = {}
+    room_users[room_id][user_id] = username
+    
+    # Notify others in room
+    await sio.emit("user_joined_room", {
+        "user_id": user_id,
+        "username": username,
+        "room_id": room_id
+    }, room=f"room_{room_id}", skip_sid=sid)
+    
+    # Send current room users to the joining user
+    await sio.emit("room_users", {
+        "room_id": room_id,
+        "users": list(room_users.get(room_id, {}).values())
+    }, to=sid)
+    
+    logger.info(f"User {user_id} joined room {room_id}")
+
+@sio.on("leave_room")
+async def leave_room(sid, data):
+    session = await sio.get_session(sid)
+    user_id = session.get("user_id")
+    room_id = data.get("room_id")
+    
+    if not user_id or room_id not in CHAT_ROOMS:
+        return
+    
+    # Leave the socket room
+    sio.leave_room(sid, f"room_{room_id}")
+    
+    # Remove user from room tracking
+    if room_id in room_users and user_id in room_users[room_id]:
+        username = room_users[room_id].pop(user_id, "Anonymous")
+        
+        # Notify others
+        await sio.emit("user_left_room", {
+            "user_id": user_id,
+            "username": username,
+            "room_id": room_id
+        }, room=f"room_{room_id}")
+    
+    logger.info(f"User {user_id} left room {room_id}")
+
+@sio.on("room_message")
+async def room_message(sid, data):
+    session = await sio.get_session(sid)
+    user_id = session.get("user_id")
+    room_id = data.get("room_id")
+    message_content = data.get("message", "").strip()
+    
+    if not user_id:
+        return
+    
+    if room_id not in CHAT_ROOMS:
+        await sio.emit("error", {"message": "Invalid room"}, to=sid)
+        return
+    
+    if not message_content or len(message_content) > 2000:
+        await sio.emit("error", {"message": "Invalid message"}, to=sid)
+        return
+    
+    # Get user info
+    user = await users_collection.find_one({"_id": ObjectId(user_id)})
+    
+    if user.get("is_blocked", False):
+        await sio.emit("error", {"message": "You are blocked from sending messages"}, to=sid)
+        return
+    
+    # Save message to database
+    message_doc = {
+        "user_id": ObjectId(user_id),
+        "username": user.get("username"),
+        "message": message_content,
+        "timestamp": datetime.utcnow(),
+        "room": room_id
+    }
+    
+    result = await messages_collection.insert_one(message_doc)
+    
+    # Broadcast to room
+    await sio.emit("room_message", {
+        "message_id": str(result.inserted_id),
+        "user_id": user_id,
+        "username": user.get("username"),
+        "message": message_content,
+        "timestamp": datetime.utcnow().isoformat(),
+        "room_id": room_id
+    }, room=f"room_{room_id}")
+    
+    logger.info(f"Room {room_id} message from {user_id}: {message_content[:50]}")
+
+# ===== LEGACY COMMUNITY CHAT =====
 
 @sio.on("join_community")
 async def join_community(sid, data):
