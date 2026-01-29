@@ -20,8 +20,11 @@ const BOARD_SIZE = Math.min(SCREEN_WIDTH - 32, 380);
 const SQUARE_SIZE = BOARD_SIZE / 8;
 
 // UNIFIED PREMIUM CHESS PIECE SYSTEM
+// WHITE pieces use outline characters, BLACK pieces use filled characters
 const PIECE_CHARS: { [key: string]: string } = {
-  K: '♚', Q: '♛', R: '♜', B: '♝', N: '♞', P: '♟',
+  // White pieces (uppercase) - outline style
+  K: '♔', Q: '♕', R: '♖', B: '♗', N: '♘', P: '♙',
+  // Black pieces (lowercase) - filled style
   k: '♚', q: '♛', r: '♜', b: '♝', n: '♞', p: '♟',
 };
 
