@@ -1777,6 +1777,79 @@ async def get_friend_status(
     
     return {"status": "none"}
 
+# ========================= DIRECT MESSAGES (DM) =========================
+
+class DMMessage(BaseModel):
+    content: str
+
+@app.get("/api/dm/conversation/{friend_id}")
+async def get_dm_conversation(
+    friend_id: str,
+    limit: int = 50,
+    current_user: dict = Depends(get_current_user)
+):
+    """Get DM conversation with a friend"""
+    my_id = current_user["_id"]
+    
+    # Verify they are friends
+    friend = await friends_collection.find_one({
+        "$or": [
+            {"requester_id": my_id, "receiver_id": friend_id, "status": "accepted"},
+            {"requester_id": friend_id, "receiver_id": my_id, "status": "accepted"}
+        ]
+    })
+    
+    if not friend:
+        raise HTTPException(status_code=403, detail="You can only DM friends")
+    
+    # Get messages between the two users
+    messages = await dm_messages_collection.find({
+        "$or": [
+            {"sender_id": my_id, "receiver_id": friend_id},
+            {"sender_id": friend_id, "receiver_id": my_id}
+        ]
+    }).sort("created_at", -1).limit(limit).to_list(limit)
+    
+    # Convert ObjectId to string
+    for msg in messages:
+        msg["_id"] = str(msg["_id"])
+    
+    return {"messages": messages}
+
+@app.post("/api/dm/send/{friend_id}")
+async def send_dm(
+    friend_id: str,
+    message: DMMessage,
+    current_user: dict = Depends(get_current_user)
+):
+    """Send a DM to a friend"""
+    my_id = current_user["_id"]
+    
+    # Verify they are friends
+    friend = await friends_collection.find_one({
+        "$or": [
+            {"requester_id": my_id, "receiver_id": friend_id, "status": "accepted"},
+            {"requester_id": friend_id, "receiver_id": my_id, "status": "accepted"}
+        ]
+    })
+    
+    if not friend:
+        raise HTTPException(status_code=403, detail="You can only DM friends")
+    
+    # Create the DM message
+    dm_doc = {
+        "sender_id": my_id,
+        "receiver_id": friend_id,
+        "content": message.content,
+        "created_at": datetime.utcnow(),
+        "read": False
+    }
+    
+    result = await dm_messages_collection.insert_one(dm_doc)
+    dm_doc["_id"] = str(result.inserted_id)
+    
+    return {"success": True, "message": dm_doc}
+
 @app.get("/api/community/suggested")
 async def get_suggested_connections(
     limit: int = 10,
