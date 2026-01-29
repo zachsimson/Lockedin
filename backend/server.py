@@ -38,6 +38,7 @@ chat_messages_collection = db.chat_messages
 media_collection = db.media
 friends_collection = db.friends
 reactions_collection = db.reactions
+dm_messages_collection = db.dm_messages
 
 # Password hashing
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
