@@ -1306,7 +1306,18 @@ const styles = StyleSheet.create({
   blockedCountInfo: { flex: 1 },
   blockedCountNumber: { fontSize: 24, fontWeight: 'bold', color: '#DC2626' },
   blockedCountLabel: { fontSize: 12, color: colors.textMuted },
-  // Learn Section
+  // Learn Section with Sub-tabs
+  learnSubTabs: {
+    flexDirection: 'row', backgroundColor: colors.cardBackground,
+    paddingVertical: 8, paddingHorizontal: 12, gap: 8,
+    borderBottomWidth: 1, borderBottomColor: colors.border,
+  },
+  learnSubTab: {
+    flex: 1, flexDirection: 'row', alignItems: 'center', justifyContent: 'center',
+    paddingVertical: 10, borderRadius: 8, gap: 6,
+  },
+  learnSubTabActive: { backgroundColor: colors.surface },
+  learnSubTabText: { fontSize: 12, color: colors.textMuted },
   learnList: { padding: 16, gap: 16 },
   updateCard: {
     backgroundColor: `${colors.primary}10`, borderRadius: 12, padding: 16,
