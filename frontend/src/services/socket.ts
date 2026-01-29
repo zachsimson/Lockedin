@@ -215,6 +215,32 @@ class SocketService {
   getCurrentRoom(): string | null {
     return this.currentRoom;
   }
+
+  // Generic event listener methods for chess and other features
+  on(event: string, callback: (data: any) => void) {
+    if (!this.socket) return;
+    this.socket.on(event, callback);
+    
+    if (!this.listeners.has(event)) {
+      this.listeners.set(event, []);
+    }
+    this.listeners.get(event)?.push(callback);
+  }
+
+  off(event: string, callback: (data: any) => void) {
+    if (!this.socket) return;
+    this.socket.off(event, callback);
+    
+    const callbacks = this.listeners.get(event) || [];
+    const index = callbacks.indexOf(callback);
+    if (index > -1) callbacks.splice(index, 1);
+  }
+
+  emit(event: string, data: any) {
+    if (!this.socket?.connected) return false;
+    this.socket.emit(event, data);
+    return true;
+  }
 }
 
 export const socketService = new SocketService();
