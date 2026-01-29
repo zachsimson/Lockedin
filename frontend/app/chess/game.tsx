@@ -76,6 +76,17 @@ export default function ChessGame() {
   const [chatMessages, setChatMessages] = useState<any[]>([]);
   const [chatInput, setChatInput] = useState('');
   const [showChat, setShowChat] = useState(false);
+  
+  // Drag state for drag-to-move
+  const [draggingPiece, setDraggingPiece] = useState<{
+    piece: string;
+    fromSquare: string;
+    fromRow: number;
+    fromCol: number;
+  } | null>(null);
+  const dragPosition = useRef(new Animated.ValueXY()).current;
+  const boardRef = useRef<View>(null);
+  const [boardLayout, setBoardLayout] = useState({ x: 0, y: 0, width: 0, height: 0 });
 
   const getBoardColors = useCallback(() => {
     return BOARD_THEMES[boardTheme] || BOARD_THEMES.classic;
