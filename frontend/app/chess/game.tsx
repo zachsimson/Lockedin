@@ -9,6 +9,7 @@ import {
   Alert,
   ActivityIndicator,
   Dimensions,
+  Image,
 } from 'react-native';
 import { useState, useEffect, useCallback } from 'react';
 import { useAuth } from '../../src/context/AuthContext';
@@ -22,14 +23,23 @@ const BOARD_SIZE = Math.min(SCREEN_WIDTH - 32, 400);
 const SQUARE_SIZE = BOARD_SIZE / 8;
 
 // =============================================================================
-// UNIFIED PREMIUM CHESS PIECE SYSTEM
-// Both sides use FILLED pieces with 3D styling - WHITE vs BLACK
+// Chess piece images from Lichess (cburnett set - chess.com style)
 // =============================================================================
-const PIECE_CHARS: { [key: string]: string } = {
-  // White pieces (uppercase) - filled style, styled white
-  K: '♚', Q: '♛', R: '♜', B: '♝', N: '♞', P: '♟',
-  // Black pieces (lowercase) - filled style, styled black  
-  k: '♚', q: '♛', r: '♜', b: '♝', n: '♞', p: '♟',
+const PIECE_IMAGES: { [key: string]: string } = {
+  // White pieces
+  K: 'https://lichess1.org/assets/_Dx9JwH/piece/cburnett/wK.svg',
+  Q: 'https://lichess1.org/assets/_Dx9JwH/piece/cburnett/wQ.svg',
+  R: 'https://lichess1.org/assets/_Dx9JwH/piece/cburnett/wR.svg',
+  B: 'https://lichess1.org/assets/_Dx9JwH/piece/cburnett/wB.svg',
+  N: 'https://lichess1.org/assets/_Dx9JwH/piece/cburnett/wN.svg',
+  P: 'https://lichess1.org/assets/_Dx9JwH/piece/cburnett/wP.svg',
+  // Black pieces
+  k: 'https://lichess1.org/assets/_Dx9JwH/piece/cburnett/bK.svg',
+  q: 'https://lichess1.org/assets/_Dx9JwH/piece/cburnett/bQ.svg',
+  r: 'https://lichess1.org/assets/_Dx9JwH/piece/cburnett/bR.svg',
+  b: 'https://lichess1.org/assets/_Dx9JwH/piece/cburnett/bB.svg',
+  n: 'https://lichess1.org/assets/_Dx9JwH/piece/cburnett/bN.svg',
+  p: 'https://lichess1.org/assets/_Dx9JwH/piece/cburnett/bP.svg',
 };
 
 const BOARD_THEMES = {
