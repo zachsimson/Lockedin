@@ -375,8 +375,52 @@ export default function Tools() {
       await api.post('/api/friends/request', { receiver_id: userId });
       Alert.alert('Sent', 'Friend request sent!');
       setSuggestedUsers(prev => prev.filter(u => u._id !== userId));
+      setSearchResults(prev => prev.filter(u => u._id !== userId));
     } catch (error: any) {
       Alert.alert('Error', error.response?.data?.detail || 'Failed');
+    }
+  };
+
+  // Search users
+  const searchUsers = async (query: string) => {
+    if (query.length < 2) {
+      setSearchResults([]);
+      return;
+    }
+    
+    setSearchLoading(true);
+    try {
+      const response = await api.get(`/api/users/search?q=${encodeURIComponent(query)}`);
+      setSearchResults(response.data.users || []);
+    } catch (error) {
+      console.error('Search failed:', error);
+      setSearchResults([]);
+    } finally {
+      setSearchLoading(false);
+    }
+  };
+
+  // Accept friend request
+  const acceptFriendRequest = async (requesterId: string) => {
+    try {
+      await api.post(`/api/friends/accept/${requesterId}`);
+      Alert.alert('Success', 'Friend request accepted!');
+      // Refresh friends list
+      const response = await api.get('/api/friends');
+      setFriends(response.data.friends || []);
+      setPendingRequests(response.data.pending_incoming || []);
+    } catch (error: any) {
+      Alert.alert('Error', error.response?.data?.detail || 'Failed to accept');
+    }
+  };
+
+  // Decline friend request
+  const declineFriendRequest = async (requesterId: string) => {
+    try {
+      await api.post(`/api/friends/decline/${requesterId}`);
+      setPendingRequests(prev => prev.filter(r => r.requester_id !== requesterId));
+    } catch (error: any) {
+      Alert.alert('Error', error.response?.data?.detail || 'Failed to decline');
     }
   };
 
