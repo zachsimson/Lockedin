@@ -522,11 +522,19 @@ export default function Tools() {
   );
 
   // Learn Section - Redesigned, Premium, Curated
-  // Open video in in-app player
+  // Open video in in-app player (mobile) or external link (web)
   const openVideoPlayer = (item: ContentItem) => {
     if (item.url || item.embedUrl) {
-      setSelectedVideo(item);
-      setShowVideoPlayer(true);
+      // On web, just open in a new tab for better experience
+      if (Platform.OS === 'web') {
+        if (item.url) {
+          window.open(item.url, '_blank');
+        }
+      } else {
+        // On mobile, show in-app player
+        setSelectedVideo(item);
+        setShowVideoPlayer(true);
+      }
     }
   };
 
