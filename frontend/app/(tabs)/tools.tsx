@@ -1276,6 +1276,74 @@ export default function Tools() {
           </View>
         </View>
       </Modal>
+
+      {/* Search Users Modal */}
+      <Modal visible={showSearchModal} transparent animationType="slide">
+        <View style={styles.modalOverlay}>
+          <View style={styles.searchModalContent}>
+            <View style={styles.searchModalHeader}>
+              <Text style={styles.modalTitle}>Search Users</Text>
+              <Pressable 
+                style={styles.closeModalButton}
+                onPress={() => { setShowSearchModal(false); setSearchQuery(''); setSearchResults([]); }}
+              >
+                <Ionicons name="close" size={24} color={colors.textPrimary} />
+              </Pressable>
+            </View>
+            
+            <View style={styles.searchInputContainer}>
+              <Ionicons name="search" size={20} color={colors.textMuted} />
+              <TextInput
+                style={styles.searchInput}
+                placeholder="Enter username..."
+                placeholderTextColor={colors.textMuted}
+                value={searchQuery}
+                onChangeText={(text) => {
+                  setSearchQuery(text);
+                  searchUsers(text);
+                }}
+                autoFocus
+              />
+              {searchLoading && <ActivityIndicator size="small" color={colors.primary} />}
+            </View>
+            
+            <ScrollView style={styles.searchResultsList}>
+              {searchResults.length > 0 ? (
+                searchResults.map((user) => (
+                  <View key={`search-${user._id}`} style={styles.searchResultItem}>
+                    <View style={[styles.chatRoomIcon, { backgroundColor: `${AVATAR_COLORS[user.avatar_id] || colors.primary}20` }]}>
+                      <Ionicons 
+                        name={(AVATAR_ICONS[user.avatar_id] || 'person') as any} 
+                        size={24} 
+                        color={AVATAR_COLORS[user.avatar_id] || colors.primary} 
+                      />
+                    </View>
+                    <View style={styles.searchResultInfo}>
+                      <Text style={styles.searchResultName}>{user.username}</Text>
+                    </View>
+                    <Pressable 
+                      style={styles.addFriendButton}
+                      onPress={() => sendFriendRequest(user._id)}
+                    >
+                      <Ionicons name="person-add" size={18} color="#000" />
+                    </Pressable>
+                  </View>
+                ))
+              ) : searchQuery.length >= 2 && !searchLoading ? (
+                <View style={styles.noResultsContainer}>
+                  <Ionicons name="search-outline" size={48} color={colors.textMuted} />
+                  <Text style={styles.noResultsText}>No users found</Text>
+                </View>
+              ) : searchQuery.length < 2 ? (
+                <View style={styles.noResultsContainer}>
+                  <Ionicons name="people-outline" size={48} color={colors.textMuted} />
+                  <Text style={styles.noResultsText}>Type at least 2 characters to search</Text>
+                </View>
+              ) : null}
+            </ScrollView>
+          </View>
+        </View>
+      </Modal>
     </View>
   );
 }
