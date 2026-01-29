@@ -10,8 +10,10 @@ import {
   ActivityIndicator,
   Dimensions,
   Image,
+  PanResponder,
+  Animated,
 } from 'react-native';
-import { useState, useEffect, useCallback, useRef } from 'react';
+import { useState, useEffect, useCallback, useRef, useMemo } from 'react';
 import { useAuth } from '../../src/context/AuthContext';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
