@@ -79,6 +79,49 @@ export default function ChessGame() {
     return BOARD_THEMES[boardTheme] || BOARD_THEMES.classic;
   }, [boardTheme]);
 
+  // Setup socket connection for real-time updates
+  useEffect(() => {
+    if (!user?._id || !gameId) return;
+
+    // Connect socket if not connected
+    socketService.connect(user._id);
+
+    // Listen for opponent's moves
+    const handleChessMove = (data: any) => {
+      if (data.game_id === gameId) {
+        console.log('Received chess move:', data);
+        loadGame(); // Reload game state
+      }
+    };
+
+    // Listen for chess chat messages
+    const handleChessChat = (data: any) => {
+      if (data.game_id === gameId) {
+        setChatMessages(prev => [...prev, data]);
+      }
+    };
+
+    // Listen for game resignation
+    const handleResignation = (data: any) => {
+      if (data.game_id === gameId) {
+        Alert.alert('Game Over', 'Your opponent resigned. You win!');
+        loadGame();
+      }
+    };
+
+    // Subscribe to events
+    socketService.on(`chess_move_${user._id}`, handleChessMove);
+    socketService.on(`chess_chat_${user._id}`, handleChessChat);
+    socketService.on(`chess_resign_${user._id}`, handleResignation);
+
+    return () => {
+      // Cleanup listeners
+      socketService.off(`chess_move_${user._id}`, handleChessMove);
+      socketService.off(`chess_chat_${user._id}`, handleChessChat);
+      socketService.off(`chess_resign_${user._id}`, handleResignation);
+    };
+  }, [user?._id, gameId]);
+
   useEffect(() => { if (gameId) loadGame(); }, [gameId]);
 
   const loadGame = async () => {
