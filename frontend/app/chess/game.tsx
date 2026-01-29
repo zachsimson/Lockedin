@@ -702,7 +702,11 @@ const styles = StyleSheet.create({
   headerTitle: { fontSize: 20, fontWeight: 'bold', color: colors.textPrimary, letterSpacing: 2 },
   headerBtn: { padding: 8 },
   content: { padding: 16, alignItems: 'center' },
-  playerInfo: { flexDirection: 'row', alignItems: 'center', gap: 10, paddingVertical: 10 },
+  playerRow: { 
+    flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', 
+    width: '100%', paddingVertical: 8 
+  },
+  playerInfo: { flexDirection: 'row', alignItems: 'center', gap: 10 },
   playerAvatar: {
     width: 36, height: 36, borderRadius: 18, backgroundColor: colors.surface,
     borderWidth: 2, borderColor: colors.primary, justifyContent: 'center', alignItems: 'center',
@@ -710,6 +714,14 @@ const styles = StyleSheet.create({
   playerAvatarYou: { backgroundColor: colors.primary, borderColor: colors.primary },
   playerName: { fontSize: 16, fontWeight: '600', color: colors.textPrimary },
   playerColor: { fontSize: 14, color: colors.textMuted },
+  timerBox: {
+    flexDirection: 'row', alignItems: 'center', gap: 6,
+    backgroundColor: colors.surface, paddingHorizontal: 14, paddingVertical: 8,
+    borderRadius: 8, borderWidth: 1, borderColor: colors.border,
+  },
+  timerBoxActive: { backgroundColor: colors.primary, borderColor: colors.primary },
+  timerText: { fontSize: 18, fontWeight: 'bold', color: colors.textMuted, fontVariant: ['tabular-nums'] },
+  timerTextActive: { color: '#000' },
   boardContainer: { alignItems: 'center', marginVertical: 8 },
   board: { width: BOARD_SIZE, height: BOARD_SIZE, borderWidth: 3, borderRadius: 4, overflow: 'hidden', position: 'relative' },
   row: { flexDirection: 'row' },
