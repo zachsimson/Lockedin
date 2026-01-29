@@ -1608,16 +1608,37 @@ async def get_friends(current_user: dict = Depends(get_current_user)):
     
     friend_users = []
     for fid in friend_ids:
-        user = await users_collection.find_one(
-            {"_id": ObjectId(fid)},
-            {"password": 0, "email": 0}
-        )
-        if user:
-            friend_users.append(serialize_doc(user))
+        try:
+            user = await users_collection.find_one(
+                {"_id": ObjectId(fid)},
+                {"password": 0, "email": 0}
+            )
+            if user:
+                friend_users.append(serialize_doc(user))
+        except:
+            pass
+    
+    # Get user details for pending incoming requests
+    pending_incoming_with_users = []
+    for req in pending_incoming:
+        try:
+            requester = await users_collection.find_one(
+                {"_id": ObjectId(req["requester_id"])},
+                {"password": 0, "email": 0}
+            )
+            if requester:
+                pending_incoming_with_users.append({
+                    "_id": str(req["_id"]),
+                    "requester_id": req["requester_id"],
+                    "requester": serialize_doc(requester),
+                    "created_at": req.get("created_at")
+                })
+        except:
+            pass
     
     return {
         "friends": friend_users,
-        "pending_incoming": serialize_doc(pending_incoming),
+        "pending_incoming": pending_incoming_with_users,
         "pending_outgoing": serialize_doc(pending_outgoing)
     }
 
