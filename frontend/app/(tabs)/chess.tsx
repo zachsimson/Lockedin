@@ -35,18 +35,17 @@ const AVATAR_COLORS: { [key: string]: string } = {
   crown: '#FBBF24', anchor: '#10B981',
 };
 
-// Modern Chess Pieces - WHITE pieces use outline chars, BLACK pieces use filled chars
+// Modern Chess Pieces - Both sides use FILLED pieces, styled WHITE vs BLACK
 const PIECE_SETS = {
   standard: {
-    // White pieces (uppercase) - outline style
-    K: '♔', Q: '♕', R: '♖', B: '♗', N: '♘', P: '♙',
-    // Black pieces (lowercase) - filled style
+    // White pieces (uppercase) - filled, styled white
+    K: '♚', Q: '♛', R: '♜', B: '♝', N: '♞', P: '♟',
+    // Black pieces (lowercase) - filled, styled black
     k: '♚', q: '♛', r: '♜', b: '♝', n: '♞', p: '♟',
   },
   modern: {
-    // White pieces (uppercase) - outline style
-    K: '♔', Q: '♕', R: '♖', B: '♗', N: '♘', P: '♙',
-    // Black pieces (lowercase) - filled style
+    // Same filled pieces for modern style
+    K: '♚', Q: '♛', R: '♜', B: '♝', N: '♞', P: '♟',
     k: '♚', q: '♛', r: '♜', b: '♝', n: '♞', p: '♟',
   },
 };
