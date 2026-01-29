@@ -251,16 +251,35 @@ export default function ChessGame() {
   };
 
   const makeMove = async (from: string, to: string, promotion: string | null) => {
+    if (!gameState) return;
+    
     try {
       const response = await api.post('/api/chess/move', {
         game_id: gameId, from_square: from, to_square: to, promotion,
       });
-      setLastMove({ from, to });
-      await loadGame();
-      if (response.data.game_result) {
-        const resultMessage = response.data.winner_id === user?._id
-          ? `You won by ${response.data.game_result}!` : `Game ended: ${response.data.game_result}`;
-        Alert.alert('Game Over', resultMessage);
+      
+      // Update state with response data (no full reload needed)
+      if (response.data) {
+        setGameState(prev => prev ? {
+          ...prev,
+          fen: response.data.fen || prev.fen,
+          turn: response.data.turn || (prev.turn === 'white' ? 'black' : 'white'),
+          is_your_turn: !prev.is_your_turn,
+          is_check: response.data.is_check || false,
+          legal_moves: response.data.legal_moves || [],
+          move_history: response.data.move_history || prev.move_history,
+          game: { ...prev.game, status: response.data.game_result ? 'completed' : 'active' }
+        } : null);
+        
+        setLastMove({ from, to });
+        setSelectedSquare(null);
+        setValidMoves([]);
+        
+        if (response.data.game_result) {
+          const resultMessage = response.data.winner_id === user?._id
+            ? `You won by ${response.data.game_result}!` : `Game ended: ${response.data.game_result}`;
+          Alert.alert('Game Over', resultMessage);
+        }
       }
     } catch (error: any) {
       Alert.alert('Invalid Move', error.response?.data?.detail || 'Could not make move');
