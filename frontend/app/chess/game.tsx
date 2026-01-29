@@ -409,19 +409,19 @@ const styles = StyleSheet.create({
   square: { width: SQUARE_SIZE, height: SQUARE_SIZE, justifyContent: 'center', alignItems: 'center' },
   pieceContainer: { width: '100%', height: '100%', justifyContent: 'center', alignItems: 'center' },
   piece: { fontSize: SQUARE_SIZE * 0.8, textAlign: 'center' },
-  // WHITE PIECES - Pure white with black outline for maximum visibility
+  // WHITE PIECES - Solid white with strong black 3D shadow effect
   whitePiece: {
     color: '#FFFFFF',
     textShadowColor: '#000000',
-    textShadowOffset: { width: 1, height: 1 },
-    textShadowRadius: 2,
+    textShadowOffset: { width: 2, height: 2 },
+    textShadowRadius: 3,
   },
-  // BLACK PIECES - Pure black with slight white outline for visibility on dark squares
+  // BLACK PIECES - Solid black with subtle highlight for 3D depth
   blackPiece: {
-    color: '#000000',
-    textShadowColor: 'rgba(255, 255, 255, 0.5)',
-    textShadowOffset: { width: 0, height: 0 },
-    textShadowRadius: 1,
+    color: '#1A1A1A',
+    textShadowColor: 'rgba(255, 255, 255, 0.3)',
+    textShadowOffset: { width: -1, height: -1 },
+    textShadowRadius: 2,
   },
   validMoveIndicator: {
     width: SQUARE_SIZE * 0.3, height: SQUARE_SIZE * 0.3,
