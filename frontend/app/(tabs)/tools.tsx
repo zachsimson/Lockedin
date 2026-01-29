@@ -928,95 +928,154 @@ export default function Tools() {
   };
 
   // Connect Section
-  const renderConnectSection = () => (
-    <ScrollView
-      contentContainerStyle={styles.connectContent}
-      refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}
-    >
-      <Text style={styles.connectTitle}>Suggested Connections</Text>
-      <Text style={styles.connectSubtitle}>People on a similar journey</Text>
-      
-      {suggestedUsers.length > 0 ? (
-        <View style={styles.usersGrid}>
-          {suggestedUsers.map((usr, index) => (
+  // DMs Section - Direct Messages with Friends
+  const renderDMsSection = () => {
+    const AVATAR_ICONS_LOCAL: { [key: string]: string } = {
+      shield: 'shield-checkmark', phoenix: 'flame', mountain: 'triangle', star: 'star',
+      diamond: 'diamond', lightning: 'flash', heart: 'heart', rocket: 'rocket',
+      crown: 'trophy', anchor: 'fitness',
+    };
+    const AVATAR_COLORS_LOCAL: { [key: string]: string } = {
+      shield: '#00F5A0', phoenix: '#FF6B6B', mountain: '#4ECDC4', star: '#FFE66D',
+      diamond: '#A78BFA', lightning: '#F59E0B', heart: '#EC4899', rocket: '#3B82F6',
+      crown: '#FBBF24', anchor: '#10B981',
+    };
+    
+    // If a friend is selected, show the DM conversation
+    if (selectedDmFriend) {
+      return (
+        <KeyboardAvoidingView 
+          style={{ flex: 1 }} 
+          behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+          keyboardVerticalOffset={100}
+        >
+          {/* DM Header */}
+          <View style={styles.dmHeader}>
+            <Pressable style={styles.backToRooms} onPress={() => setSelectedDmFriend(null)}>
+              <Ionicons name="arrow-back" size={20} color={colors.textPrimary} />
+            </Pressable>
+            <View style={[styles.dmFriendAvatar, { borderColor: AVATAR_COLORS_LOCAL[selectedDmFriend.avatar_id] || colors.primary }]}>
+              <Ionicons 
+                name={(AVATAR_ICONS_LOCAL[selectedDmFriend.avatar_id] || 'person') as any} 
+                size={16} 
+                color={AVATAR_COLORS_LOCAL[selectedDmFriend.avatar_id] || colors.primary} 
+              />
+            </View>
+            <View style={styles.chatHeaderCenter}>
+              <Text style={styles.chatRoomName}>{selectedDmFriend.username}</Text>
+              <Text style={styles.userCount}>Direct Message</Text>
+            </View>
+          </View>
+          
+          {/* DM Messages */}
+          <FlatList
+            ref={dmListRef}
+            data={dmMessages}
+            keyExtractor={(item, idx) => `dm-${item._id || idx}`}
+            contentContainerStyle={styles.chatList}
+            inverted
+            ListEmptyComponent={
+              <View style={[styles.emptyState, { transform: [{ scaleY: -1 }] }]}>
+                <Ionicons name="chatbubble-outline" size={48} color={colors.textMuted} />
+                <Text style={styles.emptyText}>No messages yet</Text>
+                <Text style={styles.emptySubtext}>Say hello to {selectedDmFriend.username}!</Text>
+              </View>
+            }
+            renderItem={({ item }) => {
+              const isMe = item.sender_id === user?._id;
+              return (
+                <View style={[styles.chatMessage, isMe && styles.myMessage]}>
+                  <Text style={styles.chatMessageText}>{item.content}</Text>
+                  <Text style={styles.chatMessageTime}>{getTimeAgo(item.created_at)}</Text>
+                </View>
+              );
+            }}
+          />
+          
+          {/* DM Input */}
+          <View style={styles.chatInputContainer}>
+            <TextInput
+              style={styles.chatMessageInput}
+              placeholder="Type a message..."
+              placeholderTextColor={colors.textMuted}
+              value={dmInput}
+              onChangeText={setDmInput}
+            />
             <Pressable 
-              key={`user-${usr._id || index}`}
-              style={styles.userCard}
-              onPress={() => router.push(`/profile/${usr._id}`)}
+              style={styles.sendButton}
+              onPress={async () => {
+                if (!dmInput.trim()) return;
+                try {
+                  await api.post(`/api/dm/send/${selectedDmFriend._id}`, { content: dmInput.trim() });
+                  setDmInput('');
+                  // Refresh DMs
+                  const res = await api.get(`/api/dm/conversation/${selectedDmFriend._id}`);
+                  setDmMessages(res.data.messages || []);
+                } catch (error) {
+                  console.error('Failed to send DM:', error);
+                }
+              }}
             >
-              <View style={[styles.userAvatar, { borderColor: AVATAR_COLORS[usr.avatar_id] || colors.primary }]}>
+              <Ionicons name="send" size={20} color="#000" />
+            </Pressable>
+          </View>
+        </KeyboardAvoidingView>
+      );
+    }
+    
+    // Show friends list for DMs
+    return (
+      <ScrollView contentContainerStyle={styles.dmList}>
+        <Text style={styles.chatRoomTitle}>Direct Messages</Text>
+        <Text style={styles.chatRoomSubtitle}>Chat privately with friends</Text>
+        
+        {friends.length > 0 ? (
+          friends.map((friend) => (
+            <Pressable 
+              key={`dm-friend-${friend._id}`}
+              style={styles.chatRoomCard}
+              onPress={async () => {
+                setSelectedDmFriend(friend);
+                try {
+                  const res = await api.get(`/api/dm/conversation/${friend._id}`);
+                  setDmMessages(res.data.messages || []);
+                } catch (error) {
+                  console.error('Failed to load DMs:', error);
+                  setDmMessages([]);
+                }
+              }}
+            >
+              <View style={[styles.chatRoomIcon, { backgroundColor: `${AVATAR_COLORS_LOCAL[friend.avatar_id]}20` }]}>
                 <Ionicons 
-                  name={(AVATAR_ICONS[usr.avatar_id] || 'person') as any} 
-                  size={22} 
-                  color={AVATAR_COLORS[usr.avatar_id] || colors.primary} 
+                  name={(AVATAR_ICONS_LOCAL[friend.avatar_id] || 'person') as any} 
+                  size={24} 
+                  color={AVATAR_COLORS_LOCAL[friend.avatar_id] || colors.primary} 
                 />
               </View>
-              <Text style={styles.userName} numberOfLines={1}>{usr.username}</Text>
-              {usr.days_clean !== undefined && (
-                <Text style={styles.userStreak}>{usr.days_clean}d clean</Text>
-              )}
-              <Pressable 
-                style={styles.addButton}
-                onPress={(e) => { e.stopPropagation(); sendFriendRequest(usr._id); }}
-              >
-                <Ionicons name="person-add" size={14} color="#000" />
-              </Pressable>
+              <View style={styles.chatRoomInfo}>
+                <Text style={styles.chatRoomName}>{friend.username}</Text>
+                <Text style={styles.chatRoomDesc}>Tap to chat</Text>
+              </View>
+              <Ionicons name="chevron-forward" size={20} color={colors.textMuted} />
             </Pressable>
-          ))}
-        </View>
-      ) : (
-        <View style={styles.emptyState}>
-          <Ionicons name="people-outline" size={48} color={colors.textMuted} />
-          <Text style={styles.emptyText}>No suggestions right now</Text>
-          <Text style={styles.emptySubtext}>Check back later</Text>
-        </View>
-      )}
-    </ScrollView>
-  );
-
-  // Feed Section - Moved to END, Redesigned
-  const renderFeedSection = () => (
-    <FlatList
-      data={activities}
-      keyExtractor={(item, index) => `activity-${item._id || index}`}
-      contentContainerStyle={styles.feedList}
-      refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}
-      ListHeaderComponent={
-        <View style={styles.feedHeader}>
-          <Text style={styles.feedHeaderTitle}>Community Activity</Text>
-          <Text style={styles.feedHeaderSubtitle}>Recent milestones & achievements</Text>
-        </View>
-      }
-      renderItem={({ item }) => (
-        <Pressable 
-          style={styles.feedCard}
-          onPress={() => router.push(`/profile/${item.user_id}`)}
-        >
-          <View style={[styles.feedAvatar, { borderColor: AVATAR_COLORS[item.avatar_id] || colors.primary }]}>
-            <Ionicons 
-              name={(AVATAR_ICONS[item.avatar_id] || 'person') as any} 
-              size={16} 
-              color={AVATAR_COLORS[item.avatar_id] || colors.primary} 
-            />
+          ))
+        ) : (
+          <View style={styles.emptyState}>
+            <Ionicons name="people-outline" size={48} color={colors.textMuted} />
+            <Text style={styles.emptyText}>No friends yet</Text>
+            <Text style={styles.emptySubtext}>Add friends from the community to DM them</Text>
           </View>
-          <View style={styles.feedContent}>
-            <Text style={styles.feedText}>
-              <Text style={styles.feedUsername}>{item.username}</Text>
-              {' '}{item.activity_description || item.activity_type}
-            </Text>
-            <Text style={styles.feedTime}>{getTimeAgo(item.created_at)}</Text>
-          </View>
-        </Pressable>
-      )}
-      ListEmptyComponent={
-        <View style={styles.emptyState}>
-          <Ionicons name="pulse-outline" size={48} color={colors.textMuted} />
-          <Text style={styles.emptyText}>No activity yet</Text>
-          <Text style={styles.emptySubtext}>Community updates will appear here</Text>
+        )}
+        
+        <View style={styles.chatRoomNote}>
+          <Ionicons name="information-circle" size={18} color={colors.textSecondary} />
+          <Text style={styles.chatRoomNoteText}>
+            Add friends from user profiles to start direct messaging
+          </Text>
         </View>
-      }
-    />
-  );
+      </ScrollView>
+    );
+  };
 
   if (loading) {
     return (
